@@ -75,9 +75,10 @@ export const CheckboxField = ({
       {/* Field label (if exists) */}
       {field.label && (
         <div
-          className="absolute top-0 right-0 text-white text-xs px-2 py-0.5 rounded-tr whitespace-nowrap"
+          className="absolute top-0 right-0 text-[10px] px-1 py-0.5 whitespace-nowrap"
           style={{
-            backgroundColor: 'hsl(var(--field-checkbox))',
+            color: 'hsl(var(--field-checkbox))',
+            backgroundColor: 'transparent',
             transform: 'translateX(100%)',
           }}
           dir="rtl"

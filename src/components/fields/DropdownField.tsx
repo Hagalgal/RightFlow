@@ -94,8 +94,11 @@ export const DropdownField = ({
 
       {/* Field label */}
       <div
-        className="absolute top-0 right-0 text-white text-xs px-2 py-0.5 rounded-tr whitespace-nowrap"
-        style={{ backgroundColor: 'hsl(var(--field-dropdown))' }}
+        className="absolute top-0 right-0 text-[10px] px-1 py-0.5 whitespace-nowrap"
+        style={{
+          color: 'hsl(var(--field-dropdown))',
+          backgroundColor: 'transparent'
+        }}
         dir="rtl"
       >
         {sanitizeUserInput(field.label || field.name) || 'רשימה נפתחת'}
