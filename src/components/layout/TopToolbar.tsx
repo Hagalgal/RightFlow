@@ -1,4 +1,4 @@
-import { Upload, Save, ChevronRight, ChevronLeft, Type, CheckSquare, ZoomIn, ZoomOut, Undo, Redo, Circle, ChevronDown, Settings } from 'lucide-react';
+import { Upload, Save, ChevronRight, ChevronLeft, Type, CheckSquare, ZoomIn, ZoomOut, Undo, Redo, Circle, ChevronDown, Settings, Download, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ToolMode } from '@/types/fields';
@@ -19,6 +19,9 @@ interface TopToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  onSaveFields?: () => void;
+  onLoadFields?: () => void;
+  hasFields?: boolean;
 }
 
 export const TopToolbar = ({
@@ -37,6 +40,9 @@ export const TopToolbar = ({
   onRedo,
   canUndo = false,
   canRedo = false,
+  onSaveFields,
+  onLoadFields,
+  hasFields = false,
 }: TopToolbarProps) => {
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -73,13 +79,42 @@ export const TopToolbar = ({
           disabled={!hasDocument}
         >
           <Save className="w-4 h-4 mr-2" />
-          שמור תבנית
+          שמור PDF מלא
         </Button>
         <Button variant="outline" size="sm" onClick={onSettings}>
           <Settings className="w-4 h-4 mr-2" />
           הגדרות
         </Button>
       </div>
+
+      {hasDocument && (
+        <>
+          <Separator orientation="vertical" className="h-8" />
+
+          {/* Field template operations */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onSaveFields}
+              disabled={!hasFields}
+              title="שמור שדות כתבנית"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              שמור שדות
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLoadFields}
+              title="טען שדות מתבנית"
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              טען שדות
+            </Button>
+          </div>
+        </>
+      )}
 
       {hasDocument && (
         <>

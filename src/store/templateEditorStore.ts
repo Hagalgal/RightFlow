@@ -69,6 +69,7 @@ interface TemplateEditorStore {
   copyField: () => void;
   pasteField: () => void;
   duplicateField: (id: string) => void;
+  loadFields: (fields: FieldDefinition[]) => void;
 
   // Actions - Undo/Redo
   undo: () => void;
@@ -317,6 +318,15 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
     state.addFieldWithUndo(newField);
 
     console.log('✓ Field duplicated with undo support');
+  },
+
+  // Load fields from template (replace all fields)
+  loadFields: (fields) => {
+    set({
+      fields,
+      selectedFieldId: null,
+    });
+    console.log(`✓ Loaded ${fields.length} fields from template`);
   },
 
   // Undo/Redo actions
