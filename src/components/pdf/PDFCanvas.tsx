@@ -391,11 +391,11 @@ export const PDFCanvas = ({
         onMouseUp={handleCanvasMouseUp}
         style={{
           cursor:
-            activeTool === 'text-field'
+            activeTool === 'text-field' || activeTool === 'dropdown-field'
               ? 'crosshair'
-              : activeTool === 'checkbox-field'
-              ? 'pointer'
-              : 'default',
+              : activeTool === 'checkbox-field' || activeTool === 'radio-field'
+              ? 'copy' // Plus icon cursor for click-to-place
+              : 'default', // Arrow for select mode
         }}
       >
         <Document

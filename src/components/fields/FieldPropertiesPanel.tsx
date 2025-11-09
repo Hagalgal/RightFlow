@@ -151,60 +151,97 @@ export const FieldPropertiesPanel = ({
 
         {/* Radio Group Options (radio fields only) */}
         {field.type === 'radio' && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>אפשרויות כפתורי רדיו</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const currentOptions = field.options || [];
-                  const newOptions = [...currentOptions, `אפשרות ${currentOptions.length + 1}`];
-                  onUpdate({ options: newOptions });
-                }}
-                className="h-7 px-2"
+          <>
+            {/* Radio Orientation */}
+            <div className="space-y-2">
+              <Label htmlFor="radio-orientation">כיוון סידור כפתורים</Label>
+              <Select
+                id="radio-orientation"
+                value={field.orientation || 'vertical'}
+                onChange={(e) => onUpdate({ orientation: e.target.value as 'vertical' | 'horizontal' })}
               >
-                <Plus className="w-3 h-3 ml-1" />
-                הוסף
-              </Button>
+                <option value="vertical">אנכי (↓)</option>
+                <option value="horizontal">אופקי (→)</option>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                אנכי - כפתורים מסודרים למטה | אופקי - כפתורים מסודרים לצד
+              </p>
             </div>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              {(field.options || []).map((option, index) => (
-                <div key={index} className="flex gap-1">
-                  <Input
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...(field.options || [])];
-                      newOptions[index] = sanitizeUserInput(e.target.value);
-                      onUpdate({ options: newOptions });
-                    }}
-                    placeholder={`אפשרות ${index + 1}`}
-                    dir="rtl"
-                    className="text-sm h-8"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const newOptions = (field.options || []).filter((_, i) => i !== index);
-                      // Don't allow removing all options - keep at least 1
-                      if (newOptions.length > 0) {
+
+            {/* Radio Spacing */}
+            <div className="space-y-2">
+              <Label htmlFor="radio-spacing">מרווח בין כפתורים (pt)</Label>
+              <Input
+                id="radio-spacing"
+                type="number"
+                min="10"
+                max="100"
+                value={field.spacing || 30}
+                onChange={(e) => onUpdate({ spacing: parseInt(e.target.value) || 30 })}
+                dir="ltr"
+                className="text-left"
+              />
+              <p className="text-xs text-muted-foreground">
+                המרחק בין כל כפתור לשכנו (10-100 נקודות)
+              </p>
+            </div>
+
+            {/* Radio Options */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>אפשרויות כפתורי רדיו</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const currentOptions = field.options || [];
+                    const newOptions = [...currentOptions, `אפשרות ${currentOptions.length + 1}`];
+                    onUpdate({ options: newOptions });
+                  }}
+                  className="h-7 px-2"
+                >
+                  <Plus className="w-3 h-3 ml-1" />
+                  הוסף
+                </Button>
+              </div>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {(field.options || []).map((option, index) => (
+                  <div key={index} className="flex gap-1">
+                    <Input
+                      value={option}
+                      onChange={(e) => {
+                        const newOptions = [...(field.options || [])];
+                        newOptions[index] = sanitizeUserInput(e.target.value);
                         onUpdate({ options: newOptions });
-                      }
-                    }}
-                    disabled={(field.options || []).length <= 1}
-                    className="h-8 w-8 flex-shrink-0"
-                    title="הסר אפשרות"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))}
+                      }}
+                      placeholder={`אפשרות ${index + 1}`}
+                      dir="rtl"
+                      className="text-sm h-8"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newOptions = (field.options || []).filter((_, i) => i !== index);
+                        // Don't allow removing all options - keep at least 1
+                        if (newOptions.length > 0) {
+                          onUpdate({ options: newOptions });
+                        }
+                      }}
+                      disabled={(field.options || []).length <= 1}
+                      className="h-8 w-8 flex-shrink-0"
+                      title="הסר אפשרות"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                כפתורי רדיו מאפשרים בחירת אפשרות אחת בלבד מהרשימה
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              כפתורי רדיו מאפשרים בחירת אפשרות אחת בלבד מהרשימה
-            </p>
-          </div>
+          </>
         )}
 
         {/* Dropdown Options (dropdown fields only) */}
