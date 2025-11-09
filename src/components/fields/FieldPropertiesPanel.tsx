@@ -34,7 +34,7 @@ export const FieldPropertiesPanel = ({
         labelInputRef.current?.select(); // Select any existing text
       }, 100);
     }
-  }, [field.id]); // Run when field changes
+  }, [field.id, field.name, field.label]); // Run when field changes
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const validation = validateFieldName(e.target.value);
     if (validation.isValid) {

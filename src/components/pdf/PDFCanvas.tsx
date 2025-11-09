@@ -203,6 +203,7 @@ export const PDFCanvas = ({
       addFieldWithUndo,
       startDrag,
       selectField,
+      settings,
     ],
   );
 
@@ -301,6 +302,7 @@ export const PDFCanvas = ({
       scale,
       addFieldWithUndo,
       endDrag,
+      settings,
     ],
   );
 
