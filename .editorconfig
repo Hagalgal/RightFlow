@@ -1,0 +1,60 @@
+# EditorConfig helps maintain consistent coding styles across different editors and IDEs
+# https://editorconfig.org
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+# Markdown files - preserve trailing whitespace for line breaks
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Package manager files
+[{package.json,package-lock.json,pnpm-lock.yaml,yarn.lock}]
+indent_size = 2
+
+# TypeScript and JavaScript files
+[*.{ts,tsx,js,jsx}]
+indent_size = 2
+quote_type = single
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# HTML files
+[*.html]
+indent_size = 2
+
+# CSS and Tailwind files
+[*.{css,scss,sass}]
+indent_size = 2
+
+# Configuration files
+[{.eslintrc,.prettierrc,.babelrc}]
+indent_size = 2
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
+
+# Batch files use CRLF line endings
+[*.{cmd,bat}]
+end_of_line = crlf
+
+# Shell scripts use LF line endings
+[*.sh]
+end_of_line = lf
