@@ -133,7 +133,7 @@ export const PDFCanvas = ({
           y: pdfCoords.y - 20, // Adjust for checkbox height
           width: 20,
           height: 20,
-          name: `checkbox_${Date.now()}`,
+          name: '',
           required: false,
           direction: 'rtl',
         };
@@ -156,8 +156,6 @@ export const PDFCanvas = ({
           canvasWidth,
         );
 
-        const timestamp = Date.now();
-        const groupName = `radio_group_${timestamp}`;
         const buttonCount = settings.radioField.defaultButtonCount;
 
         // Generate default options based on settings
@@ -171,10 +169,10 @@ export const PDFCanvas = ({
           y: pdfCoords.y - 20, // Adjust for radio height
           width: 20,
           height: 20,
-          name: groupName,
+          name: '',
           required: false,
           direction: 'rtl',
-          radioGroup: groupName,
+          radioGroup: '', // Empty group name, user should set meaningful name
           options: defaultOptions,
           spacing: settings.radioField.spacing,
           orientation: settings.radioField.orientation,
@@ -265,7 +263,7 @@ export const PDFCanvas = ({
         y: pdfCoords.y - pdfHeight,
         width: pdfWidth,
         height: pdfHeight,
-        name: `dropdown_${Date.now()}`,
+        name: '',
         required: false,
         direction: settings.dropdownField.direction,
         font: settings.dropdownField.font,
@@ -277,7 +275,7 @@ export const PDFCanvas = ({
         y: pdfCoords.y - pdfHeight,
         width: pdfWidth,
         height: pdfHeight,
-        name: `field_${Date.now()}`,
+        name: '',
         required: false,
         direction: settings.textField.direction,
         font: settings.textField.font,

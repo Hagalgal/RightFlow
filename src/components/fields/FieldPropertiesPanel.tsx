@@ -21,20 +21,21 @@ export const FieldPropertiesPanel = ({
   onClose,
 }: FieldPropertiesPanelProps) => {
   const labelInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus label input when panel opens for a new field (fixes bug e)
+  // Auto-focus name input when panel opens for a new field with empty name
   useEffect(() => {
-    // Check if this is a newly created field (name matches pattern field_timestamp)
-    const isNewField = field.name.startsWith('field_') && !field.label;
+    // Check if this is a newly created field (empty name)
+    const isNewField = field.name === '';
 
-    if (isNewField && labelInputRef.current) {
+    if (isNewField && nameInputRef.current) {
       // Small delay to ensure the panel is fully rendered
       setTimeout(() => {
-        labelInputRef.current?.focus();
-        labelInputRef.current?.select(); // Select any existing text
+        nameInputRef.current?.focus();
+        nameInputRef.current?.select(); // Select any existing text
       }, 100);
     }
-  }, [field.id, field.name, field.label]); // Run when field changes
+  }, [field.id, field.name]); // Run when field changes
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const validation = validateFieldName(e.target.value);
     if (validation.isValid) {
@@ -104,6 +105,7 @@ export const FieldPropertiesPanel = ({
         <div className="space-y-2">
           <Label htmlFor="field-name">שם שדה (באנגלית)</Label>
           <Input
+            ref={nameInputRef}
             id="field-name"
             value={field.name}
             onChange={handleNameChange}
