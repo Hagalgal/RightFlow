@@ -440,6 +440,10 @@ export const PDFCanvas = ({
             onFieldSelect={selectField}
             onFieldUpdate={updateField}
             onFieldDelete={deleteFieldWithUndo}
+            onFieldDuplicate={(id) => {
+              const { duplicateField } = useTemplateEditorStore.getState();
+              duplicateField(id);
+            }}
           />
         )}
 

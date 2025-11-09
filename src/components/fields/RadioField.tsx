@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { FieldDefinition } from '@/types/fields';
 import { sanitizeUserInput } from '@/utils/inputSanitization';
+import { FieldContextMenu } from './FieldContextMenu';
 
 interface RadioFieldProps {
   field: FieldDefinition;
@@ -11,6 +13,7 @@ interface RadioFieldProps {
   onSelect: (id: string) => void;
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
 }
 
 export const RadioField = ({
@@ -20,12 +23,22 @@ export const RadioField = ({
   onSelect,
   onUpdate,
   onDelete,
+  onDuplicate,
 }: RadioFieldProps) => {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
     onUpdate(field.id, {
       x: d.x / scale,
       y: d.y / scale,
     });
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+    onSelect(field.id);
   };
 
   const options = field.options || ['אפשרות 1'];
@@ -43,31 +56,33 @@ export const RadioField = ({
       : field.height;
 
   return (
-    <Rnd
-      position={{
-        x: field.x * scale,
-        y: field.y * scale,
-      }}
-      size={{
-        width: containerWidth * scale,
-        height: containerHeight * scale,
-      }}
-      onDragStop={handleDragStop}
-      disableResizing={true}
-      bounds="parent"
-      className={cn(
-        'field-marker field-marker-radio',
-        isSelected && 'field-marker-selected',
-        'group',
-      )}
-      style={{
-        zIndex: isSelected ? 1000 : 100,
-      }}
-      onClick={(e: React.MouseEvent) => {
-        e.stopPropagation();
-        onSelect(field.id);
-      }}
-    >
+    <>
+      <Rnd
+        position={{
+          x: field.x * scale,
+          y: field.y * scale,
+        }}
+        size={{
+          width: containerWidth * scale,
+          height: containerHeight * scale,
+        }}
+        onDragStop={handleDragStop}
+        disableResizing={true}
+        bounds="parent"
+        className={cn(
+          'field-marker field-marker-radio',
+          isSelected && 'field-marker-selected',
+          'group',
+        )}
+        style={{
+          zIndex: isSelected ? 1000 : 100,
+        }}
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          onSelect(field.id);
+        }}
+        onContextMenu={handleContextMenu}
+      >
       {/* Radio buttons - display all options based on orientation */}
       <div
         className={cn('flex gap-0', orientation === 'vertical' ? 'flex-col' : 'flex-row')}
@@ -124,5 +139,17 @@ export const RadioField = ({
         <X className="w-3 h-3" />
       </button>
     </Rnd>
+
+    {/* Context Menu */}
+    {contextMenu && (
+      <FieldContextMenu
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onDuplicate={() => onDuplicate(field.id)}
+        onDelete={() => onDelete(field.id)}
+        onClose={() => setContextMenu(null)}
+      />
+    )}
+    </>
   );
 };
