@@ -11,6 +11,7 @@ interface FieldOverlayProps {
   onFieldSelect: (id: string) => void;
   onFieldUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onFieldDelete: (id: string) => void;
+  onFieldDuplicate: (id: string) => void;
 }
 
 export const FieldOverlay = ({
@@ -20,6 +21,7 @@ export const FieldOverlay = ({
   onFieldSelect,
   onFieldUpdate,
   onFieldDelete,
+  onFieldDuplicate,
 }: FieldOverlayProps) => {
   // Scale factor for converting between PDF points and pixels
   const scaleFactor = scale / 100;
@@ -40,6 +42,7 @@ export const FieldOverlay = ({
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
+                onDuplicate={onFieldDuplicate}
               />
             );
           } else if (field.type === 'checkbox') {
@@ -52,6 +55,7 @@ export const FieldOverlay = ({
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
+                onDuplicate={onFieldDuplicate}
               />
             );
           } else if (field.type === 'radio') {
@@ -64,6 +68,7 @@ export const FieldOverlay = ({
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
+                onDuplicate={onFieldDuplicate}
               />
             );
           } else if (field.type === 'dropdown') {
@@ -76,6 +81,7 @@ export const FieldOverlay = ({
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
+                onDuplicate={onFieldDuplicate}
               />
             );
           }

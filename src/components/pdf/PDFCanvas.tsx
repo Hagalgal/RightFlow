@@ -80,6 +80,32 @@ export const PDFCanvas = ({
     [scale, onPageRender, setStoreCanvasWidth],
   );
 
+  const handleCanvasMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      if (!containerRef.current || !currentPageDimensions || !canvasWidth) return;
+
+      // Ignore clicks on field markers
+      const target = event.target as HTMLElement;
+      if (target.closest('.field-marker')) return;
+
+      const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
+
+      // Start drag for text field or dropdown (drag-to-create)
+      if ((activeTool === 'text-field' || activeTool === 'dropdown-field') && !isDragging) {
+        startDrag(viewportCoords.x, viewportCoords.y);
+        event.preventDefault(); // Prevent text selection during drag
+        return;
+      }
+    },
+    [
+      activeTool,
+      isDragging,
+      currentPageDimensions,
+      canvasWidth,
+      startDrag,
+    ],
+  );
+
   const handleCanvasClick = useCallback(
     (event: React.MouseEvent) => {
       if (!containerRef.current || !currentPageDimensions || !canvasWidth) return;
@@ -107,7 +133,7 @@ export const PDFCanvas = ({
           y: pdfCoords.y - 20, // Adjust for checkbox height
           width: 20,
           height: 20,
-          name: `checkbox_${Date.now()}`,
+          name: '',
           required: false,
           direction: 'rtl',
         };
@@ -130,8 +156,6 @@ export const PDFCanvas = ({
           canvasWidth,
         );
 
-        const timestamp = Date.now();
-        const groupName = `radio_group_${timestamp}`;
         const buttonCount = settings.radioField.defaultButtonCount;
 
         // Generate default options based on settings
@@ -145,10 +169,10 @@ export const PDFCanvas = ({
           y: pdfCoords.y - 20, // Adjust for radio height
           width: 20,
           height: 20,
-          name: groupName,
+          name: '',
           required: false,
           direction: 'rtl',
-          radioGroup: groupName,
+          radioGroup: '', // Empty group name, user should set meaningful name
           options: defaultOptions,
           spacing: settings.radioField.spacing,
           orientation: settings.radioField.orientation,
@@ -159,18 +183,6 @@ export const PDFCanvas = ({
         // Reset tool to select mode after creating radio group
         const { setActiveTool } = useTemplateEditorStore.getState();
         setActiveTool('select');
-        return;
-      }
-
-      // Start drag for text field
-      if (activeTool === 'text-field' && !isDragging) {
-        startDrag(viewportCoords.x, viewportCoords.y);
-        return;
-      }
-
-      // Start drag for dropdown field
-      if (activeTool === 'dropdown-field' && !isDragging) {
-        startDrag(viewportCoords.x, viewportCoords.y);
         return;
       }
 
@@ -189,6 +201,7 @@ export const PDFCanvas = ({
       addFieldWithUndo,
       startDrag,
       selectField,
+      settings,
     ],
   );
 
@@ -250,7 +263,7 @@ export const PDFCanvas = ({
         y: pdfCoords.y - pdfHeight,
         width: pdfWidth,
         height: pdfHeight,
-        name: `dropdown_${Date.now()}`,
+        name: '',
         required: false,
         direction: settings.dropdownField.direction,
         font: settings.dropdownField.font,
@@ -262,7 +275,7 @@ export const PDFCanvas = ({
         y: pdfCoords.y - pdfHeight,
         width: pdfWidth,
         height: pdfHeight,
-        name: `field_${Date.now()}`,
+        name: '',
         required: false,
         direction: settings.textField.direction,
         font: settings.textField.font,
@@ -287,6 +300,7 @@ export const PDFCanvas = ({
       scale,
       addFieldWithUndo,
       endDrag,
+      settings,
     ],
   );
 
@@ -386,16 +400,17 @@ export const PDFCanvas = ({
       <div
         ref={containerRef}
         className="relative"
+        onMouseDown={handleCanvasMouseDown}
         onClick={handleCanvasClick}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         style={{
           cursor:
-            activeTool === 'text-field'
+            activeTool === 'text-field' || activeTool === 'dropdown-field'
               ? 'crosshair'
-              : activeTool === 'checkbox-field'
-              ? 'pointer'
-              : 'default',
+              : activeTool === 'checkbox-field' || activeTool === 'radio-field'
+              ? 'copy' // Plus icon cursor for click-to-place
+              : 'default', // Arrow for select mode
         }}
       >
         <Document
@@ -425,6 +440,10 @@ export const PDFCanvas = ({
             onFieldSelect={selectField}
             onFieldUpdate={updateField}
             onFieldDelete={deleteFieldWithUndo}
+            onFieldDuplicate={(id) => {
+              const { duplicateField } = useTemplateEditorStore.getState();
+              duplicateField(id);
+            }}
           />
         )}
 

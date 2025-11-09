@@ -18,6 +18,7 @@ import {
 
 function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fieldTemplateInputRef = useRef<HTMLInputElement>(null);
   const [recoveryData, setRecoveryData] = useState<RecoveryData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -45,6 +46,7 @@ function App() {
     redo,
     canUndo,
     canRedo,
+    loadFields,
   } = useTemplateEditorStore();
 
   const { settings } = useSettingsStore();
@@ -179,6 +181,74 @@ function App() {
     }
   };
 
+  const handleSaveFields = async () => {
+    if (fields.length === 0) {
+      alert('אין שדות לשמירה. אנא הוסף לפחות שדה אחד.');
+      return;
+    }
+
+    try {
+      // Import field template utilities
+      const { saveFieldsToFile } = await import('@/utils/fieldTemplates');
+
+      // Prompt for template name
+      const templateName = prompt('הכנס שם לתבנית:', `template_${Date.now()}`);
+      if (!templateName) return; // User cancelled
+
+      // Save fields to JSON file
+      saveFieldsToFile(fields, templateName);
+
+      alert(`✅ תבנית השדות נשמרה בהצלחה!\nקובץ: ${templateName}.json\nשדות: ${fields.length}`);
+    } catch (error) {
+      console.error('Error saving fields:', error);
+      alert(`שגיאה בשמירת שדות: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+    }
+  };
+
+  const handleLoadFields = () => {
+    fieldTemplateInputRef.current?.click();
+  };
+
+  const handleFieldTemplateChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Import field template utilities
+      const { loadFieldsFromFile } = await import('@/utils/fieldTemplates');
+
+      // Load fields from JSON file
+      const loadedFields = await loadFieldsFromFile(file);
+
+      // Ask user if they want to replace or merge
+      const replace = confirm(
+        `נמצאו ${loadedFields.length} שדות בתבנית.\n\n` +
+          `האם להחליף את השדות הקיימים (${fields.length})?\n\n` +
+          `לחץ "אישור" להחלפה או "ביטול" למיזוג`,
+      );
+
+      if (replace) {
+        // Replace all fields
+        loadFields(loadedFields);
+        alert(`✅ ${loadedFields.length} שדות נטענו בהצלחה והחליפו את השדות הקיימים!`);
+      } else {
+        // Merge fields (add to existing)
+        loadFields([...fields, ...loadedFields]);
+        alert(
+          `✅ ${loadedFields.length} שדות נטענו ונוספו!\nסה"כ שדות כעת: ${fields.length + loadedFields.length}`,
+        );
+      }
+
+      console.log(`✓ Loaded ${loadedFields.length} fields from template`);
+    } catch (error) {
+      console.error('Error loading fields:', error);
+      alert(`שגיאה בטעינת שדות: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+    }
+
+    // Reset input so same file can be loaded again
+    event.target.value = '';
+  };
+
   return (
     <div className="w-screen h-screen flex flex-col" dir="rtl">
       {/* Recovery Dialog */}
@@ -190,12 +260,19 @@ function App() {
         />
       )}
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept="application/pdf"
         onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
+      <input
+        ref={fieldTemplateInputRef}
+        type="file"
+        accept="application/json"
+        onChange={handleFieldTemplateChange}
         style={{ display: 'none' }}
       />
 
@@ -215,6 +292,9 @@ function App() {
         onRedo={redo}
         canUndo={canUndo()}
         canRedo={canRedo()}
+        onSaveFields={handleSaveFields}
+        onLoadFields={handleLoadFields}
+        hasFields={fields.length > 0}
       />
 
       {/* Settings Modal */}

@@ -8,7 +8,7 @@
  * character mapping issues that cause text reversal.
  */
 
-import { PDFDocument, PDFFont, rgb, PDFCheckBox } from 'pdf-lib';
+import { PDFDocument, PDFFont, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { FieldDefinition } from '@/types/fields';
 import { validateFieldName, validateFieldNameUniqueness } from '@/utils/inputSanitization';
