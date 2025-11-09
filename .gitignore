@@ -45,3 +45,6 @@ Phase0-Testing
 
 # PDF output files (test outputs)
 Phase0-Testing/output/*.pdf
+
+# Markdown documentation files
+*.md
