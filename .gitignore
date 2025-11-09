@@ -31,5 +31,17 @@ dist-ssr
 # Vercel
 .vercel
 
+# Claude Code configuration
+.claude
+
+# GitHub templates and workflows
+.github
+
+# Documentation and planning files
+Documents
+
+# Testing phase directory
+Phase0-Testing
+
 # PDF output files (test outputs)
 Phase0-Testing/output/*.pdf
