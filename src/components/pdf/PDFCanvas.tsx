@@ -80,6 +80,32 @@ export const PDFCanvas = ({
     [scale, onPageRender, setStoreCanvasWidth],
   );
 
+  const handleCanvasMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      if (!containerRef.current || !currentPageDimensions || !canvasWidth) return;
+
+      // Ignore clicks on field markers
+      const target = event.target as HTMLElement;
+      if (target.closest('.field-marker')) return;
+
+      const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
+
+      // Start drag for text field or dropdown (drag-to-create)
+      if ((activeTool === 'text-field' || activeTool === 'dropdown-field') && !isDragging) {
+        startDrag(viewportCoords.x, viewportCoords.y);
+        event.preventDefault(); // Prevent text selection during drag
+        return;
+      }
+    },
+    [
+      activeTool,
+      isDragging,
+      currentPageDimensions,
+      canvasWidth,
+      startDrag,
+    ],
+  );
+
   const handleCanvasClick = useCallback(
     (event: React.MouseEvent) => {
       if (!containerRef.current || !currentPageDimensions || !canvasWidth) return;
@@ -159,18 +185,6 @@ export const PDFCanvas = ({
         // Reset tool to select mode after creating radio group
         const { setActiveTool } = useTemplateEditorStore.getState();
         setActiveTool('select');
-        return;
-      }
-
-      // Start drag for text field
-      if (activeTool === 'text-field' && !isDragging) {
-        startDrag(viewportCoords.x, viewportCoords.y);
-        return;
-      }
-
-      // Start drag for dropdown field
-      if (activeTool === 'dropdown-field' && !isDragging) {
-        startDrag(viewportCoords.x, viewportCoords.y);
         return;
       }
 
@@ -386,6 +400,7 @@ export const PDFCanvas = ({
       <div
         ref={containerRef}
         className="relative"
+        onMouseDown={handleCanvasMouseDown}
         onClick={handleCanvasClick}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
