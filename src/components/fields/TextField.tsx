@@ -5,11 +5,19 @@ import { cn } from '@/utils/cn';
 import { FieldDefinition } from '@/types/fields';
 import { sanitizeUserInput } from '@/utils/inputSanitization';
 import { FieldContextMenu } from './FieldContextMenu';
+import { pdfToViewportCoords, viewportToPDFCoords } from '@/utils/pdfCoordinates';
+
+interface PageDimensions {
+  width: number;
+  height: number;
+}
 
 interface TextFieldProps {
   field: FieldDefinition;
   isSelected: boolean;
   scale: number;
+  pageDimensions: PageDimensions;
+  canvasWidth: number;
   onSelect: (id: string) => void;
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
@@ -20,16 +28,33 @@ export const TextField = ({
   field,
   isSelected,
   scale,
+  pageDimensions,
+  canvasWidth,
   onSelect,
   onUpdate,
   onDelete,
   onDuplicate,
 }: TextFieldProps) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
+    // d.x, d.y is the TOP-LEFT corner in viewport
+    // We need to convert to BOTTOM-LEFT for PDF
+    // Calculate viewport bottom: top + height
+    const viewportBottomY = d.y + viewportHeight;
+
+    // Convert BOTTOM-LEFT viewport position to PDF coordinates
+    const pdfCoords = viewportToPDFCoords(
+      d.x,
+      viewportBottomY, // bottom of field
+      pageDimensions,
+      scale * 100,
+      canvasWidth,
+    );
+
     onUpdate(field.id, {
-      x: d.x / scale,
-      y: d.y / scale,
+      x: pdfCoords.x,
+      y: pdfCoords.y, // This is now the bottom-left
     });
   };
 
@@ -40,11 +65,29 @@ export const TextField = ({
     _delta: any,
     position: { x: number; y: number },
   ) => {
+    // Convert size from pixels to PDF points
+    const pixelsToPointsScale = pageDimensions.width / canvasWidth;
+    const pdfWidth = parseInt(ref.style.width) * pixelsToPointsScale;
+    const pdfHeight = parseInt(ref.style.height) * pixelsToPointsScale;
+
+    // position.x, position.y is the TOP-LEFT corner in viewport
+    // Calculate viewport bottom: top + height
+    const viewportBottomY = position.y + parseInt(ref.style.height);
+
+    // Convert BOTTOM-LEFT viewport position to PDF coordinates
+    const pdfCoords = viewportToPDFCoords(
+      position.x,
+      viewportBottomY,
+      pageDimensions,
+      scale * 100,
+      canvasWidth,
+    );
+
     onUpdate(field.id, {
-      width: parseInt(ref.style.width) / scale,
-      height: parseInt(ref.style.height) / scale,
-      x: position.x / scale,
-      y: position.y / scale,
+      width: pdfWidth,
+      height: pdfHeight,
+      x: pdfCoords.x,
+      y: pdfCoords.y, // This is the bottom-left
     });
   };
 
@@ -55,16 +98,34 @@ export const TextField = ({
     onSelect(field.id);
   };
 
+  // Convert PDF size to viewport size first
+  const pointsToPixelsScale = canvasWidth / pageDimensions.width;
+  const viewportWidth = field.width * pointsToPixelsScale;
+  const viewportHeight = field.height * pointsToPixelsScale;
+
+  // Convert PDF coordinates to viewport coordinates for rendering
+  // field.y is the BOTTOM of the field in PDF, but Rnd needs TOP-LEFT
+  // So we need to convert the TOP of the field: field.y + field.height
+  const pdfTopY = field.y + field.height; // Top of field in PDF coordinates
+
+  const viewportTopCoords = pdfToViewportCoords(
+    field.x,
+    pdfTopY, // top of field
+    pageDimensions,
+    scale * 100,
+    canvasWidth,
+  );
+
   return (
     <>
       <Rnd
         position={{
-          x: field.x * scale,
-          y: field.y * scale,
+          x: viewportTopCoords.x,
+          y: viewportTopCoords.y, // Use TOP-LEFT for Rnd positioning
         }}
         size={{
-          width: field.width * scale,
-          height: field.height * scale,
+          width: viewportWidth,
+          height: viewportHeight,
         }}
         onDragStop={handleDragStop}
         onResizeStop={handleResizeStop}

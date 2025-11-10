@@ -4,10 +4,17 @@ import { RadioField } from './RadioField';
 import { DropdownField } from './DropdownField';
 import { FieldDefinition } from '@/types/fields';
 
+interface PageDimensions {
+  width: number;
+  height: number;
+}
+
 interface FieldOverlayProps {
   fields: FieldDefinition[];
   selectedFieldId: string | null;
   scale: number;
+  pageDimensions: PageDimensions;
+  canvasWidth: number;
   onFieldSelect: (id: string) => void;
   onFieldUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onFieldDelete: (id: string) => void;
@@ -18,6 +25,8 @@ export const FieldOverlay = ({
   fields,
   selectedFieldId,
   scale,
+  pageDimensions,
+  canvasWidth,
   onFieldSelect,
   onFieldUpdate,
   onFieldDelete,
@@ -39,6 +48,8 @@ export const FieldOverlay = ({
                 field={field}
                 isSelected={isSelected}
                 scale={scaleFactor}
+                pageDimensions={pageDimensions}
+                canvasWidth={canvasWidth}
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
@@ -52,6 +63,8 @@ export const FieldOverlay = ({
                 field={field}
                 isSelected={isSelected}
                 scale={scaleFactor}
+                pageDimensions={pageDimensions}
+                canvasWidth={canvasWidth}
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
@@ -65,6 +78,8 @@ export const FieldOverlay = ({
                 field={field}
                 isSelected={isSelected}
                 scale={scaleFactor}
+                pageDimensions={pageDimensions}
+                canvasWidth={canvasWidth}
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}
@@ -78,6 +93,8 @@ export const FieldOverlay = ({
                 field={field}
                 isSelected={isSelected}
                 scale={scaleFactor}
+                pageDimensions={pageDimensions}
+                canvasWidth={canvasWidth}
                 onSelect={onFieldSelect}
                 onUpdate={onFieldUpdate}
                 onDelete={onFieldDelete}

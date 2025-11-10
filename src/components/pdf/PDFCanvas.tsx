@@ -31,6 +31,7 @@ export const PDFCanvas = ({
 }: PDFCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
+  const justDraggedRef = useRef(false);
 
   // Zustand stores
   const {
@@ -91,6 +92,7 @@ export const PDFCanvas = ({
       const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
 
       // Start drag for text field or dropdown (drag-to-create)
+      // But we'll check for minimum drag distance before creating
       if ((activeTool === 'text-field' || activeTool === 'dropdown-field') && !isDragging) {
         startDrag(viewportCoords.x, viewportCoords.y);
         event.preventDefault(); // Prevent text selection during drag
@@ -110,11 +112,108 @@ export const PDFCanvas = ({
     (event: React.MouseEvent) => {
       if (!containerRef.current || !currentPageDimensions || !canvasWidth) return;
 
+      // Skip if we just finished a drag operation
+      if (justDraggedRef.current) {
+        justDraggedRef.current = false;
+        return;
+      }
+
       // Ignore clicks on field markers
       const target = event.target as HTMLElement;
       if (target.closest('.field-marker')) return;
 
+      // NOTE: Click-to-place is now disabled for text and dropdown fields
+      // Users should drag to create fields (mouse down → drag → mouse up)
+      // This provides better control over field sizing
+
+      // Deselect field when clicking on empty area in select mode
+      if (activeTool === 'select') {
+        selectField(null);
+      }
+
+      // Click-to-place for checkboxes and radio buttons only
       const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
+
+      // Click-to-place text field with default dimensions (DISABLED - use drag instead)
+      /*if (activeTool === 'text-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        console.log('[PDFCanvas] Text field click-to-place:');
+        console.log('  Viewport coords:', viewportCoords);
+        console.log('  PDF coords:', pdfCoords);
+        console.log('  Page dimensions:', currentPageDimensions);
+        console.log('  Canvas width:', canvasWidth);
+        console.log('  Scale:', scale);
+
+        // Default dimensions for click-to-place text field
+        const defaultWidth = 200;
+        const defaultHeight = 30;
+
+        // COORDINATE SYSTEM - for drag-to-create in mouseUp handler
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'text',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - defaultHeight, // Subtract height: pdfCoords.y is top, field.y is bottom
+          width: defaultWidth,
+          height: defaultHeight,
+          name: '',
+          required: false,
+          direction: settings.textField.direction,
+          font: settings.textField.font,
+          fontSize: settings.textField.fontSize,
+        };
+
+        console.log('  Field to create:', { x: newField.x, y: newField.y, width: newField.width, height: newField.height });
+        addFieldWithUndo(newField);
+
+        // Reset tool to select mode after creating field
+        const { setActiveTool } = useTemplateEditorStore.getState();
+        setActiveTool('select');
+        return;
+      }*/
+
+      // Click-to-place dropdown with default dimensions (DISABLED - use drag instead)
+      /*if (activeTool === 'dropdown-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        // Default dimensions for click-to-place dropdown
+        const defaultWidth = 200;
+        const defaultHeight = 30;
+
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'dropdown',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - defaultHeight, // Subtract height: pdfCoords.y is top, field.y is bottom
+          width: defaultWidth,
+          height: defaultHeight,
+          name: '',
+          required: false,
+          direction: settings.dropdownField.direction,
+          font: settings.dropdownField.font,
+          options: ['אפשרות 1', 'אפשרות 2', 'אפשרות 3'],
+        };
+
+        addFieldWithUndo(newField);
+
+        // Reset tool to select mode after creating field
+        const { setActiveTool } = useTemplateEditorStore.getState();
+        setActiveTool('select');
+        return;
+      }*/
 
       // Click-to-place checkbox
       if (activeTool === 'checkbox-field') {
@@ -130,7 +229,7 @@ export const PDFCanvas = ({
           type: 'checkbox',
           pageNumber,
           x: pdfCoords.x,
-          y: pdfCoords.y - 20, // Adjust for checkbox height
+          y: pdfCoords.y - 20, // Subtract height: pdfCoords.y is top, field.y is bottom
           width: 20,
           height: 20,
           name: '',
@@ -139,10 +238,7 @@ export const PDFCanvas = ({
         };
 
         addFieldWithUndo(newField);
-
-        // Reset tool to select mode after creating checkbox
-        const { setActiveTool } = useTemplateEditorStore.getState();
-        setActiveTool('select');
+        // Keep tool active for multiple field creation
         return;
       }
 
@@ -166,7 +262,7 @@ export const PDFCanvas = ({
           type: 'radio',
           pageNumber,
           x: pdfCoords.x,
-          y: pdfCoords.y - 20, // Adjust for radio height
+          y: pdfCoords.y - 20, // Subtract height: pdfCoords.y is top, field.y is bottom
           width: 20,
           height: 20,
           name: '',
@@ -179,16 +275,8 @@ export const PDFCanvas = ({
         };
 
         addFieldWithUndo(newField);
-
-        // Reset tool to select mode after creating radio group
-        const { setActiveTool } = useTemplateEditorStore.getState();
-        setActiveTool('select');
+        // Keep tool active for multiple field creation
         return;
-      }
-
-      // Deselect field when clicking on empty area
-      if (activeTool === 'select') {
-        selectField(null);
       }
     },
     [
@@ -226,41 +314,61 @@ export const PDFCanvas = ({
 
       const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
 
-      // Calculate dimensions (absolute values work for any drag direction - fixes bug a)
+      // Calculate dimensions (absolute values work for any drag direction)
       const width = Math.abs(viewportCoords.x - dragStartX);
       const height = Math.abs(viewportCoords.y - dragStartY);
 
-      // Minimum size check
-      if (width < 30 || height < 15) {
-        endDrag();
-        return;
-      }
+      // Apply minimum dimensions if drag was too small
+      const minWidth = 50;
+      const minHeight = 20;
+      const finalWidth = Math.max(width, minWidth);
+      const finalHeight = Math.max(height, minHeight);
 
-      // Get top-left corner in viewport (accounting for any drag direction - fixes bug a)
+      // Mark that we just completed a drag to prevent click handler from firing
+      justDraggedRef.current = true;
+
+      // Get top-left corner in viewport (accounting for any drag direction)
       const viewportX = Math.min(dragStartX, viewportCoords.x);
-      const viewportY = Math.min(dragStartY, viewportCoords.y);
+      const viewportTopY = Math.min(dragStartY, viewportCoords.y);
 
-      // Convert top-left corner to PDF coordinates
-      // viewportToPDFCoords already handles Y-axis flip (viewport top → PDF bottom)
+      // For PDF, we need the BOTTOM of the rectangle in viewport coords
+      // because field.y represents the bottom edge
+      const viewportBottomY = viewportTopY + finalHeight;
+
+      console.log('=== DRAG TO CREATE DEBUG ===');
+      console.log('Drag start:', { x: dragStartX, y: dragStartY });
+      console.log('Drag end:', { x: viewportCoords.x, y: viewportCoords.y });
+      console.log('Rectangle in viewport:');
+      console.log('  Top-left:', { x: viewportX, y: viewportTopY });
+      console.log('  Size:', { width: finalWidth, height: finalHeight });
+      console.log('  Bottom-left:', { x: viewportX, y: viewportBottomY });
+      console.log('Page dimensions:', currentPageDimensions);
+      console.log('Canvas width:', canvasWidth);
+
+      // Convert BOTTOM-left corner to PDF coordinates
       const pdfCoords = viewportToPDFCoords(
         viewportX,
-        viewportY,
+        viewportBottomY,
         currentPageDimensions,
         scale,
         canvasWidth,
       );
 
       // Convert width and height to PDF points
-      const pdfWidth = (width / canvasWidth) * currentPageDimensions.width;
-      const pdfHeight = (height / canvasWidth) * currentPageDimensions.width;
+      const pdfWidth = (finalWidth / canvasWidth) * currentPageDimensions.width;
+      const pdfHeight = (finalHeight / canvasWidth) * currentPageDimensions.width;
 
-      // pdfCoords.y points to the top edge converted to PDF space (from bottom)
-      // We need the bottom-left corner for PDF, so subtract height (fixes bug c)
+      console.log('Converted to PDF:');
+      console.log('  PDF coords (bottom-left):', pdfCoords);
+      console.log('  PDF size:', { width: pdfWidth, height: pdfHeight });
+      console.log('  Final field.y:', pdfCoords.y);
+
+      // pdfCoords.y is now the PDF Y of the bottom-left corner - use directly!
       const newField: Omit<FieldDefinition, 'id'> = activeTool === 'dropdown-field' ? {
         type: 'dropdown',
         pageNumber,
         x: pdfCoords.x,
-        y: pdfCoords.y - pdfHeight,
+        y: pdfCoords.y, // Use directly - already the bottom edge
         width: pdfWidth,
         height: pdfHeight,
         name: '',
@@ -272,7 +380,7 @@ export const PDFCanvas = ({
         type: 'text',
         pageNumber,
         x: pdfCoords.x,
-        y: pdfCoords.y - pdfHeight,
+        y: pdfCoords.y, // Use directly - already the bottom edge
         width: pdfWidth,
         height: pdfHeight,
         name: '',
@@ -285,9 +393,8 @@ export const PDFCanvas = ({
       addFieldWithUndo(newField);
       endDrag();
 
-      // Reset tool to select mode after creating field (fixes bug: continuous creation)
-      const { setActiveTool } = useTemplateEditorStore.getState();
-      setActiveTool('select');
+      // Keep tool active to allow creating multiple fields
+      // User can press Escape or click select tool to stop
     },
     [
       isDragging,
@@ -432,11 +539,13 @@ export const PDFCanvas = ({
         </Document>
 
         {/* Field overlay */}
-        {canvasWidth > 0 && (
+        {canvasWidth > 0 && currentPageDimensions && (
           <FieldOverlay
             fields={currentPageFields}
             selectedFieldId={selectedFieldId}
             scale={scale}
+            pageDimensions={currentPageDimensions}
+            canvasWidth={canvasWidth}
             onFieldSelect={selectField}
             onFieldUpdate={updateField}
             onFieldDelete={deleteFieldWithUndo}
