@@ -22,6 +22,7 @@ export interface FieldDefinition {
   label?: string;
   required: boolean;
   defaultValue?: string;
+  sectionName?: string; // Section name for grouping fields
 
   // Hebrew-specific
   direction: 'ltr' | 'rtl';

@@ -32,6 +32,7 @@ interface TemplateEditorStore {
   fields: FieldDefinition[];
   selectedFieldId: string | null;
   copiedField: FieldDefinition | null; // For copy/paste functionality
+  lastUpdatedFieldId: string | null; // Track last updated field for section name inheritance
 
   // Undo/Redo state
   undoManager: UndoManager;
@@ -98,6 +99,7 @@ const initialState = {
   zoomLevel: 100,
   canvasWidth: 0,
   activeTool: 'select' as ToolMode,
+  lastUpdatedFieldId: null,
   fields: [],
   selectedFieldId: null,
   copiedField: null,
@@ -152,8 +154,19 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
   // Undo-aware field addition
   addFieldWithUndo: (fieldData) => {
     const state = get();
+
+    // Inherit sectionName from last updated field if not provided
+    let sectionName = fieldData.sectionName;
+    if (!sectionName && state.lastUpdatedFieldId) {
+      const lastUpdatedField = state.fields.find(f => f.id === state.lastUpdatedFieldId);
+      if (lastUpdatedField?.sectionName) {
+        sectionName = lastUpdatedField.sectionName;
+      }
+    }
+
     const newField: FieldDefinition = {
       ...fieldData,
+      sectionName,
       id: `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
 
@@ -163,6 +176,7 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
         set((prevState) => ({
           fields: [...prevState.fields, field],
           selectedFieldId: field.id,
+          lastUpdatedFieldId: field.id,
         }));
       },
       deleteField: (id) => {
@@ -208,6 +222,7 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
           fields: prevState.fields.map((f) =>
             f.id === fieldId ? { ...f, ...fieldUpdates } : f,
           ),
+          lastUpdatedFieldId: fieldId,
         }));
       },
     });

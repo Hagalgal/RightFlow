@@ -56,6 +56,11 @@ export const FieldPropertiesPanel = ({
     onUpdate({ defaultValue: sanitized });
   };
 
+  const handleSectionNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitized = sanitizeUserInput(e.target.value);
+    onUpdate({ sectionName: sanitized });
+  };
+
   const handleRequiredToggle = (checked: boolean) => {
     onUpdate({ required: checked });
   };
@@ -131,6 +136,21 @@ export const FieldPropertiesPanel = ({
           />
           <p className="text-xs text-muted-foreground">
             טקסט שיוצג ליד השדה
+          </p>
+        </div>
+
+        {/* Section Name */}
+        <div className="space-y-2">
+          <Label htmlFor="field-section">שם מקטע</Label>
+          <Input
+            id="field-section"
+            value={field.sectionName || ''}
+            onChange={handleSectionNameChange}
+            placeholder="לדוגמה: פרטים אישיים"
+            dir="rtl"
+          />
+          <p className="text-xs text-muted-foreground">
+            קיבוץ שדות למקטעים (מועתק אוטומטית לשדות חדשים)
           </p>
         </div>
 
