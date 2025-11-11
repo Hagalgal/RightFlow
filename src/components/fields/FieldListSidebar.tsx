@@ -7,6 +7,7 @@ interface FieldListSidebarProps {
   fields: FieldDefinition[];
   selectedFieldId: string | null;
   currentPage: number;
+  errorFieldIds?: Set<string>; // Set of field IDs with validation errors
   onFieldSelect: (fieldId: string) => void;
   onFieldDelete: (fieldId: string) => void;
   onPageNavigate: (page: number) => void;
@@ -16,6 +17,7 @@ export const FieldListSidebar = ({
   fields,
   selectedFieldId,
   currentPage,
+  errorFieldIds,
   onFieldSelect,
   onFieldDelete,
   onPageNavigate,
@@ -71,61 +73,66 @@ export const FieldListSidebar = ({
                 עמוד {pageNum}
               </div>
               <div className="space-y-1">
-                {fieldsByPage[pageNum].map((field) => (
-                  <div
-                    key={field.id}
-                    className={cn(
-                      'group flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors',
-                      selectedFieldId === field.id
-                        ? 'bg-primary/10 border border-primary'
-                        : 'hover:bg-muted border border-transparent',
-                    )}
-                    onClick={() => handleFieldClick(field)}
-                  >
-                    {/* Field icon */}
+                {fieldsByPage[pageNum].map((field) => {
+                  const hasError = errorFieldIds?.has(field.id);
+                  return (
                     <div
-                      className="flex-shrink-0"
-                      style={{
-                        color:
-                          field.type === 'text'
-                            ? 'hsl(var(--field-text))'
-                            : 'hsl(var(--field-checkbox))',
-                      }}
-                    >
-                      {field.type === 'text' ? (
-                        <Type className="w-4 h-4" />
-                      ) : (
-                        <CheckSquare className="w-4 h-4" />
+                      key={field.id}
+                      className={cn(
+                        'group flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors',
+                        hasError
+                          ? 'bg-destructive/10 border border-destructive hover:bg-destructive/20'
+                          : selectedFieldId === field.id
+                            ? 'bg-primary/10 border border-primary'
+                            : 'hover:bg-muted border border-transparent',
                       )}
-                    </div>
-
-                    {/* Field info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">
-                        {field.label || field.name}
+                      onClick={() => handleFieldClick(field)}
+                    >
+                      {/* Field icon */}
+                      <div
+                        className="flex-shrink-0"
+                        style={{
+                          color:
+                            field.type === 'text'
+                              ? 'hsl(var(--field-text))'
+                              : 'hsl(var(--field-checkbox))',
+                        }}
+                      >
+                        {field.type === 'text' ? (
+                          <Type className="w-4 h-4" />
+                        ) : (
+                          <CheckSquare className="w-4 h-4" />
+                        )}
                       </div>
-                      {field.label && (
-                        <div className="text-xs text-muted-foreground truncate" dir="ltr">
-                          {field.name}
-                        </div>
-                      )}
-                      {field.required && (
-                        <div className="text-xs text-destructive">חובה</div>
-                      )}
-                    </div>
 
-                    {/* Delete button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                      onClick={(e) => handleDelete(e, field.id)}
-                      title="מחק שדה"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                      {/* Field info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {field.label || field.name}
+                        </div>
+                        {field.label && (
+                          <div className="text-xs text-muted-foreground truncate" dir="ltr">
+                            {field.name}
+                          </div>
+                        )}
+                        {field.required && (
+                          <div className="text-xs text-destructive">חובה</div>
+                        )}
+                      </div>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        onClick={(e) => handleDelete(e, field.id)}
+                        title="מחק שדה"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

@@ -125,6 +125,55 @@ export function validateFieldNameUniqueness(
 }
 
 /**
+ * Get list of field IDs with validation errors
+ *
+ * @param fields - Array of field definitions
+ * @returns Set of field IDs that have validation errors
+ */
+export function getFieldsWithErrors(
+  fields: Array<{ id: string; name: string; type: string; width: number; height: number; x: number; y: number }>,
+): Set<string> {
+  const errorFieldIds = new Set<string>();
+
+  // Check for duplicate field names
+  const nameToFieldIds = new Map<string, string[]>();
+  fields.forEach((field) => {
+    if (!nameToFieldIds.has(field.name)) {
+      nameToFieldIds.set(field.name, []);
+    }
+    nameToFieldIds.get(field.name)!.push(field.id);
+  });
+
+  // Mark all fields with duplicate names as errors
+  nameToFieldIds.forEach((fieldIds) => {
+    if (fieldIds.length > 1) {
+      fieldIds.forEach((id) => errorFieldIds.add(id));
+    }
+  });
+
+  // Check each field for validation errors
+  fields.forEach((field) => {
+    // Validate field name format
+    const nameValidation = validateFieldName(field.name);
+    if (!nameValidation.isValid) {
+      errorFieldIds.add(field.id);
+    }
+
+    // Check minimum width for text fields
+    if (field.type === 'text' && field.width < 36) {
+      errorFieldIds.add(field.id);
+    }
+
+    // Check field dimensions
+    if (field.x < 0 || field.y < 0 || field.width <= 0 || field.height <= 0) {
+      errorFieldIds.add(field.id);
+    }
+  });
+
+  return errorFieldIds;
+}
+
+/**
  * Sanitize file size to prevent integer overflow
  *
  * @param size - File size in bytes

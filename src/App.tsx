@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { TopToolbar } from '@/components/layout/TopToolbar';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageThumbnailSidebar } from '@/components/layout/PageThumbnailSidebar';
@@ -10,6 +10,7 @@ import { VersionDisplay } from '@/components/ui/VersionDisplay';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { generateThumbnails } from '@/utils/pdfThumbnails';
+import { getFieldsWithErrors } from '@/utils/inputSanitization';
 import {
   loadRecoveryData,
   clearRecoveryData,
@@ -52,6 +53,11 @@ function App() {
   } = useTemplateEditorStore();
 
   const { settings } = useSettingsStore();
+
+  // Calculate field validation errors
+  const errorFieldIds = useMemo(() => {
+    return getFieldsWithErrors(fields);
+  }, [fields]);
 
   // Check for crash recovery data on mount
   useEffect(() => {
@@ -379,6 +385,7 @@ function App() {
             fields={fields}
             selectedFieldId={selectedFieldId}
             currentPage={currentPage}
+            errorFieldIds={errorFieldIds}
             onFieldSelect={selectField}
             onFieldDelete={deleteField}
             onPageNavigate={setCurrentPage}
