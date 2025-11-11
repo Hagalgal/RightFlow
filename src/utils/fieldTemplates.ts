@@ -126,24 +126,24 @@ export async function loadFieldsFromFile(file: File): Promise<FieldDefinition[]>
 
   // Validate field structure
   const validatedFields = template.fields.filter((field) => {
-    // Basic required properties
-    if (
-      !field.id ||
-      !field.type ||
-      typeof field.pageNumber !== 'number' ||
-      typeof field.x !== 'number' ||
-      typeof field.y !== 'number' ||
-      typeof field.width !== 'number' ||
-      typeof field.height !== 'number' ||
-      typeof field.name !== 'string'
-    ) {
-      console.warn(`Invalid field skipped:`, field);
-      return false;
-    }
+    // Detailed validation logging
+    const validations = {
+      hasId: !!field.id,
+      hasType: !!field.type,
+      hasPageNumber: typeof field.pageNumber === 'number',
+      hasX: typeof field.x === 'number',
+      hasY: typeof field.y === 'number',
+      hasWidth: typeof field.width === 'number',
+      hasHeight: typeof field.height === 'number',
+      hasName: typeof field.name === 'string',
+      validType: ['text', 'checkbox', 'radio', 'dropdown'].includes(field.type),
+    };
 
-    // Type validation
-    if (!['text', 'checkbox', 'radio', 'dropdown'].includes(field.type)) {
-      console.warn(`Unknown field type ${field.type}, skipping`);
+    const isValid = Object.values(validations).every((v) => v === true);
+
+    if (!isValid) {
+      console.warn(`Invalid field skipped:`, field);
+      console.warn(`Validation results:`, validations);
       return false;
     }
 
