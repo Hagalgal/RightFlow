@@ -6,6 +6,7 @@ import { PDFViewer } from '@/components/pdf/PDFViewer';
 import { FieldListSidebar } from '@/components/fields/FieldListSidebar';
 import { RecoveryDialog } from '@/components/dialogs/RecoveryDialog';
 import { SettingsModal } from '@/components/settings/SettingsModal';
+import { VersionDisplay } from '@/components/ui/VersionDisplay';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { generateThumbnails } from '@/utils/pdfThumbnails';
@@ -106,6 +107,46 @@ function App() {
       setPdfFile(file);
       setCurrentPage(1);
       setThumbnails([]);
+
+      // Check if PDF has AcroForm fields and extract them
+      try {
+        const { hasAcroFormFields, extractFieldsFromPDF } = await import(
+          '@/utils/pdfFieldExtractor'
+        );
+
+        const hasFields = await hasAcroFormFields(file);
+
+        if (hasFields) {
+          const shouldExtract = confirm(
+            'נמצאו שדות קיימים ב-PDF.\n\n' +
+              'האם לייבא את השדות הקיימים לעורך?\n\n' +
+              'לחץ "אישור" לייבוא אוטומטי או "ביטול" להתחיל ריק',
+          );
+
+          if (shouldExtract) {
+            const extractedFields = await extractFieldsFromPDF(file);
+
+            if (extractedFields.length > 0) {
+              loadFields(extractedFields);
+              alert(
+                `✅ ${extractedFields.length} שדות יובאו בהצלחה מה-PDF!\n\n` +
+                  `ניתן לערוך אותם או להוסיף שדות נוספים.`,
+              );
+              console.log(`✓ Imported ${extractedFields.length} fields from PDF`);
+            }
+          } else {
+            console.log('User chose not to import existing fields');
+          }
+        }
+      } catch (error) {
+        console.error('Error extracting fields from PDF:', error);
+        // Don't block PDF upload if field extraction fails
+        alert(
+          'לא ניתן לייבא שדות מה-PDF.\n' +
+            'ניתן להמשיך ולהוסיף שדות ידנית.\n\n' +
+            `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
+        );
+      }
     } else {
       alert(validation.error || 'אנא בחר קובץ PDF תקין');
     }
@@ -328,6 +369,8 @@ function App() {
           />
         )}
       </MainLayout>
+
+      <VersionDisplay />
     </div>
   );
 }

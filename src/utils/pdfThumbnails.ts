@@ -29,7 +29,7 @@ export const generateThumbnails = async (
 
       // Create canvas for rendering
       const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
 
       if (!context) {
         console.error(`Failed to get canvas context for page ${pageNum}`);
