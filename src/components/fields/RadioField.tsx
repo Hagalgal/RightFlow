@@ -109,7 +109,7 @@ export const RadioField = ({
           height: viewportHeight,
         }}
         onDragStop={handleDragStop}
-        disableResizing={true}
+        enableResizing={false} // Radio buttons have fixed size - no resize handles
         bounds="parent"
         className={cn(
           'field-marker field-marker-radio',
@@ -118,6 +118,7 @@ export const RadioField = ({
         )}
         style={{
           zIndex: isSelected ? 1000 : 100,
+          cursor: 'move',
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();

@@ -94,7 +94,7 @@ export const CheckboxField = ({
           height: viewportHeight,
         }}
         onDragStop={handleDragStop}
-        disableResizing={true} // Checkboxes have fixed size
+        enableResizing={false} // Checkboxes have fixed size - no resize handles
         bounds="parent"
         className={cn(
           'field-marker field-marker-checkbox',
@@ -103,6 +103,7 @@ export const CheckboxField = ({
         )}
         style={{
           zIndex: isSelected ? 1000 : 100,
+          cursor: 'move',
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
