@@ -48,6 +48,7 @@ function App() {
     canUndo,
     canRedo,
     loadFields,
+    updateFieldWithUndo,
   } = useTemplateEditorStore();
 
   const { settings } = useSettingsStore();
@@ -193,12 +194,27 @@ function App() {
 
     try {
       // Import PDF generation utilities
-      const { generateFillablePDF, downloadPDF, validateFieldsForPDF } = await import(
+      const { generateFillablePDF, downloadPDF, validateFieldsForPDF, ensureFieldNames } = await import(
         '@/utils/pdfGeneration'
       );
 
+      // Auto-generate missing field names
+      const fieldsWithNames = ensureFieldNames(fields);
+
+      // Update fields in store if any names were auto-generated
+      const hasChanges = fieldsWithNames.some((f, i) => f.name !== fields[i].name);
+      if (hasChanges) {
+        console.log('Auto-generated missing field names');
+        // Update each field that changed
+        fieldsWithNames.forEach((field, index) => {
+          if (field.name !== fields[index].name) {
+            updateFieldWithUndo(field.id, { name: field.name });
+          }
+        });
+      }
+
       // Validate fields before generation
-      const errors = validateFieldsForPDF(fields);
+      const errors = validateFieldsForPDF(fieldsWithNames);
       if (errors.length > 0) {
         alert(`שגיאות בשדות:\n\n${errors.join('\n')}`);
         return;
@@ -207,7 +223,7 @@ function App() {
       console.log('🚀 Generating fillable PDF...');
 
       // Generate PDF with all fields and settings
-      const pdfBytes = await generateFillablePDF(pdfFile, fields, {
+      const pdfBytes = await generateFillablePDF(pdfFile, fieldsWithNames, {
         checkboxStyle: settings.checkboxField.style,
       });
 

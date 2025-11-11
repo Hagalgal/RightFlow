@@ -360,6 +360,38 @@ export function downloadPDF(pdfBytes: Uint8Array, filename: string): void {
 }
 
 /**
+ * Auto-generate missing field names for fields with empty names
+ *
+ * @param fields - Array of field definitions
+ * @returns Updated fields with auto-generated names
+ */
+export function ensureFieldNames(fields: FieldDefinition[]): FieldDefinition[] {
+  const typeCounters: Record<string, number> = {};
+
+  return fields.map(field => {
+    // If field already has a valid name, keep it
+    if (field.name && field.name.trim() !== '') {
+      return field;
+    }
+
+    // Auto-generate name based on type
+    const fieldType = field.type;
+    if (!typeCounters[fieldType]) {
+      typeCounters[fieldType] = 0;
+    }
+    typeCounters[fieldType]++;
+
+    const autoName = `${fieldType}_${typeCounters[fieldType]}`;
+    console.log(`Auto-generated field name: ${autoName} for field type ${fieldType}`);
+
+    return {
+      ...field,
+      name: autoName,
+    };
+  });
+}
+
+/**
  * Validate fields before PDF generation
  *
  * @param fields - Fields to validate
