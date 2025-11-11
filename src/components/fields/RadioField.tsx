@@ -127,7 +127,7 @@ export const RadioField = ({
       >
       {/* Radio buttons - display all options based on orientation */}
       <div
-        className={cn('flex gap-0', orientation === 'vertical' ? 'flex-col' : 'flex-row')}
+        className={cn('flex gap-0 pointer-events-none', orientation === 'vertical' ? 'flex-col' : 'flex-row')}
         style={{ gap: `${spacing * scale}px` }}
       >
         {options.map((option, index) => (

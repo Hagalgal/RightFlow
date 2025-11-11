@@ -147,7 +147,7 @@ export const DropdownField = ({
         onContextMenu={handleContextMenu}
       >
       {/* Dropdown preview */}
-      <div className="w-full h-full flex items-center justify-between px-2 text-xs" dir="rtl">
+      <div className="w-full h-full flex items-center justify-between px-2 text-xs pointer-events-none" dir="rtl">
         <span className="truncate">{field.options?.[0] || 'בחר אפשרות'}</span>
         <ChevronDown className="w-3 h-3 flex-shrink-0" style={{ color: 'hsl(var(--field-dropdown))' }} />
       </div>

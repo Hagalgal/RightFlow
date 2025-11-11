@@ -111,7 +111,7 @@ export const CheckboxField = ({
         onContextMenu={handleContextMenu}
       >
       {/* Checkbox icon */}
-      <div className="w-4 h-4 border-2 rounded-sm" style={{ borderColor: 'hsl(var(--field-checkbox))' }} />
+      <div className="w-4 h-4 border-2 rounded-sm pointer-events-none" style={{ borderColor: 'hsl(var(--field-checkbox))' }} />
 
       {/* Field label (if exists) */}
       {field.label && (
