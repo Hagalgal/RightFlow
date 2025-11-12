@@ -6,13 +6,51 @@
  *
  * CRITICAL: Hebrew font MUST be embedded with subset: false to prevent
  * character mapping issues that cause text reversal.
+ *
+ * CRITICAL: pdf-lib does NOT handle RTL text natively for form fields.
+ * Hebrew text must be manually reversed before being set in fields.
  */
 
-import { PDFDocument, PDFFont, rgb, PDFName } from 'pdf-lib';
+import { PDFDocument, PDFFont, rgb, PDFName, PDFNumber, PDFBool } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { FieldDefinition } from '@/types/fields';
 import { validateFieldName, validateFieldNameUniqueness } from '@/utils/inputSanitization';
 import { CheckboxStyle } from '@/types/settings';
+
+/**
+ * Add Unicode RTL markers to Hebrew text for proper bidirectional display
+ *
+ * PDF viewers apply the Unicode Bidirectional Algorithm when rendering text.
+ * By wrapping Hebrew text with RLE (Right-to-Left Embedding) and PDF (Pop Directional Format),
+ * we signal to the PDF viewer to treat the text as RTL without manual character reversal.
+ *
+ * Unicode Control Characters:
+ * - U+202B (RLE): Right-to-Left Embedding - starts RTL text section
+ * - U+202C (PDF): Pop Directional Format - ends RTL text section
+ * - U+200F (RLM): Right-to-Left Mark - zero-width RTL character
+ *
+ * @param text - Original text in logical order
+ * @returns Text wrapped with Unicode RTL markers
+ *
+ * @example
+ * wrapWithRTLMarkers("שלום") => "\u202Bשלום\u202C"
+ */
+function wrapWithRTLMarkers(text: string): string {
+  if (!text) return text;
+
+  // Check if text contains Hebrew characters (U+0590 to U+05FF)
+  const hasHebrew = /[\u0590-\u05FF]/.test(text);
+
+  if (!hasHebrew) {
+    return text; // No Hebrew, return as-is
+  }
+
+  // Wrap Hebrew text with RLE...PDF for proper RTL embedding
+  const RLE = '\u202B'; // Right-to-Left Embedding
+  const PDF = '\u202C'; // Pop Directional Format
+
+  return RLE + text + PDF;
+}
 
 /**
  * Embed Noto Sans Hebrew font into PDF document
@@ -77,22 +115,32 @@ function createTextField(
     // Omit backgroundColor - transparent by default
   });
 
-  // Set default value if provided
-  if (field.defaultValue) {
-    textField.setText(field.defaultValue);
-  }
-
-  // Apply Hebrew font for RTL text with transparent background
-  // We need to use the default appearance provider but pdf-lib doesn't expose
-  // a way to customize the background color in the appearance stream
-  // So we'll use a workaround: call updateAppearances to set up the font,
-  // then manually remove the background fill from the appearance stream
+  // Apply Hebrew font for RTL text BEFORE setting value
+  // This ensures the appearance stream is generated with the correct font
   textField.updateAppearances(hebrewFont);
 
-  // Remove the gray background by updating the appearance stream
-  // The gray background comes from the /BG (background) entry in the MK (appearance characteristics) dictionary
+  // Set default value if provided (after font is configured)
+  // CRITICAL: Wrap Hebrew text with Unicode RTL markers for proper bidirectional display
+  if (field.defaultValue) {
+    const textWithRTL = wrapWithRTLMarkers(field.defaultValue);
+    textField.setText(textWithRTL);
+    // Regenerate appearances with the new value
+    textField.updateAppearances(hebrewFont);
+  }
+
+  // Configure field for RTL (Right-to-Left) text
+  // CRITICAL: AcroForm fields need proper quadding for Hebrew text direction
   try {
-    const widgets = textField.acroField.getWidgets();
+    const acroField = textField.acroField;
+    const fieldDict = acroField.dict;
+
+    // Set quadding to 2 (right-aligned) for RTL languages
+    // Q=0: Left-aligned (LTR), Q=1: Centered, Q=2: Right-aligned (RTL)
+    fieldDict.set(PDFName.of('Q'), PDFNumber.of(2));
+
+    // Remove the gray background by updating the appearance stream
+    // The gray background comes from the /BG (background) entry in the MK (appearance characteristics) dictionary
+    const widgets = acroField.getWidgets();
     widgets.forEach(widget => {
       // Remove the MK (appearance characteristics) dict which contains the background color
       const widgetDict = widget.dict;
@@ -101,8 +149,10 @@ function createTextField(
         widgetDict.delete(mkKey);
       }
     });
+
+    console.log(`   ✓ RTL quadding configured for field: ${field.name}`);
   } catch (error) {
-    console.warn('Could not remove background from text field:', error);
+    console.warn('Could not configure RTL for text field:', error);
   }
 
   // Set as required if needed
@@ -245,13 +295,16 @@ function createDropdownField(
   // Create dropdown
   const dropdown = form.createDropdown(field.name);
 
-  // Set options
+  // Set options - wrap Hebrew text with RTL markers for each option
+  // CRITICAL: Use Unicode RTL markers for proper bidirectional display
   if (field.options && field.options.length > 0) {
-    dropdown.setOptions(field.options);
+    const optionsWithRTL = field.options.map(opt => wrapWithRTLMarkers(opt));
+    dropdown.setOptions(optionsWithRTL);
 
-    // Set default value if provided
+    // Set default value if provided - also wrap with RTL markers
     if (field.defaultValue && field.options.includes(field.defaultValue)) {
-      dropdown.select(field.defaultValue);
+      const defaultWithRTL = wrapWithRTLMarkers(field.defaultValue);
+      dropdown.select(defaultWithRTL);
     }
   }
 
@@ -270,9 +323,16 @@ function createDropdownField(
   // Apply Hebrew font for RTL text in dropdown options
   dropdown.updateAppearances(hebrewFont);
 
-  // Remove the gray background (same as text fields)
+  // Configure dropdown for RTL (Right-to-Left) text
   try {
-    const widgets = dropdown.acroField.getWidgets();
+    const acroField = dropdown.acroField;
+    const fieldDict = acroField.dict;
+
+    // Set quadding to 2 (right-aligned) for RTL languages
+    fieldDict.set(PDFName.of('Q'), PDFNumber.of(2));
+
+    // Remove the gray background (same as text fields)
+    const widgets = acroField.getWidgets();
     widgets.forEach(widget => {
       const widgetDict = widget.dict;
       const mkKey = PDFName.of('MK');
@@ -280,8 +340,10 @@ function createDropdownField(
         widgetDict.delete(mkKey);
       }
     });
+
+    console.log(`   ✓ RTL quadding configured for dropdown: ${field.name}`);
   } catch (error) {
-    console.warn('Could not remove background from dropdown:', error);
+    console.warn('Could not configure RTL for dropdown:', error);
   }
 
   // Set as required if needed
@@ -290,6 +352,83 @@ function createDropdownField(
   }
 
   console.log(`✓ Created dropdown: ${field.name} with ${field.options?.length || 0} options at (${field.x}, ${field.y})`);
+}
+
+/**
+ * Create signature field in PDF (image-based)
+ *
+ * @param pdfDoc - PDF document
+ * @param page - PDF page to add signature to
+ * @param field - Field definition with signature image
+ */
+async function createSignatureField(
+  pdfDoc: PDFDocument,
+  page: any,
+  field: FieldDefinition,
+): Promise<void> {
+  // If no signature image, draw an empty rectangle border
+  if (!field.signatureImage) {
+    page.drawRectangle({
+      x: field.x,
+      y: field.y,
+      width: field.width,
+      height: field.height,
+      borderColor: rgb(0.7, 0.7, 0.7),
+      borderWidth: 1,
+    });
+    console.log(`✓ Created empty signature field: ${field.name} at (${field.x}, ${field.y})`);
+    return;
+  }
+
+  try {
+    // Convert base64 data URL to bytes
+    const base64Data = field.signatureImage.split(',')[1]; // Remove "data:image/png;base64," prefix
+    const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+    // Determine image format from data URL
+    const isPng = field.signatureImage.startsWith('data:image/png');
+    const image = isPng
+      ? await pdfDoc.embedPng(imageBytes)
+      : await pdfDoc.embedJpg(imageBytes);
+
+    // Draw signature image
+    page.drawImage(image, {
+      x: field.x,
+      y: field.y,
+      width: field.width,
+      height: field.height,
+    });
+
+    // Add timestamp below signature if present
+    if (field.signatureTimestamp) {
+      const date = new Date(field.signatureTimestamp);
+      const dateStr = date.toLocaleDateString('he-IL', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+
+      page.drawText(dateStr, {
+        x: field.x,
+        y: field.y - 12, // 12 points below signature
+        size: 8,
+        color: rgb(0.4, 0.4, 0.4),
+      });
+    }
+
+    console.log(`✓ Created signature field: ${field.name} at (${field.x}, ${field.y}) with image`);
+  } catch (error) {
+    console.error(`Failed to embed signature image for ${field.name}:`, error);
+    // Fallback: draw empty rectangle
+    page.drawRectangle({
+      x: field.x,
+      y: field.y,
+      width: field.width,
+      height: field.height,
+      borderColor: rgb(0.7, 0.7, 0.7),
+      borderWidth: 1,
+    });
+  }
 }
 
 /**
@@ -328,7 +467,17 @@ export async function generateFillablePDF(
     // Embed Hebrew font (CRITICAL: subset: false)
     const hebrewFont = await embedHebrewFont(pdfDoc);
 
-    // Form is accessed via pdfDoc.getForm() in helper functions below
+    // Get the form and configure for Hebrew
+    const form = pdfDoc.getForm();
+
+    // Set NeedAppearances flag to ensure PDF readers regenerate appearance streams
+    // This is critical for Hebrew text to display correctly in Acrobat Reader
+    try {
+      form.acroForm.dict.set(PDFName.of('NeedAppearances'), PDFBool.True);
+      console.log('✓ NeedAppearances flag set for proper Hebrew rendering');
+    } catch (error) {
+      console.warn('Could not set NeedAppearances flag:', error);
+    }
 
     // Group fields by page for organized creation
     const fieldsByPage: Record<number, FieldDefinition[]> = {};
@@ -366,6 +515,8 @@ export async function generateFillablePDF(
           createRadioField(pdfDoc, page, field);
         } else if (field.type === 'dropdown') {
           createDropdownField(pdfDoc, page, field, hebrewFont);
+        } else if (field.type === 'signature') {
+          await createSignatureField(pdfDoc, page, field);
         }
       }
     }
