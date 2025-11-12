@@ -2,14 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { X, Upload, Pen, Eraser } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/utils/cn';
 
 interface SignatureModalProps {
   isOpen: boolean;
@@ -145,30 +138,68 @@ export const SignatureModal = ({
     }
   }, [isOpen, currentSignature]);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>הוסף חתימה</DialogTitle>
-          <DialogDescription>
-            צייר חתימה או העלה תמונה קיימת
-          </DialogDescription>
-        </DialogHeader>
+  if (!isOpen) return null;
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'draw' | 'upload')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="draw">
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-background rounded-lg shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-auto m-4"
+        onClick={(e) => e.stopPropagation()}
+        dir="rtl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h2 className="text-lg font-semibold">הוסף חתימה</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              צייר חתימה או העלה תמונה קיימת
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClose}
+            className="h-6 w-6"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Tabs */}
+        <div className="p-6">
+          <div className="grid grid-cols-2 gap-2 mb-4 p-1 bg-muted rounded-lg">
+            <button
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center",
+                activeTab === 'draw'
+                  ? 'bg-background shadow-sm'
+                  : 'hover:bg-background/50'
+              )}
+              onClick={() => setActiveTab('draw')}
+            >
               <Pen className="w-4 h-4 ml-2" />
               ציור
-            </TabsTrigger>
-            <TabsTrigger value="upload">
+            </button>
+            <button
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center",
+                activeTab === 'upload'
+                  ? 'bg-background shadow-sm'
+                  : 'hover:bg-background/50'
+              )}
+              onClick={() => setActiveTab('upload')}
+            >
               <Upload className="w-4 h-4 ml-2" />
               העלאה
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
-          {/* Draw Tab */}
-          <TabsContent value="draw" className="space-y-4">
+          {/* Draw Tab Content */}
+          {activeTab === 'draw' && (
+            <div className="space-y-4">
             <div className="border-2 border-dashed border-border rounded-lg p-2 bg-white">
               <SignatureCanvas
                 ref={signatureRef}
@@ -197,10 +228,12 @@ export const SignatureModal = ({
             <p className="text-sm text-muted-foreground">
               השתמש בעכבר או במסך המגע כדי לצייר את החתימה שלך
             </p>
-          </TabsContent>
+            </div>
+          )}
 
-          {/* Upload Tab */}
-          <TabsContent value="upload" className="space-y-4">
+          {/* Upload Tab Content */}
+          {activeTab === 'upload' && (
+            <div className="space-y-4">
             <div
               className="border-2 border-dashed border-border rounded-lg p-8 bg-muted/50 flex flex-col items-center justify-center min-h-[200px] cursor-pointer hover:bg-muted/70 transition-colors"
               onClick={() => fileInputRef.current?.click()}
@@ -250,19 +283,20 @@ export const SignatureModal = ({
             <p className="text-sm text-muted-foreground">
               העלה תמונה קיימת של החתימה שלך (רקע שקוף מומלץ)
             </p>
-          </TabsContent>
-        </Tabs>
+            </div>
+          )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 justify-end mt-4">
-          <Button type="button" variant="outline" onClick={handleClose}>
-            ביטול
-          </Button>
-          <Button type="button" onClick={handleSave}>
-            שמור חתימה
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-3 justify-end mt-4">
+            <Button type="button" variant="outline" onClick={handleClose}>
+              ביטול
+            </Button>
+            <Button type="button" onClick={handleSave}>
+              שמור חתימה
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
