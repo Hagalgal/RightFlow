@@ -6,6 +6,7 @@ import { PageThumbnailSidebar } from '@/components/layout/PageThumbnailSidebar';
 import { PDFViewer } from '@/components/pdf/PDFViewer';
 import { FieldListSidebar } from '@/components/fields/FieldListSidebar';
 import { RecoveryDialog } from '@/components/dialogs/RecoveryDialog';
+import { UploadWarningDialog } from '@/components/dialogs/UploadWarningDialog';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { VersionDisplay } from '@/components/ui/VersionDisplay';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
@@ -24,6 +25,8 @@ function App() {
   const fieldTemplateInputRef = useRef<HTMLInputElement>(null);
   const [recoveryData, setRecoveryData] = useState<RecoveryData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showUploadWarning, setShowUploadWarning] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   // Zustand stores
   const {
@@ -111,7 +114,30 @@ function App() {
     // Validate PDF file (checks MIME type, size, and magic bytes)
     const validation = await validatePDFFile(file);
 
-    if (validation.isValid) {
+    if (!validation.isValid) {
+      alert(validation.error || 'קובץ PDF לא תקין');
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Check if there are existing fields
+    if (fields.length > 0) {
+      // Show warning dialog
+      setPendingFile(file);
+      setShowUploadWarning(true);
+      return;
+    }
+
+    // No existing fields - proceed with upload
+    await processFileUpload(file, false);
+  };
+
+  const processFileUpload = async (file: File, keepFields: boolean) => {
+    if (!keepFields) {
+      // Clear existing fields for new document
       setPdfFile(file);
       setCurrentPage(1);
       setThumbnails([]);
@@ -156,7 +182,16 @@ function App() {
         );
       }
     } else {
-      alert(validation.error || 'אנא בחר קובץ PDF תקין');
+      // keepFields = true - just update the PDF file
+      setPdfFile(file);
+      setCurrentPage(1);
+      setThumbnails([]);
+      console.log('PDF updated, keeping existing fields');
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -186,6 +221,31 @@ function App() {
   const handlePageRender = (page: any) => {
     const { width, height } = page.getSize();
     setPageDimensions(currentPage, { width, height });
+  };
+
+  const handleUploadWarningNewDocument = async () => {
+    setShowUploadWarning(false);
+    if (pendingFile) {
+      await processFileUpload(pendingFile, false);
+      setPendingFile(null);
+    }
+  };
+
+  const handleUploadWarningNewVersion = async () => {
+    setShowUploadWarning(false);
+    if (pendingFile) {
+      await processFileUpload(pendingFile, true);
+      setPendingFile(null);
+    }
+  };
+
+  const handleUploadWarningCancel = () => {
+    setShowUploadWarning(false);
+    setPendingFile(null);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSave = async () => {
@@ -321,6 +381,16 @@ function App() {
           recoveryData={recoveryData}
           onRestore={handleRestore}
           onDiscard={handleDiscardRecovery}
+        />
+      )}
+
+      {/* Upload Warning Dialog */}
+      {showUploadWarning && (
+        <UploadWarningDialog
+          fieldCount={fields.length}
+          onNewDocument={handleUploadWarningNewDocument}
+          onNewVersion={handleUploadWarningNewVersion}
+          onCancel={handleUploadWarningCancel}
         />
       )}
 

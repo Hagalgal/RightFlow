@@ -331,24 +331,20 @@ export const PDFCanvas = ({
       const viewportX = Math.min(dragStartX, viewportCoords.x);
       const viewportTopY = Math.min(dragStartY, viewportCoords.y);
 
-      // For PDF, we need the BOTTOM of the rectangle in viewport coords
-      // because field.y represents the bottom edge
-      const viewportBottomY = viewportTopY + finalHeight;
-
       console.log('=== DRAG TO CREATE DEBUG ===');
       console.log('Drag start:', { x: dragStartX, y: dragStartY });
       console.log('Drag end:', { x: viewportCoords.x, y: viewportCoords.y });
       console.log('Rectangle in viewport:');
       console.log('  Top-left:', { x: viewportX, y: viewportTopY });
       console.log('  Size:', { width: finalWidth, height: finalHeight });
-      console.log('  Bottom-left:', { x: viewportX, y: viewportBottomY });
       console.log('Page dimensions:', currentPageDimensions);
       console.log('Canvas width:', canvasWidth);
 
-      // Convert BOTTOM-left corner to PDF coordinates
-      const pdfCoords = viewportToPDFCoords(
+      // Convert TOP-left corner to PDF coordinates
+      // viewportToPDFCoords flips the Y axis: viewport top -> PDF top
+      const pdfTopCoords = viewportToPDFCoords(
         viewportX,
-        viewportBottomY,
+        viewportTopY,
         currentPageDimensions,
         scale,
         canvasWidth,
@@ -358,17 +354,21 @@ export const PDFCanvas = ({
       const pdfWidth = (finalWidth / canvasWidth) * currentPageDimensions.width;
       const pdfHeight = (finalHeight / canvasWidth) * currentPageDimensions.width;
 
-      console.log('Converted to PDF:');
-      console.log('  PDF coords (bottom-left):', pdfCoords);
-      console.log('  PDF size:', { width: pdfWidth, height: pdfHeight });
-      console.log('  Final field.y:', pdfCoords.y);
+      // field.y should be the BOTTOM of the field in PDF coordinates
+      // pdfTopCoords.y is the TOP of the field, so subtract height to get bottom
+      const pdfBottomY = pdfTopCoords.y - pdfHeight;
 
-      // pdfCoords.y is now the PDF Y of the bottom-left corner - use directly!
+      console.log('Converted to PDF:');
+      console.log('  PDF top coords:', pdfTopCoords);
+      console.log('  PDF size:', { width: pdfWidth, height: pdfHeight });
+      console.log('  PDF bottom Y (field.y):', pdfBottomY);
+
+      // pdfBottomY is now the PDF Y of the bottom-left corner!
       const newField: Omit<FieldDefinition, 'id'> = activeTool === 'dropdown-field' ? {
         type: 'dropdown',
         pageNumber,
-        x: pdfCoords.x,
-        y: pdfCoords.y, // Use directly - already the bottom edge
+        x: pdfTopCoords.x,
+        y: pdfBottomY, // Bottom edge in PDF coordinates
         width: pdfWidth,
         height: pdfHeight,
         name: '',
@@ -379,8 +379,8 @@ export const PDFCanvas = ({
       } : {
         type: 'text',
         pageNumber,
-        x: pdfCoords.x,
-        y: pdfCoords.y, // Use directly - already the bottom edge
+        x: pdfTopCoords.x,
+        y: pdfBottomY, // Bottom edge in PDF coordinates
         width: pdfWidth,
         height: pdfHeight,
         name: '',

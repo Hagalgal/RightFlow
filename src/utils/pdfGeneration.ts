@@ -64,9 +64,11 @@ function createTextField(
   const textField = form.createTextField(field.name);
 
   // Add field to page with correct coordinates
+  // CRITICAL: field.y is the BOTTOM edge, but pdf-lib expects the Y coordinate
+  // to be the bottom-left corner of the field, which is what we have
   textField.addToPage(page, {
     x: field.x,
-    y: field.y,
+    y: field.y, // field.y is already the bottom edge - correct for pdf-lib
     width: field.width,
     height: field.height,
     borderColor: rgb(0.5, 0.5, 0.5),
@@ -301,10 +303,21 @@ export async function generateFillablePDF(
     for (const [pageNum, pageFields] of Object.entries(fieldsByPage)) {
       const pageIndex = parseInt(pageNum) - 1; // Convert to 0-based index
       const page = pdfDoc.getPage(pageIndex);
+      const pageHeight = page.getHeight();
+      const pageWidth = page.getWidth();
 
       console.log(`📝 Processing page ${pageNum} with ${pageFields.length} fields...`);
+      console.log(`   Page dimensions: ${pageWidth} x ${pageHeight} points`);
 
       for (const field of pageFields) {
+        console.log(`   Creating ${field.type} field "${field.name}":`)
+;
+        console.log(`      Position: (${field.x.toFixed(2)}, ${field.y.toFixed(2)})`);
+        console.log(`      Size: ${field.width.toFixed(2)} x ${field.height.toFixed(2)}`);
+        console.log(`      Top edge would be at Y: ${(field.y + field.height).toFixed(2)}`);
+        console.log(`      Distance from page bottom: ${field.y.toFixed(2)} points`);
+        console.log(`      Distance from page top: ${(pageHeight - field.y - field.height).toFixed(2)} points`);
+
         if (field.type === 'text') {
           createTextField(pdfDoc, page, field, hebrewFont);
         } else if (field.type === 'checkbox') {
