@@ -8,7 +8,7 @@
  * character mapping issues that cause text reversal.
  */
 
-import { PDFDocument, PDFFont, rgb } from 'pdf-lib';
+import { PDFDocument, PDFFont, rgb, PDFName } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { FieldDefinition } from '@/types/fields';
 import { validateFieldName, validateFieldNameUniqueness } from '@/utils/inputSanitization';
@@ -64,16 +64,17 @@ function createTextField(
   const textField = form.createTextField(field.name);
 
   // Add field to page with correct coordinates
-  // CRITICAL: field.y is the BOTTOM edge, but pdf-lib expects the Y coordinate
-  // to be the bottom-left corner of the field, which is what we have
+  // CRITICAL: pdf-lib's addToPage expects Y coordinate as the TOP edge of the widget
+  // This is counterintuitive because PDF Rect is [x_ll, y_ll, x_ur, y_ur] (lower-left, upper-right)
+  // But pdf-lib's API uses (x, y) as top-left corner and internally converts to PDF Rect
   textField.addToPage(page, {
     x: field.x,
-    y: field.y, // field.y is already the bottom edge - correct for pdf-lib
+    y: field.y + field.height, // Y is the TOP edge (field.y is bottom, so add height)
     width: field.width,
     height: field.height,
-    borderColor: rgb(0.7, 0.7, 0.7), // Light gray border
-    borderWidth: 0.5, // Thin border
-    // No backgroundColor - transparent by default
+    borderColor: rgb(0.5, 0.5, 0.5), // Gray border
+    borderWidth: 1,
+    // Omit backgroundColor - transparent by default
   });
 
   // Set default value if provided
@@ -81,8 +82,28 @@ function createTextField(
     textField.setText(field.defaultValue);
   }
 
-  // Apply Hebrew font for RTL text
+  // Apply Hebrew font for RTL text with transparent background
+  // We need to use the default appearance provider but pdf-lib doesn't expose
+  // a way to customize the background color in the appearance stream
+  // So we'll use a workaround: call updateAppearances to set up the font,
+  // then manually remove the background fill from the appearance stream
   textField.updateAppearances(hebrewFont);
+
+  // Remove the gray background by updating the appearance stream
+  // The gray background comes from the /BG (background) entry in the MK (appearance characteristics) dictionary
+  try {
+    const widgets = textField.acroField.getWidgets();
+    widgets.forEach(widget => {
+      // Remove the MK (appearance characteristics) dict which contains the background color
+      const widgetDict = widget.dict;
+      const mkKey = PDFName.of('MK');
+      if (widgetDict.has(mkKey)) {
+        widgetDict.delete(mkKey);
+      }
+    });
+  } catch (error) {
+    console.warn('Could not remove background from text field:', error);
+  }
 
   // Set as required if needed
   if (field.required) {
@@ -112,9 +133,10 @@ function createCheckboxField(
   const checkbox = form.createCheckBox(field.name);
 
   // Add checkbox to page
+  // CRITICAL: Y coordinate is the TOP edge
   checkbox.addToPage(page, {
     x: field.x,
-    y: field.y,
+    y: field.y + field.height, // Y is the TOP edge
     width: field.width,
     height: field.height,
     borderColor: rgb(0, 0, 0),
@@ -173,19 +195,20 @@ function createRadioField(
   // Add each radio button option to the group, positioned based on orientation
   options.forEach((option, index) => {
     let xPos = field.x;
-    let yPos = field.y;
+    let yPos = field.y + field.height; // Y is the TOP edge
 
     if (orientation === 'horizontal') {
       // Horizontal layout - buttons side by side
       xPos = field.x + index * (field.width + spacing);
     } else {
       // Vertical layout - buttons stacked
-      yPos = field.y - index * (field.height + spacing); // PDF Y-axis goes bottom to top
+      // In PDF coords, higher Y = higher on page, so ADD for each subsequent button
+      yPos = (field.y + field.height) + index * (field.height + spacing);
     }
 
     radioGroup.addOptionToPage(option, page, {
       x: xPos,
-      y: yPos,
+      y: yPos, // Y is the TOP edge
       width: field.width,
       height: field.height,
       borderColor: rgb(0, 0, 0),
@@ -233,18 +256,33 @@ function createDropdownField(
   }
 
   // Add dropdown to page
+  // CRITICAL: Y coordinate is the TOP edge (same as text fields)
   dropdown.addToPage(page, {
     x: field.x,
-    y: field.y,
+    y: field.y + field.height, // Y is the TOP edge
     width: field.width,
     height: field.height,
-    borderColor: rgb(0.7, 0.7, 0.7), // Light gray border
-    borderWidth: 0.5, // Thin border
-    // No backgroundColor - transparent by default
+    borderColor: rgb(0.5, 0.5, 0.5), // Gray border
+    borderWidth: 1,
+    // Omit backgroundColor - transparent by default
   });
 
-  // Apply Hebrew font for RTL text
+  // Apply Hebrew font for RTL text in dropdown options
   dropdown.updateAppearances(hebrewFont);
+
+  // Remove the gray background (same as text fields)
+  try {
+    const widgets = dropdown.acroField.getWidgets();
+    widgets.forEach(widget => {
+      const widgetDict = widget.dict;
+      const mkKey = PDFName.of('MK');
+      if (widgetDict.has(mkKey)) {
+        widgetDict.delete(mkKey);
+      }
+    });
+  } catch (error) {
+    console.warn('Could not remove background from dropdown:', error);
+  }
 
   // Set as required if needed
   if (field.required) {

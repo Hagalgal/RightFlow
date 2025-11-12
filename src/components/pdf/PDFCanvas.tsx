@@ -351,8 +351,10 @@ export const PDFCanvas = ({
       );
 
       // Convert width and height to PDF points
-      const pdfWidth = (finalWidth / canvasWidth) * currentPageDimensions.width;
-      const pdfHeight = (finalHeight / canvasWidth) * currentPageDimensions.width;
+      // Use the scale factor (pixels to points) consistently
+      const pixelsToPointsScale = currentPageDimensions.width / canvasWidth;
+      const pdfWidth = finalWidth * pixelsToPointsScale;
+      const pdfHeight = finalHeight * pixelsToPointsScale;
 
       // field.y should be the BOTTOM of the field in PDF coordinates
       // pdfTopCoords.y is the TOP of the field, so subtract height to get bottom
