@@ -355,11 +355,22 @@ function createDropdownField(
 }
 
 /**
- * Create signature field in PDF (image-based)
+ * Create signature field in PDF (image-based, static/pre-filled)
+ *
+ * ⚠️ IMPORTANT: This creates a STATIC signature image, not an interactive AcroForm signature field.
+ * End users CANNOT sign the PDF after generation.
+ *
+ * REASON: pdf-lib does NOT support creating interactive signature fields (no form.createSignature()).
+ * Only createTextField, createCheckBox, createButton, etc. are available.
+ *
+ * USE CASES:
+ * - Company stamps/seals on form templates
+ * - Authorized signatory signatures
+ * - Pre-approved signatures embedded in forms
  *
  * @param pdfDoc - PDF document
  * @param page - PDF page to add signature to
- * @param field - Field definition with signature image
+ * @param field - Field definition with signature image (base64 PNG/JPG)
  */
 async function createSignatureField(
   pdfDoc: PDFDocument,

@@ -12,6 +12,24 @@ interface SignatureModalProps {
 }
 
 /**
+ * SignatureModal - Capture signatures for pre-filled PDF forms
+ *
+ * ⚠️ IMPORTANT: This creates STATIC signature images embedded in the PDF.
+ * End users CANNOT sign the PDF after generation. They must use their PDF viewer's
+ * signature tool if they need to add signatures later.
+ *
+ * USE CASES:
+ * - Company stamps/seals on form templates
+ * - Authorized signatory signatures
+ * - Manager approvals embedded in forms
+ * - Official signatures required on every form
+ *
+ * LIMITATION:
+ * pdf-lib does NOT support creating interactive AcroForm signature fields.
+ * Only static image-based signatures are possible with this library.
+ */
+
+/**
  * Validate that a data URL is a safe image format and not malicious content
  * Prevents XSS attacks via data URLs
  */
