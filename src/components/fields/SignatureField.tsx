@@ -156,7 +156,7 @@ export const SignatureField = ({
         style={{
           zIndex: isSelected ? 1000 : 100,
           border: '2px dashed hsl(var(--signature-border))',
-          backgroundColor: field.signatureImage ? 'transparent' : 'hsl(var(--signature-bg))',
+          backgroundColor: field.signatureImage ? 'transparent' : 'hsl(var(--signature-bg) / 0.05)',
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
