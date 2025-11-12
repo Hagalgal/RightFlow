@@ -308,7 +308,7 @@ export const PDFCanvas = ({
 
   const handleCanvasMouseUp = useCallback(
     (event: React.MouseEvent) => {
-      if (!isDragging || (activeTool !== 'text-field' && activeTool !== 'dropdown-field') || !containerRef.current) return;
+      if (!isDragging || (activeTool !== 'text-field' && activeTool !== 'dropdown-field' && activeTool !== 'signature-field') || !containerRef.current) return;
       if (!currentPageDimensions || !canvasWidth || dragStartX === null || dragStartY === null)
         return;
 
