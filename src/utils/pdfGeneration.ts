@@ -13,6 +13,7 @@
 
 import { PDFDocument, PDFFont, rgb, PDFName, PDFNumber, PDFBool, PDFString } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import JSZip from 'jszip';
 import { FieldDefinition } from '@/types/fields';
 import { validateFieldName, validateFieldNameUniqueness } from '@/utils/inputSanitization';
 import { CheckboxStyle } from '@/types/settings';
@@ -55,13 +56,16 @@ function wrapWithRTLMarkers(text: string): string {
 /**
  * Add RightFlow custom metadata to AcroForm field
  *
- * Stores field metadata (category, index, required) as custom PDF dictionary entries.
+ * Stores field metadata as custom PDF dictionary entries.
  * These properties are preserved in the generated PDF and can be read by PDF tools.
  *
  * Custom property naming convention:
- * - RFCategory: Field category/section name (PDFName)
+ * - RFCategory: Field category/section name (PDFString)
  * - RFIndex: Field creation order index (PDFNumber)
  * - RFRequired: Required field flag (PDFBool)
+ * - RFPageNumber: Page number (PDFNumber)
+ * - RFLabel: Field label for display (PDFString)
+ * - RFType: Field type (text, checkbox, etc.) (PDFString)
  *
  * @param fieldDict - PDF field dictionary to add properties to
  * @param field - Field definition with metadata
@@ -81,7 +85,18 @@ function addCustomFieldMetadata(fieldDict: any, field: FieldDefinition): void {
     // Add required flag (redundant with AcroForm's Ff flag, but explicit for RightFlow)
     fieldDict.set(PDFName.of('RFRequired'), field.required ? PDFBool.True : PDFBool.False);
 
-    console.log(`   ✓ Custom metadata added: category=${field.sectionName || 'none'}, index=${field.index}, required=${field.required}`);
+    // Add page number
+    fieldDict.set(PDFName.of('RFPageNumber'), PDFNumber.of(field.pageNumber));
+
+    // Add label
+    if (field.label) {
+      fieldDict.set(PDFName.of('RFLabel'), PDFString.of(field.label));
+    }
+
+    // Add field type
+    fieldDict.set(PDFName.of('RFType'), PDFString.of(field.type));
+
+    console.log(`   ✓ Custom metadata added: type=${field.type}, page=${field.pageNumber}, category=${field.sectionName || 'none'}, label=${field.label || 'none'}, index=${field.index}, required=${field.required}`);
   } catch (error) {
     console.warn('Could not add custom metadata to field:', error);
   }
@@ -625,22 +640,66 @@ export async function generateFillablePDF(
 }
 
 /**
- * Download PDF to user's computer
+ * Download PDF and field metadata as a zip file
  *
  * @param pdfBytes - PDF file bytes
  * @param filename - Suggested filename (without .pdf extension)
+ * @param fields - Optional field definitions to export as JSON metadata
  */
-export function downloadPDF(pdfBytes: Uint8Array, filename: string): void {
-  // Create blob from PDF bytes - cast to fix TypeScript strict type checking
-  const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+export async function downloadPDF(pdfBytes: Uint8Array, filename: string, fields?: FieldDefinition[]): Promise<void> {
+  // If no fields, download PDF only (no zip needed)
+  if (!fields || fields.length === 0) {
+    const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    console.log(`✓ PDF downloaded: ${filename}.pdf`);
+    return;
+  }
+
+  // Create zip file containing both PDF and JSON
+  const zip = new JSZip();
+
+  // Add PDF to zip
+  zip.file(`${filename}.pdf`, pdfBytes);
+
+  // Create JSON metadata
+  const metadata = fields.map(field => ({
+    name: field.name,
+    type: field.type,
+    pageNumber: field.pageNumber,
+    label: field.label,
+    sectionName: field.sectionName,
+    index: field.index,
+    required: field.required,
+    x: field.x,
+    y: field.y,
+    width: field.width,
+    height: field.height,
+    defaultValue: field.defaultValue,
+    options: field.options,
+    radioGroup: field.radioGroup,
+  }));
+
+  // Add JSON to zip
+  const jsonString = JSON.stringify(metadata, null, 2);
+  zip.file(`${filename}.json`, jsonString);
+
+  // Generate zip file
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
 
   // Create download URL
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(zipBlob);
 
   // Create temporary link and trigger download
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${filename}.pdf`;
+  link.download = `${filename}.zip`;
   document.body.appendChild(link);
   link.click();
 
@@ -648,8 +707,9 @@ export function downloadPDF(pdfBytes: Uint8Array, filename: string): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 
-  console.log(`✓ PDF downloaded: ${filename}.pdf`);
+  console.log(`✓ Zip file downloaded: ${filename}.zip (contains PDF + JSON metadata)`);
 }
+
 
 /**
  * Auto-generate missing field names for fields with empty names
@@ -712,9 +772,9 @@ export function validateFieldsForPDF(fields: FieldDefinition[]): string[] {
       errors.push(`שדה ${index + 1}: ${nameValidation.error}`);
     }
 
-    // Check minimum width (36pt for Hebrew text)
-    if (field.type === 'text' && field.width < 36) {
-      errors.push(`שדה "${field.name}": רוחב קטן מדי (מינימום 36pt לטקסט עברי)`);
+    // Check minimum width (20pt for Hebrew text)
+    if (field.type === 'text' && field.width < 20) {
+      errors.push(`שדה "${field.name}": רוחב קטן מדי (מינימום 20pt לטקסט עברי)`);
     }
 
     // Check field is within valid range

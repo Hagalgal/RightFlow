@@ -295,11 +295,11 @@ function App() {
         checkboxStyle: settings.checkboxField.style,
       });
 
-      // Download PDF
+      // Download PDF and JSON metadata as zip file
       const filename = pdfFile.name.replace('.pdf', '_fillable');
-      downloadPDF(pdfBytes, filename);
+      await downloadPDF(pdfBytes, filename, fieldsWithNames);
 
-      alert('✅ הPDF הורד בהצלחה! בדוק את תיקיית ההורדות.');
+      alert('✅ קובץ ZIP (PDF + JSON) הורד בהצלחה! בדוק את תיקיית ההורדות.');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert(`שגיאה ביצירת PDF: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
