@@ -1,4 +1,4 @@
-import { Type, CheckSquare, Circle, ChevronDown } from 'lucide-react';
+import { Type, CheckSquare, Circle, ChevronDown, PenTool } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ToolMode } from '@/types/fields';
 
@@ -56,6 +56,17 @@ export const ToolsBar = ({ activeTool, onToolChange }: ToolsBarProps) => {
       >
         <ChevronDown className="w-5 h-5" />
         רשימה נפתחת
+      </Button>
+
+      <Button
+        variant={activeTool === 'signature-field' ? 'default' : 'outline'}
+        size="default"
+        onClick={() => onToolChange('signature-field')}
+        title="הוסף שדה חתימה - גרור על ה-PDF ליצירת שדה"
+        className="gap-2"
+      >
+        <PenTool className="w-5 h-5" />
+        שדה חתימה
       </Button>
 
       <Button

@@ -2,9 +2,9 @@
  * Field type definitions for PDF form fields
  */
 
-export type FieldType = 'text' | 'checkbox' | 'radio' | 'dropdown';
+export type FieldType = 'text' | 'checkbox' | 'radio' | 'dropdown' | 'signature';
 
-export type ToolMode = 'select' | 'text-field' | 'checkbox-field' | 'radio-field' | 'dropdown-field';
+export type ToolMode = 'select' | 'text-field' | 'checkbox-field' | 'radio-field' | 'dropdown-field' | 'signature-field';
 
 export interface FieldDefinition {
   id: string;
@@ -23,6 +23,7 @@ export interface FieldDefinition {
   required: boolean;
   defaultValue?: string;
   sectionName?: string; // Section name for grouping fields
+  index?: number; // Creation order index for HTML form generation
 
   // Hebrew-specific
   direction: 'ltr' | 'rtl';
@@ -34,6 +35,10 @@ export interface FieldDefinition {
   radioGroup?: string; // For radio buttons - group name (radio only)
   spacing?: number; // Spacing between radio buttons (radio only)
   orientation?: 'vertical' | 'horizontal'; // Radio button layout direction (radio only)
+
+  // Signature specific
+  signatureImage?: string; // Base64 encoded signature image (PNG/JPG)
+  signatureTimestamp?: string; // ISO timestamp when signature was captured
 
   // Validation (future enhancement)
   validation?: {

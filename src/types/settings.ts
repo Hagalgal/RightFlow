@@ -26,11 +26,17 @@ export interface DropdownFieldSettings {
   direction: 'ltr' | 'rtl';
 }
 
+export interface SignatureFieldSettings {
+  defaultWidth: number; // In PDF points
+  defaultHeight: number; // In PDF points
+}
+
 export interface AppSettings {
   textField: TextFieldSettings;
   checkboxField: CheckboxFieldSettings;
   radioField: RadioFieldSettings;
   dropdownField: DropdownFieldSettings;
+  signatureField: SignatureFieldSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -50,5 +56,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dropdownField: {
     font: 'NotoSansHebrew',
     direction: 'rtl',
+  },
+  signatureField: {
+    defaultWidth: 200, // ~70mm
+    defaultHeight: 60,  // ~21mm
   },
 };

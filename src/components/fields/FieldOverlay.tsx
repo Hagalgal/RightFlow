@@ -2,6 +2,7 @@ import { TextField } from './TextField';
 import { CheckboxField } from './CheckboxField';
 import { RadioField } from './RadioField';
 import { DropdownField } from './DropdownField';
+import { SignatureField } from './SignatureField';
 import { FieldDefinition } from '@/types/fields';
 
 interface PageDimensions {
@@ -89,6 +90,21 @@ export const FieldOverlay = ({
           } else if (field.type === 'dropdown') {
             return (
               <DropdownField
+                key={field.id}
+                field={field}
+                isSelected={isSelected}
+                scale={scaleFactor}
+                pageDimensions={pageDimensions}
+                canvasWidth={canvasWidth}
+                onSelect={onFieldSelect}
+                onUpdate={onFieldUpdate}
+                onDelete={onFieldDelete}
+                onDuplicate={onFieldDuplicate}
+              />
+            );
+          } else if (field.type === 'signature') {
+            return (
+              <SignatureField
                 key={field.id}
                 field={field}
                 isSelected={isSelected}

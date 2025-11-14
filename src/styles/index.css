@@ -30,6 +30,8 @@
     --field-checkbox: 142.1 76.2% 36.3%;
     --field-radio: 262.1 83.3% 57.8%;
     --field-dropdown: 24.6 95% 53.1%;
+    --signature-border: 280 100% 60%;
+    --signature-bg: 280 100% 60%;
     --field-selected: 24.6 95% 53.1%;
     --field-hover: 262.1 83.3% 57.8%;
 
@@ -78,6 +80,10 @@
 
 .field-marker-dropdown {
   @apply border-[hsl(var(--field-dropdown))] bg-[hsl(var(--field-dropdown))]/5;
+}
+
+.field-marker-signature {
+  @apply border-[hsl(var(--signature-border))] bg-[hsl(var(--signature-bg))]/5;
 }
 
 .field-marker-selected {

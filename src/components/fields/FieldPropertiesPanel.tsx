@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X, Plus, Trash2, PenTool } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { FieldDefinition } from '@/types/fields';
 import { cn } from '@/utils/cn';
 import { sanitizeUserInput, validateFieldName, sanitizeFontSize } from '@/utils/inputSanitization';
+import { SignatureModal } from './SignatureModal';
 
 interface FieldPropertiesPanelProps {
   field: FieldDefinition;
@@ -22,6 +23,7 @@ export const FieldPropertiesPanel = ({
 }: FieldPropertiesPanelProps) => {
   const labelInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
 
   // Auto-focus name input when panel opens for a new field with empty name
   useEffect(() => {
@@ -93,6 +95,7 @@ export const FieldPropertiesPanel = ({
           {field.type === 'checkbox' && 'מאפייני תיבת סימון'}
           {field.type === 'radio' && 'מאפייני כפתור רדיו'}
           {field.type === 'dropdown' && 'מאפייני רשימה נפתחת'}
+          {field.type === 'signature' && 'מאפייני שדה חתימה'}
         </h3>
         <Button
           variant="ghost"
@@ -138,6 +141,24 @@ export const FieldPropertiesPanel = ({
             טקסט שיוצג ליד השדה
           </p>
         </div>
+
+        {/* Field Index (Read-only) */}
+        {field.index !== undefined && (
+          <div className="space-y-2">
+            <Label htmlFor="field-index">מספר סידורי</Label>
+            <Input
+              id="field-index"
+              value={field.index}
+              readOnly
+              disabled
+              dir="ltr"
+              className="text-left bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              סדר יצירת השדה (לא ניתן לעריכה)
+            </p>
+          </div>
+        )}
 
         {/* Section Name */}
         <div className="space-y-2">
@@ -288,6 +309,49 @@ export const FieldPropertiesPanel = ({
           </div>
         )}
 
+        {/* Signature Field Properties */}
+        {field.type === 'signature' && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>חתימה</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSignatureModalOpen(true)}
+                  className="flex-1"
+                >
+                  <PenTool className="w-4 h-4 ml-2" />
+                  {field.signatureImage ? 'ערוך חתימה' : 'הוסף חתימה'}
+                </Button>
+                {field.signatureImage && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => onUpdate({ signatureImage: undefined, signatureTimestamp: undefined })}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              {field.signatureImage && (
+                <div className="mt-2 border rounded p-2 bg-muted/20">
+                  <img
+                    src={field.signatureImage}
+                    alt="Signature preview"
+                    className="max-w-full h-16 object-contain mx-auto"
+                  />
+                  {field.signatureTimestamp && (
+                    <p className="text-xs text-muted-foreground text-center mt-1">
+                      נוצרה: {new Date(field.signatureTimestamp).toLocaleDateString('he-IL')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Required Toggle */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
@@ -370,6 +434,7 @@ export const FieldPropertiesPanel = ({
               {field.type === 'checkbox' && 'תיבת סימון'}
               {field.type === 'radio' && 'כפתור רדיו'}
               {field.type === 'dropdown' && 'רשימה נפתחת'}
+              {field.type === 'signature' && 'חתימה'}
             </div>
             <div>
               <span className="font-medium">רוחב:</span> {Math.round(field.width)}pt
@@ -380,6 +445,18 @@ export const FieldPropertiesPanel = ({
           </div>
         </div>
       </div>
+
+      {/* Signature Modal */}
+      {field.type === 'signature' && (
+        <SignatureModal
+          isOpen={isSignatureModalOpen}
+          onClose={() => setIsSignatureModalOpen(false)}
+          onSave={(signatureImage, timestamp) => {
+            onUpdate({ signatureImage, signatureTimestamp: timestamp });
+          }}
+          currentSignature={field.signatureImage}
+        />
+      )}
     </div>
   );
 };
