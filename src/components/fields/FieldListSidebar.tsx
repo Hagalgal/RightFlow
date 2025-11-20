@@ -60,7 +60,7 @@ export const FieldListSidebar = ({
     if (!acc[field.pageNumber]) {
       acc[field.pageNumber] = {};
     }
-    const sectionName = field.sectionName || 'ללא מקטע';
+    const sectionName = field.sectionName || 'כללי';
     if (!acc[field.pageNumber][sectionName]) {
       acc[field.pageNumber][sectionName] = [];
     }

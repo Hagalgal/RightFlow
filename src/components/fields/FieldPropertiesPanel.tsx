@@ -60,7 +60,8 @@ export const FieldPropertiesPanel = ({
 
   const handleSectionNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const sanitized = sanitizeUserInput(e.target.value);
-    onUpdate({ sectionName: sanitized });
+    // Default to 'כללי' if empty
+    onUpdate({ sectionName: sanitized || 'כללי' });
   };
 
   const handleRequiredToggle = (checked: boolean) => {

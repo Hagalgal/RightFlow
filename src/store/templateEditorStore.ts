@@ -206,6 +206,10 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
         sectionName = lastUpdatedField.sectionName;
       }
     }
+    // Default to 'כללי' if still no section name
+    if (!sectionName) {
+      sectionName = 'כללי';
+    }
 
     // Get next creation order index
     const fieldIndex = getNextFieldIndex();
