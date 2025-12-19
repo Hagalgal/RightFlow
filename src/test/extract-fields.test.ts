@@ -2,13 +2,14 @@
  * Unit tests for extract-fields API endpoint
  * Testing timeout parsing with NaN validation
  */
+import { describe, test, expect, beforeEach, afterAll, vi } from 'vitest';
 
 describe('GEMINI_TIMEOUT environment variable parsing', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     // Reset environment before each test
-    jest.resetModules();
+    vi.resetModules();
     process.env = { ...originalEnv };
   });
 
