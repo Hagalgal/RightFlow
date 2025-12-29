@@ -28,6 +28,8 @@ function App() {
   const [showUploadWarning, setShowUploadWarning] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isExtractingFields, setIsExtractingFields] = useState(false);
+  const [isReprocessing, setIsReprocessing] = useState(false);
+  const [reprocessingPage, setReprocessingPage] = useState<number | null>(null);
 
   // Zustand stores
   const {
@@ -55,6 +57,9 @@ function App() {
     canRedo,
     loadFields,
     updateFieldWithUndo,
+    setPageMetadata,
+    hoveredFieldId,
+    setHoveredField,
   } = useTemplateEditorStore();
 
   const { settings } = useSettingsStore();
@@ -155,8 +160,8 @@ function App() {
         if (hasFields) {
           const shouldExtract = confirm(
             'נמצאו שדות קיימים ב-PDF.\n\n' +
-              'האם לייבא את השדות הקיימים לעורך?\n\n' +
-              'לחץ "אישור" לייבוא אוטומטי או "ביטול" להתחיל ריק',
+            'האם לייבא את השדות הקיימים לעורך?\n\n' +
+            'לחץ "אישור" לייבוא אוטומטי או "ביטול" להתחיל ריק',
           );
 
           if (shouldExtract) {
@@ -166,7 +171,7 @@ function App() {
               loadFields(extractedFields);
               alert(
                 `✅ ${extractedFields.length} שדות יובאו בהצלחה מה-PDF!\n\n` +
-                  `ניתן לערוך אותם או להוסיף שדות נוספים.`,
+                `ניתן לערוך אותם או להוסיף שדות נוספים.`,
               );
               console.log(`✓ Imported ${extractedFields.length} fields from PDF`);
             }
@@ -179,8 +184,8 @@ function App() {
         // Don't block PDF upload if field extraction fails
         alert(
           'לא ניתן לייבא שדות מה-PDF.\n' +
-            'ניתן להמשיך ולהוסיף שדות ידנית.\n\n' +
-            `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
+          'ניתן להמשיך ולהוסיף שדות ידנית.\n\n' +
+          `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
         );
       }
     } else {
@@ -267,17 +272,28 @@ function App() {
         '@/utils/pdfGeneration'
       );
       const { generateFilename } = await import('@/utils/filenameGenerator');
+      const { reindexFields } = await import('@/utils/fieldSorting');
+
+      // Sort fields by position before saving (RTL order)
+      const sortedFields = reindexFields(fields, 'rtl');
+      console.log('📐 Fields sorted by position before PDF generation');
 
       // Auto-generate missing field names
-      const fieldsWithNames = ensureFieldNames(fields);
+      const fieldsWithNames = ensureFieldNames(sortedFields);
 
       // Update fields in store if any names were auto-generated
-      const hasChanges = fieldsWithNames.some((f, i) => f.name !== fields[i].name);
+      // IMPORTANT: Compare by field ID, not array index, since fieldsWithNames is sorted
+      const hasChanges = fieldsWithNames.some(f => {
+        const originalField = fields.find(orig => orig.id === f.id);
+        return originalField && f.name !== originalField.name;
+      });
+
       if (hasChanges) {
         console.log('Auto-generated missing field names');
-        // Update each field that changed
-        fieldsWithNames.forEach((field, index) => {
-          if (field.name !== fields[index].name) {
+        // Update each field that changed - compare by ID
+        fieldsWithNames.forEach((field) => {
+          const originalField = fields.find(orig => orig.id === field.id);
+          if (originalField && field.name !== originalField.name) {
             updateFieldWithUndo(field.id, { name: field.name });
           }
         });
@@ -320,18 +336,79 @@ function App() {
     try {
       // Import field template utilities
       const { saveFieldsToFile } = await import('@/utils/fieldTemplates');
+      const { reindexFields } = await import('@/utils/fieldSorting');
+
+      // Sort fields by position before saving (RTL order)
+      const sortedFields = reindexFields(fields, 'rtl');
+      console.log('📐 Fields sorted by position before template save');
 
       // Prompt for template name
       const templateName = prompt('הכנס שם לתבנית:', `template_${Date.now()}`);
       if (!templateName) return; // User cancelled
 
-      // Save fields to JSON file
-      saveFieldsToFile(fields, templateName);
+      // Save sorted fields to JSON file
+      saveFieldsToFile(sortedFields, templateName);
 
-      alert(`✅ תבנית השדות נשמרה בהצלחה!\nקובץ: ${templateName}.json\nשדות: ${fields.length}`);
+      alert(`✅ תבנית השדות נשמרה בהצלחה!\nקובץ: ${templateName}.json\nשדות: ${sortedFields.length}`);
     } catch (error) {
       console.error('Error saving fields:', error);
       alert(`שגיאה בשמירת שדות: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+    }
+  };
+
+  // Reprocess a single page with AI
+  const handleReprocessPage = async (pageNumber: number) => {
+    if (!pdfFile) {
+      alert('אין PDF לעיבוד. אנא טען קובץ PDF תחילה.');
+      return;
+    }
+
+    const existingFieldsCount = fields.filter(f => f.pageNumber === pageNumber).length;
+    const confirmed = confirm(
+      `עיבוד מחדש של עמוד ${pageNumber}\n\n` +
+      `פעולה זו תמחק ${existingFieldsCount} שדות קיימים בעמוד זה ותחליף אותם בשדות חדשים.\n\n` +
+      `להמשיך?`
+    );
+
+    if (!confirmed) return;
+
+    setIsReprocessing(true);
+    setReprocessingPage(pageNumber);
+
+    try {
+      const { reprocessSinglePage } = await import('@/utils/aiFieldExtraction');
+      const { reindexFields } = await import('@/utils/fieldSorting');
+
+      const { fields: newFields, metadata } = await reprocessSinglePage(
+        pdfFile,
+        pageNumber,
+        (status) => console.log(`[Reprocess] ${status}`)
+      );
+
+      // Update metadata if available
+      if (metadata) {
+        setPageMetadata(pageNumber, metadata);
+      }
+
+      // Replace and re-sort all fields in a single store update
+      const allFields = [
+        ...fields.filter(f => f.pageNumber !== pageNumber),
+        ...newFields
+      ];
+      const sortedFields = reindexFields(allFields, 'rtl');
+      loadFields(sortedFields);
+
+      alert(
+        `✅ עמוד ${pageNumber} עובד מחדש בהצלחה!\n` +
+        `שדות קודמים: ${existingFieldsCount}\n` +
+        `שדות חדשים: ${newFields.length}`
+      );
+    } catch (error) {
+      console.error('Error reprocessing page:', error);
+      alert(`שגיאה בעיבוד מחדש: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+    } finally {
+      setIsReprocessing(false);
+      setReprocessingPage(null);
     }
   };
 
@@ -353,8 +430,8 @@ function App() {
       // Ask user if they want to replace or merge
       const replace = confirm(
         `נמצאו ${loadedFields.length} שדות בתבנית.\n\n` +
-          `האם להחליף את השדות הקיימים (${fields.length})?\n\n` +
-          `לחץ "אישור" להחלפה או "ביטול" למיזוג`,
+        `האם להחליף את השדות הקיימים (${fields.length})?\n\n` +
+        `לחץ "אישור" להחלפה או "ביטול" למיזוג`,
       );
 
       if (replace) {
@@ -395,8 +472,7 @@ function App() {
       // Import AI field extraction utility
       const { extractFieldsWithAI } = await import('@/utils/aiFieldExtraction');
 
-      // Extract fields using Gemini AI
-      const extractedFields = await extractFieldsWithAI(pdfFile, (status) => {
+      const { fields: extractedFields, metadata } = await extractFieldsWithAI(pdfFile, (status) => {
         console.log(`AI Extraction: ${status}`);
       });
 
@@ -405,12 +481,15 @@ function App() {
         return;
       }
 
+      // Store metadata for each page
+      metadata.forEach(m => setPageMetadata(m.pageNumber, m));
+
       // Ask user if they want to replace or merge fields (if existing fields present)
       if (fields.length > 0) {
         const replace = confirm(
           `AI זיהה ${extractedFields.length} שדות.\n\n` +
-            `האם להחליף את השדות הקיימים (${fields.length})?\n\n` +
-            `לחץ "אישור" להחלפה או "ביטול" למיזוג`,
+          `האם להחליף את השדות הקיימים (${fields.length})?\n\n` +
+          `לחץ "אישור" להחלפה או "ביטול" למיזוג`,
         );
 
         if (replace) {
@@ -422,7 +501,7 @@ function App() {
           loadFields([...fields, ...extractedFields]);
           alert(
             `✅ ${extractedFields.length} שדות זוהו ונוספו!\n` +
-              `סה"כ שדות כעת: ${fields.length + extractedFields.length}`,
+            `סה"כ שדות כעת: ${fields.length + extractedFields.length}`,
           );
         }
       } else {
@@ -430,7 +509,7 @@ function App() {
         loadFields(extractedFields);
         alert(
           `✅ ${extractedFields.length} שדות זוהו בהצלחה באמצעות AI!\n\n` +
-            `ניתן לערוך אותם או להוסיף שדות נוספים.`,
+          `ניתן לערוך אותם או להוסיף שדות נוספים.`,
         );
       }
 
@@ -439,8 +518,8 @@ function App() {
       console.error('Error extracting fields with AI:', error);
       alert(
         'שגיאה בזיהוי שדות באמצעות AI.\n\n' +
-          `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}\n\n` +
-          'ודא שהגדרת את GEMINI_API_KEY ב-Vercel.',
+        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}\n\n` +
+        'ודא שהגדרת את GEMINI_API_KEY ב-Vercel.',
       );
     } finally {
       setIsExtractingFields(false);
@@ -518,6 +597,9 @@ function App() {
             totalPages={totalPages}
             onPageSelect={setCurrentPage}
             thumbnails={thumbnails}
+            onReprocessPage={handleReprocessPage}
+            isReprocessing={isReprocessing}
+            reprocessingPage={reprocessingPage}
           />
         )}
         <PDFViewer
@@ -537,6 +619,8 @@ function App() {
             onFieldSelect={selectField}
             onFieldDelete={deleteField}
             onPageNavigate={setCurrentPage}
+            hoveredFieldId={hoveredFieldId}
+            onFieldHover={setHoveredField}
           />
         )}
       </MainLayout>

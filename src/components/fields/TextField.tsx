@@ -22,6 +22,8 @@ interface TextFieldProps {
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onHover?: (id: string | null) => void;
+  isHovered?: boolean;
 }
 
 export const TextField = ({
@@ -34,6 +36,8 @@ export const TextField = ({
   onUpdate,
   onDelete,
   onDuplicate,
+  onHover,
+  isHovered,
 }: TextFieldProps) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -136,6 +140,7 @@ export const TextField = ({
         className={cn(
           'field-marker field-marker-text',
           isSelected && 'field-marker-selected',
+          isHovered && 'field-marker-hovered border-2 border-primary ring-2 ring-primary/20',
           'group',
         )}
         style={{
@@ -146,6 +151,8 @@ export const TextField = ({
           onSelect(field.id);
         }}
         onContextMenu={handleContextMenu}
+        onMouseEnter={() => onHover?.(field.id)}
+        onMouseLeave={() => onHover?.(null)}
       >
         {/* Field label - single line, no wrap, truncated to field width */}
         <div

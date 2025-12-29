@@ -219,19 +219,19 @@ export const FieldPropertiesPanel = ({
               <Input
                 id="radio-spacing"
                 type="number"
-                min="0"
-                max="100"
+                min="0.1"
+                max="3"
                 step="0.1"
                 value={field.spacing !== undefined ? field.spacing : 1}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  onUpdate({ spacing: isNaN(val) ? 0 : val });
+                  onUpdate({ spacing: isNaN(val) ? 0.1 : val });
                 }}
                 dir="ltr"
                 className="text-left"
               />
               <p className="text-xs text-muted-foreground">
-                המרחק בין כל כפתור לשכנו (0-100 נקודות)
+                המרחק בין כל כפתור לשכנו (0.1-3 נקודות)
               </p>
             </div>
 

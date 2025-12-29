@@ -12,6 +12,8 @@ interface FieldListSidebarProps {
   onFieldSelect: (fieldId: string) => void;
   onFieldDelete: (fieldId: string) => void;
   onPageNavigate: (page: number) => void;
+  hoveredFieldId: string | null;
+  onFieldHover: (fieldId: string | null) => void;
 }
 
 export const FieldListSidebar = ({
@@ -22,6 +24,8 @@ export const FieldListSidebar = ({
   onFieldSelect,
   onFieldDelete,
   onPageNavigate,
+  hoveredFieldId,
+  onFieldHover,
 }: FieldListSidebarProps) => {
   const [lastIndex, setLastIndex] = useState<number>(0);
 
@@ -108,73 +112,77 @@ export const FieldListSidebar = ({
                 <div className="space-y-2">
                   {sortedSections.map((sectionName) => {
                     return (
-                    <div key={`${pageNum}-${sectionName}`} className="space-y-0.5">
-                      {/* Section header - always show */}
-                      <div className="text-xs font-bold text-primary bg-primary/5 rounded px-2 py-1 mb-1 mt-1.5 border-r-2 border-primary">
-                        📂 {sectionName}
-                      </div>
-                      {/* Fields in this section */}
-                      {sections[sectionName].map((field) => {
-                        const hasError = errorFieldIds?.has(field.id);
-                        return (
-                          <div
-                            key={field.id}
-                            className={cn(
-                              'group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors mr-2',
-                              hasError
-                                ? 'bg-destructive/10 border border-destructive hover:bg-destructive/20'
-                                : selectedFieldId === field.id
-                                  ? 'bg-primary/10 border border-primary'
-                                  : 'hover:bg-muted border border-transparent',
-                            )}
-                            onClick={() => handleFieldClick(field)}
-                          >
-                            {/* Field icon */}
+                      <div key={`${pageNum}-${sectionName}`} className="space-y-0.5">
+                        {/* Section header - always show */}
+                        <div className="text-xs font-bold text-primary bg-primary/5 rounded px-2 py-1 mb-1 mt-1.5 border-r-2 border-primary">
+                          📂 {sectionName}
+                        </div>
+                        {/* Fields in this section */}
+                        {sections[sectionName].map((field) => {
+                          const hasError = errorFieldIds?.has(field.id);
+                          return (
                             <div
-                              className="flex-shrink-0"
-                              style={{
-                                color:
-                                  field.type === 'text'
-                                    ? 'hsl(var(--field-text))'
-                                    : 'hsl(var(--field-checkbox))',
-                              }}
-                            >
-                              {field.type === 'text' ? (
-                                <Type className="w-3.5 h-3.5" />
-                              ) : (
-                                <CheckSquare className="w-3.5 h-3.5" />
+                              key={field.id}
+                              className={cn(
+                                'group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors mr-2',
+                                hasError
+                                  ? 'bg-destructive/10 border border-destructive hover:bg-destructive/20'
+                                  : selectedFieldId === field.id
+                                    ? 'bg-primary/10 border border-primary'
+                                    : hoveredFieldId === field.id
+                                      ? 'bg-primary/5 border border-primary/30 ring-1 ring-primary/20'
+                                      : 'hover:bg-muted border border-transparent',
                               )}
-                            </div>
-
-                            {/* Field info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium truncate">
-                                {field.label || field.name}
+                              onClick={() => handleFieldClick(field)}
+                              onMouseEnter={() => onFieldHover(field.id)}
+                              onMouseLeave={() => onFieldHover(null)}
+                            >
+                              {/* Field icon */}
+                              <div
+                                className="flex-shrink-0"
+                                style={{
+                                  color:
+                                    field.type === 'text'
+                                      ? 'hsl(var(--field-text))'
+                                      : 'hsl(var(--field-checkbox))',
+                                }}
+                              >
+                                {field.type === 'text' ? (
+                                  <Type className="w-3.5 h-3.5" />
+                                ) : (
+                                  <CheckSquare className="w-3.5 h-3.5" />
+                                )}
                               </div>
-                              {field.label && (
-                                <div className="text-[10px] text-muted-foreground truncate leading-tight" dir="ltr">
-                                  {field.name}
-                                </div>
-                              )}
-                              {field.required && (
-                                <div className="text-[10px] text-destructive leading-tight">חובה</div>
-                              )}
-                            </div>
 
-                            {/* Delete button */}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                              onClick={(e) => handleDelete(e, field.id)}
-                              title="מחק שדה"
-                            >
-                              <Trash2 className="h-2.5 w-2.5" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                              {/* Field info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium truncate">
+                                  {field.label || field.name}
+                                </div>
+                                {field.label && (
+                                  <div className="text-[10px] text-muted-foreground truncate leading-tight" dir="ltr">
+                                    {field.name}
+                                  </div>
+                                )}
+                                {field.required && (
+                                  <div className="text-[10px] text-destructive leading-tight">חובה</div>
+                                )}
+                              </div>
+
+                              {/* Delete button */}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                onClick={(e) => handleDelete(e, field.id)}
+                                title="מחק שדה"
+                              >
+                                <Trash2 className="h-2.5 w-2.5" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                 </div>

@@ -52,12 +52,15 @@ export const PDFCanvas = ({
     startDrag,
     updateDragPosition,
     endDrag,
+    hoveredFieldId,
+    setHoveredField,
     setCanvasWidth: setStoreCanvasWidth,
     getFieldsForPage,
     undo,
     redo,
     canUndo,
     canRedo,
+    pagesMetadata,
   } = useTemplateEditorStore();
 
   const { settings } = useSettingsStore();
@@ -231,9 +234,9 @@ export const PDFCanvas = ({
           type: 'checkbox',
           pageNumber,
           x: pdfCoords.x,
-          y: pdfCoords.y - 20, // Subtract height: pdfCoords.y is top, field.y is bottom
-          width: 20,
-          height: 20,
+          y: pdfCoords.y - 10, // Subtract height: pdfCoords.y is top, field.y is bottom
+          width: 10,
+          height: 10,
           name: '',
           required: false,
           autoFill: false,
@@ -265,16 +268,16 @@ export const PDFCanvas = ({
           type: 'radio',
           pageNumber,
           x: pdfCoords.x,
-          y: pdfCoords.y - 20, // Subtract height: pdfCoords.y is top, field.y is bottom
-          width: 20,
-          height: 20,
+          y: pdfCoords.y - 10, // Subtract height: pdfCoords.y is top, field.y is bottom
+          width: 10,
+          height: 10,
           name: '',
           required: false,
           autoFill: false,
           direction: 'rtl',
           radioGroup: '', // Empty group name, user should set meaningful name
           options: defaultOptions,
-          spacing: settings.radioField.spacing,
+          spacing: 1,
           orientation: settings.radioField.orientation,
         };
 
@@ -547,8 +550,8 @@ export const PDFCanvas = ({
             activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field'
               ? 'crosshair'
               : activeTool === 'checkbox-field' || activeTool === 'radio-field'
-              ? 'copy' // Plus icon cursor for click-to-place
-              : 'default', // Arrow for select mode
+                ? 'copy' // Plus icon cursor for click-to-place
+                : 'default', // Arrow for select mode
         }}
       >
         <Document
@@ -569,6 +572,33 @@ export const PDFCanvas = ({
           />
         </Document>
 
+        {/* Page Metadata - Guidance Texts */}
+        {canvasWidth > 0 && currentPageDimensions && pagesMetadata[pageNumber]?.guidanceTexts.map((gt) => {
+          const pointsToPixelsScale = canvasWidth / currentPageDimensions.width;
+          const pdfTopY = gt.y + gt.height;
+          const viewportTopCoords = {
+            x: gt.x * pointsToPixelsScale,
+            y: (currentPageDimensions.height - pdfTopY) * pointsToPixelsScale
+          };
+
+          return (
+            <div
+              key={gt.id}
+              className="absolute border border-amber-300 bg-amber-100/20 pointer-events-none p-1 text-[10px] overflow-hidden text-amber-800 italic"
+              style={{
+                left: viewportTopCoords.x,
+                top: viewportTopCoords.y,
+                width: gt.width * pointsToPixelsScale,
+                height: gt.height * pointsToPixelsScale,
+                zIndex: 50,
+              }}
+              title={gt.content}
+            >
+              {gt.content}
+            </div>
+          );
+        })}
+
         {/* Field overlay */}
         {canvasWidth > 0 && currentPageDimensions && (
           <FieldOverlay
@@ -584,6 +614,8 @@ export const PDFCanvas = ({
               const { duplicateField } = useTemplateEditorStore.getState();
               duplicateField(id);
             }}
+            hoveredFieldId={hoveredFieldId}
+            onFieldHover={setHoveredField}
           />
         )}
 

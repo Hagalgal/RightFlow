@@ -22,6 +22,8 @@ interface SignatureFieldProps {
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onHover?: (id: string | null) => void;
+  isHovered?: boolean;
 }
 
 export const SignatureField = ({
@@ -34,6 +36,8 @@ export const SignatureField = ({
   onUpdate,
   onDelete,
   onDuplicate,
+  onHover,
+  isHovered,
 }: SignatureFieldProps) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
@@ -151,6 +155,7 @@ export const SignatureField = ({
         className={cn(
           'field-marker field-marker-signature',
           isSelected && 'field-marker-selected',
+          isHovered && 'field-marker-hovered border-2 border-primary ring-2 ring-primary/20',
           'group',
         )}
         style={{
@@ -163,6 +168,8 @@ export const SignatureField = ({
           onSelect(field.id);
         }}
         onContextMenu={handleContextMenu}
+        onMouseEnter={() => onHover?.(field.id)}
+        onMouseLeave={() => onHover?.(null)}
       >
         {/* Field label */}
         <div

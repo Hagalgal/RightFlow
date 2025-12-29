@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FieldDefinition, ToolMode } from '@/types/fields';
+import { FieldDefinition, ToolMode, PageMetadata } from '@/types/fields';
 import {
   UndoManager,
   createAddFieldAction,
@@ -78,6 +78,12 @@ interface TemplateEditorStore {
   dragCurrentX: number | null;
   dragCurrentY: number | null;
 
+  // Metadata state
+  pagesMetadata: Record<number, PageMetadata>; // page number -> metadata
+
+  // Hover state
+  hoveredFieldId: string | null;
+
   // Actions - PDF
   setPdfFile: (file: File | null) => void;
   setCurrentPage: (page: number) => void;
@@ -117,11 +123,20 @@ interface TemplateEditorStore {
   updateDragPosition: (x: number, y: number) => void;
   endDrag: () => void;
 
+  // Actions - Metadata
+  setPageMetadata: (pageNumber: number, metadata: PageMetadata) => void;
+
+  // Actions - Hover
+  setHoveredField: (id: string | null) => void;
+
   // Actions - Reset
   reset: () => void;
 
   // Actions - Crash Recovery
   restoreFromRecovery: (recoveryData: RecoveryData) => void;
+
+  // Actions - Page Reprocessing
+  replaceFieldsForPage: (pageNumber: number, newFields: FieldDefinition[]) => void;
 }
 
 const initialState = {
@@ -143,6 +158,8 @@ const initialState = {
   dragStartY: null,
   dragCurrentX: null,
   dragCurrentY: null,
+  pagesMetadata: {},
+  hoveredFieldId: null,
 };
 
 export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => ({
@@ -457,6 +474,18 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
       dragCurrentY: null,
     }),
 
+  // Metadata actions
+  setPageMetadata: (pageNumber, metadata) =>
+    set((state) => ({
+      pagesMetadata: {
+        ...state.pagesMetadata,
+        [pageNumber]: metadata,
+      },
+    })),
+
+  // Hover actions
+  setHoveredField: (id) => set({ hoveredFieldId: id }),
+
   // Reset
   reset: () => set(initialState),
 
@@ -473,5 +502,26 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
       selectedFieldId: null,
     });
     console.log(`[Store] Restored ${recoveryData.fields.length} fields from recovery data`);
+  },
+
+  // Page Reprocessing - replace all fields for a specific page
+  replaceFieldsForPage: (pageNumber, newFields) => {
+    set((state) => {
+      // Remove all existing fields for this page
+      const fieldsFromOtherPages = state.fields.filter(f => f.pageNumber !== pageNumber);
+
+      // Combine with new fields
+      const allFields = [...fieldsFromOtherPages, ...newFields];
+
+      // Re-initialize LastIndex based on all fields
+      initializeLastIndex(allFields);
+
+      console.log(`[Store] Replaced fields for page ${pageNumber}: removed old, added ${newFields.length} new`);
+
+      return {
+        fields: allFields,
+        selectedFieldId: null,
+      };
+    });
   },
 }));

@@ -22,6 +22,8 @@ interface RadioFieldProps {
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onHover?: (id: string | null) => void;
+  isHovered?: boolean;
 }
 
 export const RadioField = ({
@@ -34,8 +36,13 @@ export const RadioField = ({
   onUpdate,
   onDelete,
   onDuplicate,
+  onHover,
+  isHovered,
 }: RadioFieldProps) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // Use hover state from store via prop or internal? 
+  // Better to pass from parent (FieldOverlay) who gets it from store.
 
   const options = field.options || ['אפשרות 1'];
   const spacing = field.spacing !== undefined ? field.spacing : 1;
@@ -57,6 +64,12 @@ export const RadioField = ({
   const viewportHeight = containerHeight * pointsToPixelsScale;
 
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
+    // Validate position isn't negative or NaN
+    if (d.x < 0 || d.y < 0 || isNaN(d.x) || isNaN(d.y)) {
+      console.error('Invalid drag position detected:', d);
+      return;
+    }
+
     // d.x, d.y is the TOP-LEFT corner in viewport
     // Convert TOP-LEFT to PDF coordinates
     const pdfTopCoords = viewportToPDFCoords(
@@ -66,6 +79,12 @@ export const RadioField = ({
       scale * 100,
       canvasWidth,
     );
+
+    // Validate converted coordinates
+    if (isNaN(pdfTopCoords.x) || isNaN(pdfTopCoords.y) || pdfTopCoords.x < 0 || pdfTopCoords.y < 0) {
+      console.error('Invalid PDF coordinates conversion:', { d, pdfTopCoords, scale, canvasWidth });
+      return;
+    }
 
     // field.y should be the BOTTOM - subtract height from top
     const pixelsToPointsScale = pageDimensions.width / canvasWidth;
@@ -115,6 +134,7 @@ export const RadioField = ({
         className={cn(
           'field-marker field-marker-radio',
           isSelected && 'field-marker-selected',
+          isHovered && 'field-marker-hovered border-2 border-primary ring-2 ring-primary/20',
           'group',
         )}
         style={{
@@ -126,6 +146,8 @@ export const RadioField = ({
           onSelect(field.id);
         }}
         onContextMenu={handleContextMenu}
+        onMouseEnter={() => onHover?.(field.id)}
+        onMouseLeave={() => onHover?.(null)}
       >
         {/* Radio buttons - display all options based on orientation */}
         <div
@@ -159,11 +181,16 @@ export const RadioField = ({
         {/* Field label (group name) */}
         {field.label && (
           <div
-            className="absolute top-0 right-0 text-[10px] px-1 py-0.5 whitespace-nowrap"
+            className={cn(
+              "absolute text-[10px] px-1 py-0.5 whitespace-nowrap outline-none",
+              orientation === 'horizontal'
+                ? "bottom-full left-1/2 -translate-x-1/2 mb-1"  // מעל לאופקי
+                : "top-0 right-0"                                // מימין לאנכי
+            )}
             style={{
               color: 'hsl(var(--field-radio))',
               backgroundColor: 'transparent',
-              transform: 'translateX(100%)',
+              transform: orientation === 'vertical' ? 'translateX(100%)' : undefined,
             }}
             dir="rtl"
           >

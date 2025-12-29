@@ -20,6 +20,8 @@ interface FieldOverlayProps {
   onFieldUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onFieldDelete: (id: string) => void;
   onFieldDuplicate: (id: string) => void;
+  hoveredFieldId: string | null;
+  onFieldHover: (id: string | null) => void;
 }
 
 export const FieldOverlay = ({
@@ -32,6 +34,8 @@ export const FieldOverlay = ({
   onFieldUpdate,
   onFieldDelete,
   onFieldDuplicate,
+  hoveredFieldId,
+  onFieldHover,
 }: FieldOverlayProps) => {
   // Scale factor for converting between PDF points and pixels
   const scaleFactor = scale / 100;
@@ -41,82 +45,32 @@ export const FieldOverlay = ({
       <div className="relative w-full h-full pointer-events-auto">
         {fields.map((field) => {
           const isSelected = field.id === selectedFieldId;
+          const isHovered = field.id === hoveredFieldId;
+
+          const commonProps = {
+            field,
+            isSelected,
+            isHovered,
+            scale: scaleFactor,
+            pageDimensions,
+            canvasWidth,
+            onSelect: onFieldSelect,
+            onUpdate: onFieldUpdate,
+            onDelete: onFieldDelete,
+            onDuplicate: onFieldDuplicate,
+            onHover: onFieldHover,
+          };
 
           if (field.type === 'text') {
-            return (
-              <TextField
-                key={field.id}
-                field={field}
-                isSelected={isSelected}
-                scale={scaleFactor}
-                pageDimensions={pageDimensions}
-                canvasWidth={canvasWidth}
-                onSelect={onFieldSelect}
-                onUpdate={onFieldUpdate}
-                onDelete={onFieldDelete}
-                onDuplicate={onFieldDuplicate}
-              />
-            );
+            return <TextField key={field.id} {...commonProps} />;
           } else if (field.type === 'checkbox') {
-            return (
-              <CheckboxField
-                key={field.id}
-                field={field}
-                isSelected={isSelected}
-                scale={scaleFactor}
-                pageDimensions={pageDimensions}
-                canvasWidth={canvasWidth}
-                onSelect={onFieldSelect}
-                onUpdate={onFieldUpdate}
-                onDelete={onFieldDelete}
-                onDuplicate={onFieldDuplicate}
-              />
-            );
+            return <CheckboxField key={field.id} {...commonProps} />;
           } else if (field.type === 'radio') {
-            return (
-              <RadioField
-                key={field.id}
-                field={field}
-                isSelected={isSelected}
-                scale={scaleFactor}
-                pageDimensions={pageDimensions}
-                canvasWidth={canvasWidth}
-                onSelect={onFieldSelect}
-                onUpdate={onFieldUpdate}
-                onDelete={onFieldDelete}
-                onDuplicate={onFieldDuplicate}
-              />
-            );
+            return <RadioField key={field.id} {...commonProps} />;
           } else if (field.type === 'dropdown') {
-            return (
-              <DropdownField
-                key={field.id}
-                field={field}
-                isSelected={isSelected}
-                scale={scaleFactor}
-                pageDimensions={pageDimensions}
-                canvasWidth={canvasWidth}
-                onSelect={onFieldSelect}
-                onUpdate={onFieldUpdate}
-                onDelete={onFieldDelete}
-                onDuplicate={onFieldDuplicate}
-              />
-            );
+            return <DropdownField key={field.id} {...commonProps} />;
           } else if (field.type === 'signature') {
-            return (
-              <SignatureField
-                key={field.id}
-                field={field}
-                isSelected={isSelected}
-                scale={scaleFactor}
-                pageDimensions={pageDimensions}
-                canvasWidth={canvasWidth}
-                onSelect={onFieldSelect}
-                onUpdate={onFieldUpdate}
-                onDelete={onFieldDelete}
-                onDuplicate={onFieldDuplicate}
-              />
-            );
+            return <SignatureField key={field.id} {...commonProps} />;
           }
 
           return null;
