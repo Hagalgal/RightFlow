@@ -7,7 +7,9 @@ import { PDFViewer } from '@/components/pdf/PDFViewer';
 import { FieldListSidebar } from '@/components/fields/FieldListSidebar';
 import { RecoveryDialog } from '@/components/dialogs/RecoveryDialog';
 import { UploadWarningDialog } from '@/components/dialogs/UploadWarningDialog';
+import { HtmlPreviewDialog } from '@/components/dialogs/HtmlPreviewDialog';
 import { SettingsModal } from '@/components/settings/SettingsModal';
+import type { GeneratedHtmlResult } from '@/services/html-generation';
 import { VersionDisplay } from '@/components/ui/VersionDisplay';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -30,6 +32,10 @@ function App() {
   const [isExtractingFields, setIsExtractingFields] = useState(false);
   const [isReprocessing, setIsReprocessing] = useState(false);
   const [reprocessingPage, setReprocessingPage] = useState<number | null>(null);
+  const [isHtmlDialogOpen, setIsHtmlDialogOpen] = useState(false);
+  const [isGeneratingHtml, setIsGeneratingHtml] = useState(false);
+  const [generatedHtml, setGeneratedHtml] = useState<GeneratedHtmlResult | null>(null);
+  const [htmlLoadingStatus, setHtmlLoadingStatus] = useState('');
 
   // Zustand stores
   const {
@@ -528,6 +534,54 @@ function App() {
     }
   };
 
+  const handleExportHtml = async () => {
+    if (fields.length === 0) {
+      alert('אין שדות לייצוא. אנא הוסף לפחות שדה אחד.');
+      return;
+    }
+
+    // Open dialog and start generation
+    setIsHtmlDialogOpen(true);
+    setIsGeneratingHtml(true);
+    setGeneratedHtml(null);
+    setHtmlLoadingStatus('מתחיל יצירת HTML...');
+
+    try {
+      // Import HTML generation utilities
+      const { generateHtmlForm } = await import('@/services/html-generation');
+
+      // Get PDF filename for title
+      const formTitle = pdfFile?.name?.replace(/\.pdf$/i, '') || 'טופס';
+
+      const result = await generateHtmlForm(
+        fields,
+        {
+          formTitle,
+          generationMethod: 'auto', // Try AI first, fallback to template
+        },
+        (status) => setHtmlLoadingStatus(status)
+      );
+
+      setGeneratedHtml(result);
+      console.log(`✓ HTML form generated: ${result.formId} (method: ${result.metadata.method})`);
+    } catch (error) {
+      console.error('Error generating HTML:', error);
+      alert(
+        'שגיאה ביצירת HTML.\n\n' +
+        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`
+      );
+      setIsHtmlDialogOpen(false);
+    } finally {
+      setIsGeneratingHtml(false);
+    }
+  };
+
+  const handleCloseHtmlDialog = () => {
+    setIsHtmlDialogOpen(false);
+    setGeneratedHtml(null);
+    setHtmlLoadingStatus('');
+  };
+
   return (
     <div className="w-screen h-screen flex flex-col" dir="rtl">
       {/* Recovery Dialog */}
@@ -584,6 +638,8 @@ function App() {
         onExtractFields={handleExtractFields}
         isExtractingFields={isExtractingFields}
         hasFields={fields.length > 0}
+        onExportHtml={handleExportHtml}
+        isGeneratingHtml={isGeneratingHtml}
       />
 
       {/* Tools Bar - Field Creation Tools */}
@@ -591,6 +647,16 @@ function App() {
 
       {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+      {/* HTML Preview Dialog */}
+      <HtmlPreviewDialog
+        isOpen={isHtmlDialogOpen}
+        onClose={handleCloseHtmlDialog}
+        result={generatedHtml}
+        isLoading={isGeneratingHtml}
+        loadingStatus={htmlLoadingStatus}
+        pdfFileName={pdfFile?.name}
+      />
 
       <MainLayout>
         {pdfFile && totalPages > 0 && (
