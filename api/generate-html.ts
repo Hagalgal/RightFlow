@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 /**
  * Creates a promise that rejects after a specified timeout
@@ -233,7 +233,7 @@ IMPORTANT: Return ONLY the JSON object, no markdown code blocks or explanations.
       throw new Error('Invalid response format: missing html');
     }
 
-    const formId = `form_${uuidv4().replace(/-/g, '').substring(0, 12)}`;
+    const formId = `form_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
 
     console.log('[HTML Generation] Successfully generated HTML form');
 
