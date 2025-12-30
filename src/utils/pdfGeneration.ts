@@ -15,7 +15,7 @@ import { PDFDocument, PDFFont, rgb, PDFName, PDFNumber, PDFBool, PDFString } fro
 import fontkit from '@pdf-lib/fontkit';
 import JSZip from 'jszip';
 import { FieldDefinition } from '@/types/fields';
-import { validateFieldName, validateFieldNameUniqueness } from '@/utils/inputSanitization';
+import { validateFieldName } from '@/utils/inputSanitization';
 import { CheckboxStyle } from '@/types/settings';
 
 /**
@@ -571,6 +571,45 @@ export async function generateFillablePDF(
     // Get the form and configure for Hebrew
     const form = pdfDoc.getForm();
 
+    // Flatten ALL existing form fields to remove them completely
+    // This prevents "field already exists" errors when the PDF has existing AcroForm fields
+    try {
+      const existingFields = form.getFields();
+      if (existingFields.length > 0) {
+        console.log(`   Found ${existingFields.length} existing fields, flattening them...`);
+        form.flatten();
+        console.log(`   ✓ Flattened all existing form fields`);
+      }
+    } catch (error) {
+      console.warn('Could not flatten existing fields:', error);
+    }
+
+    // Make field names unique for PDF - pdf-lib requires unique field names
+    // If multiple fields have the same name, append the field ID to make them unique
+    const nameCount = new Map<string, number>();
+    const uniqueFieldNames = new Map<string, string>(); // Maps field.id -> unique PDF field name
+
+    for (const field of fields) {
+      const count = nameCount.get(field.name) || 0;
+      nameCount.set(field.name, count + 1);
+    }
+
+    for (const field of fields) {
+      const count = nameCount.get(field.name) || 1;
+      if (count > 1) {
+        // Multiple fields with same name - use ID to make it unique
+        uniqueFieldNames.set(field.id, `${field.name}_${field.id.slice(-6)}`);
+        console.log(`   ⚠ Duplicate name "${field.name}" -> using "${uniqueFieldNames.get(field.id)}"`);
+      } else {
+        uniqueFieldNames.set(field.id, field.name);
+      }
+    }
+
+    // Helper function to get unique field name
+    const getUniqueFieldName = (field: FieldDefinition): string => {
+      return uniqueFieldNames.get(field.id) || field.name;
+    };
+
     // Set NeedAppearances flag to ensure PDF readers regenerate appearance streams
     // This is critical for Hebrew text to display correctly in Acrobat Reader
     try {
@@ -615,8 +654,11 @@ export async function generateFillablePDF(
       console.log(`   Page dimensions: ${pageWidth} x ${pageHeight} points`);
 
       for (const field of pageFields) {
-        console.log(`   Creating ${field.type} field "${field.name}":`)
-;
+        // Create field with unique name for PDF (pdf-lib requires unique field names)
+        const pdfFieldName = getUniqueFieldName(field);
+        const fieldForPdf = { ...field, name: pdfFieldName };
+
+        console.log(`   Creating ${field.type} field "${pdfFieldName}" (original: "${field.name}"):`);
         console.log(`      Position: (${field.x.toFixed(2)}, ${field.y.toFixed(2)})`);
         console.log(`      Size: ${field.width.toFixed(2)} x ${field.height.toFixed(2)}`);
         console.log(`      Top edge would be at Y: ${(field.y + field.height).toFixed(2)}`);
@@ -624,9 +666,9 @@ export async function generateFillablePDF(
         console.log(`      Distance from page top: ${(pageHeight - field.y - field.height).toFixed(2)} points`);
 
         if (field.type === 'text') {
-          createTextField(pdfDoc, page, field, hebrewFont);
+          createTextField(pdfDoc, page, fieldForPdf, hebrewFont);
         } else if (field.type === 'checkbox') {
-          createCheckboxField(pdfDoc, page, field, options?.checkboxStyle);
+          createCheckboxField(pdfDoc, page, fieldForPdf, options?.checkboxStyle);
         } else if (field.type === 'radio') {
           const groupName = field.radioGroup || field.name;
           // Skip if this radio group was already created
@@ -638,11 +680,16 @@ export async function generateFillablePDF(
           // Get all fields in this radio group
           const groupFields = radioGroupsMap.get(groupName) || [field];
 
-          // Create radio group with all its buttons
-          createRadioGroupFromFields(pdfDoc, pdfDoc.getPages(), groupFields);
+          // Create radio group with all its buttons (use unique group name)
+          const uniqueGroupName = getUniqueFieldName({ ...field, name: groupName } as FieldDefinition);
+          const groupFieldsWithUniqueNames = groupFields.map(f => ({
+            ...f,
+            radioGroup: uniqueGroupName,
+          }));
+          createRadioGroupFromFields(pdfDoc, pdfDoc.getPages(), groupFieldsWithUniqueNames);
           createdRadioGroups.add(groupName);
         } else if (field.type === 'dropdown') {
-          createDropdownField(pdfDoc, page, field, hebrewFont);
+          createDropdownField(pdfDoc, page, fieldForPdf, hebrewFont);
         } else if (field.type === 'signature') {
           try {
             await createSignatureField(pdfDoc, page, field);
@@ -788,13 +835,8 @@ export function validateFieldsForPDF(fields: FieldDefinition[]): string[] {
     return errors;
   }
 
-  // Check for duplicate field names
-  const uniquenessCheck = validateFieldNameUniqueness(fields);
-  if (!uniquenessCheck.isValid) {
-    uniquenessCheck.duplicates.forEach((name: string) => {
-      errors.push(`שם שדה כפול: "${name}". כל שדה חייב שם ייחודי.`);
-    });
-  }
+  // NOTE: Duplicate field names are ALLOWED - pdf-lib will use unique names based on field ID
+  // Only field IDs must be unique (which is guaranteed by UUID generation)
 
   fields.forEach((field, index) => {
     // Validate field name

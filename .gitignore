@@ -31,9 +31,6 @@ dist-ssr
 # Vercel
 .vercel
 
-# Claude Code configuration
-.claude
-
 # GitHub templates and workflows
 .github
 
@@ -48,3 +45,12 @@ Phase0-Testing/output/*.pdf
 
 # Markdown documentation files
 *.md
+
+!Documents/Deployment-Infrastructure/
+!Documents/Deployment-Infrastructure/**/*.md
+
+.claude
+!.claude/commands/
+!.claude/agents/
+
+!.env

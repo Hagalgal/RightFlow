@@ -1,15 +1,17 @@
 /**
  * HTML Preview Dialog Component
  *
- * Displays generated HTML form with preview and download options
+ * Displays generated HTML form with preview and ZIP download options
+ * Downloads a package containing PDF with AcroForm fields, JSON, and HTML
  */
 
 import * as React from 'react';
-import { X, Download, ExternalLink, Loader2, FileCode } from 'lucide-react';
-import type { GeneratedHtmlResult } from '@/services/html-generation';
+import { X, ExternalLink, Loader2, FileCode, Archive } from 'lucide-react';
+import type { FieldDefinition } from '@/types/fields';
 import {
-  downloadHtmlFile,
+  downloadFormPackageZip,
   previewHtmlInNewTab,
+  type GeneratedHtmlResult,
 } from '@/services/html-generation';
 
 interface HtmlPreviewDialogProps {
@@ -19,6 +21,8 @@ interface HtmlPreviewDialogProps {
   isLoading?: boolean;
   loadingStatus?: string;
   pdfFileName?: string;
+  pdfFile?: File | null;
+  fields?: FieldDefinition[];
 }
 
 export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
@@ -28,22 +32,36 @@ export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
   isLoading = false,
   loadingStatus = 'מייצר HTML...',
   pdfFileName,
+  pdfFile,
+  fields,
 }) => {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = React.useState(false);
+  const [isDownloading, setIsDownloading] = React.useState(false);
 
-  // Generate filename from PDF name
-  const getDownloadFilename = () => {
+  // Generate base filename from PDF name
+  const getBaseFilename = () => {
     if (pdfFileName) {
-      return pdfFileName.replace(/\.pdf$/i, '') + '.html';
+      return pdfFileName.replace(/\.pdf$/i, '');
     }
-    return result?.formId ? `${result.formId}.html` : 'form.html';
+    return result?.formId || 'form-package';
   };
 
-  // Handle download
-  const handleDownload = () => {
-    if (result) {
-      downloadHtmlFile(result, getDownloadFilename());
+  // Handle ZIP download
+  const handleDownloadZip = async () => {
+    if (!result || !pdfFile || !fields || fields.length === 0) {
+      console.error('Missing required data for ZIP download');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      await downloadFormPackageZip(pdfFile, fields, result, getBaseFilename());
+    } catch (error) {
+      console.error('Error downloading ZIP:', error);
+      alert('שגיאה בהורדת הקובץ. אנא נסה שוב.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -151,10 +169,12 @@ export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
           <div className="text-sm text-muted-foreground">
             {result && (
               <span>
-                קובץ:{' '}
+                חבילה:{' '}
                 <span className="font-medium text-foreground">
-                  {getDownloadFilename()}
+                  {getBaseFilename()}.zip
                 </span>
+                <span className="mx-2 text-muted-foreground/60">•</span>
+                <span className="text-xs">PDF + JSON + HTML</span>
               </span>
             )}
           </div>
@@ -172,15 +192,24 @@ export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
               className="px-4 py-2 bg-muted text-foreground font-medium rounded-md hover:bg-muted/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <ExternalLink className="w-4 h-4" />
-              פתח בחלון חדש
+              תצוגה מקדימה
             </button>
             <button
-              onClick={handleDownload}
-              disabled={!result || isLoading}
+              onClick={handleDownloadZip}
+              disabled={!result || isLoading || isDownloading || !pdfFile || !fields}
               className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Download className="w-4 h-4" />
-              הורד HTML
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  מכין חבילה...
+                </>
+              ) : (
+                <>
+                  <Archive className="w-4 h-4" />
+                  הורד ZIP
+                </>
+              )}
             </button>
           </div>
         </div>
