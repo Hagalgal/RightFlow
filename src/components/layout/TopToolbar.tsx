@@ -1,6 +1,7 @@
-import { Upload, Save, ChevronRight, ChevronLeft, ZoomIn, ZoomOut, Undo, Redo, Settings, Download, FolderOpen, Sparkles } from 'lucide-react';
+import { Upload, Save, ChevronRight, ChevronLeft, ZoomIn, ZoomOut, Undo, Redo, Settings, Download, FolderOpen, Sparkles, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { version } from '../../../package.json';
 
 interface TopToolbarProps {
   currentPage: number;
@@ -21,6 +22,8 @@ interface TopToolbarProps {
   onExtractFields?: () => void;
   isExtractingFields?: boolean;
   hasFields?: boolean;
+  onExportHtml?: () => void;
+  isGeneratingHtml?: boolean;
 }
 
 export const TopToolbar = ({
@@ -42,6 +45,8 @@ export const TopToolbar = ({
   onExtractFields,
   isExtractingFields = false,
   hasFields = false,
+  onExportHtml,
+  isGeneratingHtml = false,
 }: TopToolbarProps) => {
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -103,6 +108,17 @@ export const TopToolbar = ({
             >
               <Download className="w-4 h-4" />
               שמור שדות
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExportHtml}
+              disabled={!hasFields || isGeneratingHtml}
+              title={isGeneratingHtml ? 'מייצר HTML...' : 'ייצא טופס כ-HTML'}
+              className="gap-2"
+            >
+              <FileCode className={`w-4 h-4 ${isGeneratingHtml ? 'animate-pulse' : ''}`} />
+              {isGeneratingHtml ? 'מייצר...' : 'ייצא HTML'}
             </Button>
             <Button
               variant="outline"
@@ -204,6 +220,10 @@ export const TopToolbar = ({
           </div>
         </>
       )}
+
+      {/* Version badge - always visible at end (left in RTL) */}
+      {!hasDocument && <div className="flex-1" />}
+      <span className="text-xs text-muted-foreground font-mono">v{version}</span>
     </div>
   );
 };
