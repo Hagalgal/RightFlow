@@ -41,6 +41,7 @@ function App() {
     activeTool,
     fields,
     selectedFieldId,
+    selectedFieldIds,
     setPdfFile,
     setCurrentPage,
     setTotalPages,
@@ -49,6 +50,7 @@ function App() {
     setActiveTool,
     setPageDimensions,
     selectField,
+    toggleFieldSelection,
     deleteField,
     restoreFromRecovery,
     undo,
@@ -614,9 +616,11 @@ function App() {
           <FieldListSidebar
             fields={fields}
             selectedFieldId={selectedFieldId}
+            selectedFieldIds={selectedFieldIds}
             currentPage={currentPage}
             errorFieldIds={errorFieldIds}
             onFieldSelect={selectField}
+            onToggleFieldSelection={toggleFieldSelection}
             onFieldDelete={deleteField}
             onPageNavigate={setCurrentPage}
             hoveredFieldId={hoveredFieldId}

@@ -19,6 +19,7 @@ interface RadioFieldProps {
   pageDimensions: PageDimensions;
   canvasWidth: number;
   onSelect: (id: string) => void;
+  onToggleSelection: (id: string) => void; // Multi-select support
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -33,6 +34,7 @@ export const RadioField = ({
   pageDimensions,
   canvasWidth,
   onSelect,
+  onToggleSelection,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -106,8 +108,9 @@ export const RadioField = ({
 
   // Convert PDF coordinates to viewport coordinates for rendering
   // field.y is the BOTTOM of the field in PDF, but Rnd needs TOP-LEFT
-  // So we need to convert the TOP of the field: field.y + field.height
-  const pdfTopY = field.y + field.height; // Top of field in PDF coordinates
+  // So we need to convert the TOP of the field: field.y + containerHeight
+  // IMPORTANT: Use containerHeight (full radio group), not field.height (single option)
+  const pdfTopY = field.y + containerHeight; // Top of the ENTIRE radio group in PDF coordinates
 
   const viewportTopCoords = pdfToViewportCoords(
     field.x,
@@ -143,7 +146,11 @@ export const RadioField = ({
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          onSelect(field.id);
+          if (e.ctrlKey || e.metaKey) {
+            onToggleSelection(field.id);
+          } else {
+            onSelect(field.id);
+          }
         }}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => onHover?.(field.id)}

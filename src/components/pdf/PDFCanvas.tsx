@@ -4,6 +4,7 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { FieldOverlay } from '@/components/fields/FieldOverlay';
 import { FieldPropertiesPanel } from '@/components/fields/FieldPropertiesPanel';
+import { MultiSelectPropertiesPanel } from '@/components/fields/MultiSelectPropertiesPanel';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { getCanvasRelativeCoords, viewportToPDFCoords } from '@/utils/pdfCoordinates';
@@ -38,6 +39,7 @@ export const PDFCanvas = ({
     activeTool,
     fields,
     selectedFieldId,
+    selectedFieldIds,
     isDragging,
     dragStartX,
     dragStartY,
@@ -49,6 +51,9 @@ export const PDFCanvas = ({
     updateFieldWithUndo,
     deleteFieldWithUndo,
     selectField,
+    toggleFieldSelection,
+    clearSelection,
+    updateMultipleFields,
     startDrag,
     updateDragPosition,
     endDrag,
@@ -495,6 +500,8 @@ export const PDFCanvas = ({
         e.preventDefault();
         if (isDragging) {
           endDrag(); // Cancel drag on Escape
+        } else if (selectedFieldIds.length > 0) {
+          clearSelection(); // Clear multi-selection first
         } else {
           selectField(null);
         }
@@ -505,9 +512,11 @@ export const PDFCanvas = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     selectedFieldId,
+    selectedFieldIds,
     isDragging,
     deleteFieldWithUndo,
     selectField,
+    clearSelection,
     endDrag,
     undo,
     redo,
@@ -604,10 +613,12 @@ export const PDFCanvas = ({
           <FieldOverlay
             fields={currentPageFields}
             selectedFieldId={selectedFieldId}
+            selectedFieldIds={selectedFieldIds}
             scale={scale}
             pageDimensions={currentPageDimensions}
             canvasWidth={canvasWidth}
             onFieldSelect={selectField}
+            onToggleFieldSelection={toggleFieldSelection}
             onFieldUpdate={updateField}
             onFieldDelete={deleteFieldWithUndo}
             onFieldDuplicate={(id) => {
@@ -638,8 +649,22 @@ export const PDFCanvas = ({
           )}
       </div>
 
-      {/* Field Properties Panel */}
-      {selectedFieldId && (() => {
+      {/* Multi-Select Properties Panel */}
+      {selectedFieldIds.length > 1 && (() => {
+        const selectedFields = fields.filter(f => selectedFieldIds.includes(f.id));
+        if (selectedFields.length === 0) return null;
+
+        return (
+          <MultiSelectPropertiesPanel
+            selectedFields={selectedFields}
+            onUpdateAll={(updates) => updateMultipleFields(selectedFieldIds, updates)}
+            onClose={clearSelection}
+          />
+        );
+      })()}
+
+      {/* Single Field Properties Panel */}
+      {selectedFieldIds.length <= 1 && selectedFieldId && (() => {
         const selectedField = fields.find(f => f.id === selectedFieldId);
         if (!selectedField) return null;
 

@@ -65,6 +65,7 @@ interface TemplateEditorStore {
   // Field state
   fields: FieldDefinition[];
   selectedFieldId: string | null;
+  selectedFieldIds: string[]; // Multi-select support
   copiedField: FieldDefinition | null; // For copy/paste functionality
   lastUpdatedFieldId: string | null; // Track last updated field for section name inheritance
 
@@ -106,6 +107,11 @@ interface TemplateEditorStore {
   deleteField: (id: string) => void;
   deleteFieldWithUndo: (id: string) => void; // Undo-aware version
   selectField: (id: string | null) => void;
+  toggleFieldSelection: (id: string) => void; // Add/remove from multi-select
+  addToSelection: (id: string) => void; // Add to multi-select
+  clearSelection: () => void; // Clear all selections
+  selectMultipleFields: (ids: string[]) => void; // Select multiple at once
+  updateMultipleFields: (ids: string[], updates: Partial<FieldDefinition>) => void; // Update multiple fields
   getFieldsForPage: (page: number) => FieldDefinition[];
   copyField: () => void;
   pasteField: () => void;
@@ -151,6 +157,7 @@ const initialState = {
   lastUpdatedFieldId: null,
   fields: [],
   selectedFieldId: null,
+  selectedFieldIds: [],
   copiedField: null,
   undoManager: new UndoManager(),
   isDragging: false,
@@ -345,7 +352,45 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
     state.undoManager.execute(action);
   },
 
-  selectField: (id) => set({ selectedFieldId: id, activeTool: 'select' }),
+  selectField: (id) => set({ selectedFieldId: id, selectedFieldIds: id ? [id] : [], activeTool: 'select' }),
+
+  // Multi-select actions
+  toggleFieldSelection: (id) => set((state) => {
+    const currentIds = state.selectedFieldIds;
+    const isSelected = currentIds.includes(id);
+    const newIds = isSelected
+      ? currentIds.filter(fid => fid !== id)
+      : [...currentIds, id];
+    return {
+      selectedFieldIds: newIds,
+      selectedFieldId: newIds.length === 1 ? newIds[0] : null,
+      activeTool: 'select',
+    };
+  }),
+
+  addToSelection: (id) => set((state) => {
+    if (state.selectedFieldIds.includes(id)) return state;
+    const newIds = [...state.selectedFieldIds, id];
+    return {
+      selectedFieldIds: newIds,
+      selectedFieldId: newIds.length === 1 ? newIds[0] : null,
+      activeTool: 'select',
+    };
+  }),
+
+  clearSelection: () => set({ selectedFieldId: null, selectedFieldIds: [] }),
+
+  selectMultipleFields: (ids) => set({
+    selectedFieldIds: ids,
+    selectedFieldId: ids.length === 1 ? ids[0] : null,
+    activeTool: 'select',
+  }),
+
+  updateMultipleFields: (ids, updates) => set((state) => ({
+    fields: state.fields.map((field) =>
+      ids.includes(field.id) ? { ...field, ...updates } : field
+    ),
+  })),
 
   getFieldsForPage: (page) => {
     const state = get();
@@ -424,6 +469,7 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
     set({
       fields,
       selectedFieldId: null,
+      selectedFieldIds: [],
     });
     console.log(`✓ Loaded ${fields.length} fields from template`);
   },
@@ -500,6 +546,7 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
       fields: recoveryData.fields,
       totalPages: recoveryData.totalPages,
       selectedFieldId: null,
+      selectedFieldIds: [],
     });
     console.log(`[Store] Restored ${recoveryData.fields.length} fields from recovery data`);
   },

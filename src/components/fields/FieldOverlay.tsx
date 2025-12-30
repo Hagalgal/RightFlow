@@ -13,10 +13,12 @@ interface PageDimensions {
 interface FieldOverlayProps {
   fields: FieldDefinition[];
   selectedFieldId: string | null;
+  selectedFieldIds: string[]; // Multi-select support
   scale: number;
   pageDimensions: PageDimensions;
   canvasWidth: number;
   onFieldSelect: (id: string) => void;
+  onToggleFieldSelection: (id: string) => void; // Multi-select support
   onFieldUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onFieldDelete: (id: string) => void;
   onFieldDuplicate: (id: string) => void;
@@ -27,10 +29,12 @@ interface FieldOverlayProps {
 export const FieldOverlay = ({
   fields,
   selectedFieldId,
+  selectedFieldIds,
   scale,
   pageDimensions,
   canvasWidth,
   onFieldSelect,
+  onToggleFieldSelection,
   onFieldUpdate,
   onFieldDelete,
   onFieldDuplicate,
@@ -44,7 +48,7 @@ export const FieldOverlay = ({
     <div className="absolute inset-0 pointer-events-none">
       <div className="relative w-full h-full pointer-events-auto">
         {fields.map((field) => {
-          const isSelected = field.id === selectedFieldId;
+          const isSelected = field.id === selectedFieldId || selectedFieldIds.includes(field.id);
           const isHovered = field.id === hoveredFieldId;
 
           const commonProps = {
@@ -55,6 +59,7 @@ export const FieldOverlay = ({
             pageDimensions,
             canvasWidth,
             onSelect: onFieldSelect,
+            onToggleSelection: onToggleFieldSelection,
             onUpdate: onFieldUpdate,
             onDelete: onFieldDelete,
             onDuplicate: onFieldDuplicate,

@@ -19,6 +19,7 @@ interface DropdownFieldProps {
   pageDimensions: PageDimensions;
   canvasWidth: number;
   onSelect: (id: string) => void;
+  onToggleSelection: (id: string) => void; // Multi-select support
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -33,6 +34,7 @@ export const DropdownField = ({
   pageDimensions,
   canvasWidth,
   onSelect,
+  onToggleSelection,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -40,6 +42,11 @@ export const DropdownField = ({
   isHovered,
 }: DropdownFieldProps) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // Calculate dimensions first - needed by handleDragStop
+  const pointsToPixelsScale = canvasWidth / pageDimensions.width;
+  const viewportWidth = field.width * pointsToPixelsScale;
+  const viewportHeight = field.height * pointsToPixelsScale;
 
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
     // d.x, d.y is the TOP-LEFT corner in viewport
@@ -103,11 +110,6 @@ export const DropdownField = ({
     });
   };
 
-  // Convert PDF size to viewport size
-  const pointsToPixelsScale = canvasWidth / pageDimensions.width;
-  const viewportWidth = field.width * pointsToPixelsScale;
-  const viewportHeight = field.height * pointsToPixelsScale;
-
   // Convert PDF coordinates to viewport coordinates for rendering
   // field.y is the BOTTOM of the field in PDF, but Rnd needs TOP-LEFT
   // So we need to convert the TOP of the field: field.y + field.height
@@ -148,7 +150,11 @@ export const DropdownField = ({
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          onSelect(field.id);
+          if (e.ctrlKey || e.metaKey) {
+            onToggleSelection(field.id);
+          } else {
+            onSelect(field.id);
+          }
         }}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => onHover?.(field.id)}

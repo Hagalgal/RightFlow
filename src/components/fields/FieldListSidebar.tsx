@@ -7,9 +7,11 @@ import { cn } from '@/utils/cn';
 interface FieldListSidebarProps {
   fields: FieldDefinition[];
   selectedFieldId: string | null;
+  selectedFieldIds: string[]; // Multi-select support
   currentPage: number;
   errorFieldIds?: Set<string>; // Set of field IDs with validation errors
   onFieldSelect: (fieldId: string) => void;
+  onToggleFieldSelection: (fieldId: string) => void; // Multi-select support
   onFieldDelete: (fieldId: string) => void;
   onPageNavigate: (page: number) => void;
   hoveredFieldId: string | null;
@@ -19,9 +21,11 @@ interface FieldListSidebarProps {
 export const FieldListSidebar = ({
   fields,
   selectedFieldId,
+  selectedFieldIds,
   currentPage,
   errorFieldIds,
   onFieldSelect,
+  onToggleFieldSelection,
   onFieldDelete,
   onPageNavigate,
   hoveredFieldId,
@@ -45,13 +49,17 @@ export const FieldListSidebar = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [fields]); // Re-read when fields change
 
-  const handleFieldClick = (field: FieldDefinition) => {
+  const handleFieldClick = (field: FieldDefinition, e: React.MouseEvent) => {
     // Navigate to field's page if not already there
     if (field.pageNumber !== currentPage) {
       onPageNavigate(field.pageNumber);
     }
-    // Select the field
-    onFieldSelect(field.id);
+    // Ctrl+click for multi-select
+    if (e.ctrlKey || e.metaKey) {
+      onToggleFieldSelection(field.id);
+    } else {
+      onFieldSelect(field.id);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, fieldId: string) => {
@@ -127,13 +135,13 @@ export const FieldListSidebar = ({
                                 'group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors mr-2',
                                 hasError
                                   ? 'bg-destructive/10 border border-destructive hover:bg-destructive/20'
-                                  : selectedFieldId === field.id
+                                  : (selectedFieldId === field.id || selectedFieldIds.includes(field.id))
                                     ? 'bg-primary/10 border border-primary'
                                     : hoveredFieldId === field.id
                                       ? 'bg-primary/5 border border-primary/30 ring-1 ring-primary/20'
                                       : 'hover:bg-muted border border-transparent',
                               )}
-                              onClick={() => handleFieldClick(field)}
+                              onClick={(e) => handleFieldClick(field, e)}
                               onMouseEnter={() => onFieldHover(field.id)}
                               onMouseLeave={() => onFieldHover(null)}
                             >

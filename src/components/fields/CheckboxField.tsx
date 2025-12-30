@@ -19,6 +19,7 @@ interface CheckboxFieldProps {
   pageDimensions: PageDimensions;
   canvasWidth: number;
   onSelect: (id: string) => void;
+  onToggleSelection: (id: string) => void; // Multi-select support
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -33,6 +34,7 @@ export const CheckboxField = ({
   pageDimensions,
   canvasWidth,
   onSelect,
+  onToggleSelection,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -47,6 +49,12 @@ export const CheckboxField = ({
   const viewportHeight = field.height * pointsToPixelsScale;
 
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
+    // Validate position isn't negative or NaN
+    if (d.x < 0 || d.y < 0 || isNaN(d.x) || isNaN(d.y)) {
+      console.error('[CheckboxField] Invalid drag position detected:', d);
+      return;
+    }
+
     // d.x, d.y is the TOP-LEFT corner in viewport
     // Convert TOP-LEFT to PDF coordinates
     const pdfTopCoords = viewportToPDFCoords(
@@ -57,14 +65,24 @@ export const CheckboxField = ({
       canvasWidth,
     );
 
+    // Validate converted coordinates
+    if (isNaN(pdfTopCoords.x) || isNaN(pdfTopCoords.y)) {
+      console.error('[CheckboxField] Invalid PDF coordinates conversion:', { d, pdfTopCoords, scale, canvasWidth });
+      return;
+    }
+
     // field.y should be the BOTTOM - subtract height from top
     const pixelsToPointsScale = pageDimensions.width / canvasWidth;
     const pdfHeight = viewportHeight * pixelsToPointsScale;
     const pdfBottomY = pdfTopCoords.y - pdfHeight;
 
+    // Ensure coordinates are within valid bounds (clamp to page dimensions)
+    const clampedX = Math.max(0, Math.min(pdfTopCoords.x, pageDimensions.width - field.width));
+    const clampedY = Math.max(0, Math.min(pdfBottomY, pageDimensions.height - field.height));
+
     onUpdate(field.id, {
-      x: pdfTopCoords.x,
-      y: pdfBottomY, // Bottom edge in PDF coordinates
+      x: clampedX,
+      y: clampedY, // Bottom edge in PDF coordinates
     });
   };
 
@@ -96,8 +114,8 @@ export const CheckboxField = ({
           y: viewportTopCoords.y, // Use TOP-LEFT for Rnd positioning
         }}
         size={{
-          width: viewportWidth,
-          height: viewportHeight,
+          width: Math.max(viewportWidth, 24), // Minimum 24px for easier dragging
+          height: Math.max(viewportHeight, 24), // Minimum 24px for easier dragging
         }}
         onDragStop={handleDragStop}
         enableResizing={false} // Checkboxes have fixed size - no resize handles
@@ -114,7 +132,11 @@ export const CheckboxField = ({
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          onSelect(field.id);
+          if (e.ctrlKey || e.metaKey) {
+            onToggleSelection(field.id);
+          } else {
+            onSelect(field.id);
+          }
         }}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => onHover?.(field.id)}
@@ -142,17 +164,17 @@ export const CheckboxField = ({
           </div>
         )}
 
-        {/* Delete button */}
+        {/* Delete button - small and offset to avoid interfering with drag */}
         <button
-          className="absolute top-0 left-0 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ transform: 'translate(-50%, -50%)' }}
+          className="absolute top-0 left-0 bg-destructive text-white rounded-full w-3.5 h-3.5 flex items-center justify-center hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ transform: 'translate(-80%, -80%)' }}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(field.id);
           }}
           title="מחק תיבת סימון"
         >
-          <X className="w-3 h-3" />
+          <X className="w-2.5 h-2.5" />
         </button>
       </Rnd>
 

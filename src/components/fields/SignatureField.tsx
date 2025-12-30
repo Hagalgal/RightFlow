@@ -19,6 +19,7 @@ interface SignatureFieldProps {
   pageDimensions: PageDimensions;
   canvasWidth: number;
   onSelect: (id: string) => void;
+  onToggleSelection: (id: string) => void; // Multi-select support
   onUpdate: (id: string, updates: Partial<FieldDefinition>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -33,6 +34,7 @@ export const SignatureField = ({
   pageDimensions,
   canvasWidth,
   onSelect,
+  onToggleSelection,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -165,7 +167,11 @@ export const SignatureField = ({
         }}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          onSelect(field.id);
+          if (e.ctrlKey || e.metaKey) {
+            onToggleSelection(field.id);
+          } else {
+            onSelect(field.id);
+          }
         }}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => onHover?.(field.id)}
