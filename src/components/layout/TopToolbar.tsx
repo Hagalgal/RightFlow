@@ -1,6 +1,7 @@
 import { Upload, Save, ChevronRight, ChevronLeft, ZoomIn, ZoomOut, Undo, Redo, Settings, Download, FolderOpen, Sparkles, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { version } from '../../../package.json';
 
 interface TopToolbarProps {
   currentPage: number;
@@ -219,6 +220,10 @@ export const TopToolbar = ({
           </div>
         </>
       )}
+
+      {/* Version badge - always visible at end (left in RTL) */}
+      {!hasDocument && <div className="flex-1" />}
+      <span className="text-xs text-muted-foreground font-mono">v{version}</span>
     </div>
   );
 };
