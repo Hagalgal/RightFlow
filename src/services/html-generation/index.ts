@@ -11,6 +11,7 @@ import type {
 import { generateHtmlWithGemini } from './gemini-html-generation';
 import { generateHtmlFormTemplate } from './html-generator.service';
 import { detectFormDirection } from './field-mapper';
+import JSZip from 'jszip';
 
 // Re-export types for convenience
 export type {
@@ -132,4 +133,73 @@ export function previewHtmlInNewTab(result: GeneratedHtmlResult): Window | null 
  */
 export function createHtmlDataUrl(result: GeneratedHtmlResult): string {
   return `data:text/html;charset=utf-8,${encodeURIComponent(result.htmlContent)}`;
+}
+
+/**
+ * Downloads a ZIP package containing:
+ * - PDF with AcroForm fields
+ * - JSON with field definitions
+ * - HTML form file
+ *
+ * @param pdfFile - Original PDF file
+ * @param fields - Field definitions array
+ * @param htmlResult - Generated HTML result
+ * @param filename - Base filename (without extension)
+ */
+export async function downloadFormPackageZip(
+  pdfFile: File,
+  fields: FieldDefinition[],
+  htmlResult: GeneratedHtmlResult,
+  filename?: string
+): Promise<void> {
+  const baseName = filename || htmlResult.formId || 'form-package';
+
+  // Create ZIP file
+  const zip = new JSZip();
+
+  // 1. Generate PDF with AcroForm fields
+  const { generateFillablePDF } = await import('@/utils/pdfGeneration');
+  const pdfBytes = await generateFillablePDF(pdfFile, fields);
+  zip.file(`${baseName}.pdf`, pdfBytes);
+
+  // 2. Add JSON with field definitions
+  const fieldMetadata = fields.map((field) => ({
+    id: field.id,
+    name: field.name,
+    type: field.type,
+    pageNumber: field.pageNumber,
+    label: field.label,
+    sectionName: field.sectionName,
+    index: field.index,
+    required: field.required,
+    autoFill: field.autoFill,
+    direction: field.direction,
+    x: field.x,
+    y: field.y,
+    width: field.width,
+    height: field.height,
+    defaultValue: field.defaultValue,
+    options: field.options,
+    radioGroup: field.radioGroup,
+  }));
+  const jsonString = JSON.stringify(fieldMetadata, null, 2);
+  zip.file(`${baseName}.json`, jsonString);
+
+  // 3. Add HTML file
+  zip.file(`${baseName}.html`, htmlResult.htmlContent);
+
+  // Generate and download ZIP
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(zipBlob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${baseName}.zip`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+
+  console.log(`✓ Form package downloaded: ${baseName}.zip (PDF + JSON + HTML)`);
 }

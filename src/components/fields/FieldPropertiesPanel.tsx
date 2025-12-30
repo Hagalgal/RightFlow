@@ -124,7 +124,7 @@ export const FieldPropertiesPanel = ({
             className="text-left"
           />
           <p className="text-xs text-muted-foreground">
-            שם ייחודי לשדה (רק אותיות אנגליות, מספרים וקו תחתון)
+            שם השדה (רק אותיות אנגליות, מספרים וקו תחתון)
           </p>
         </div>
 

@@ -656,6 +656,8 @@ function App() {
         isLoading={isGeneratingHtml}
         loadingStatus={htmlLoadingStatus}
         pdfFileName={pdfFile?.name}
+        pdfFile={pdfFile}
+        fields={fields}
       />
 
       <MainLayout>
