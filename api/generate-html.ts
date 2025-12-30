@@ -117,8 +117,12 @@ export default async function handler(
 
     const { primaryColor, style } = options.theme;
 
+    // Detect unique pages from field positions
+    const uniquePages = new Set(fields.map(f => f.position?.page ?? 1));
+    const totalPages = uniquePages.size || 1;
+
     const prompt = `You are an elite frontend developer specializing in accessible, RTL (Hebrew) forms.
-Your task is to generate a professional, COMPLETE standalone HTML5 form document.
+Your task is to generate a professional, COMPLETE standalone HTML5 form document WITH MULTI-PAGE TAB NAVIGATION.
 
 DESIGN REFERENCE (DocsFlow/Phoenix Style):
 - Colors: Primary accent: ${primaryColor}, Text: #333, Background: #f4f4f4
@@ -132,11 +136,31 @@ FORM METADATA:
 - Title: ${options.formTitle || 'טופס'}
 - Description: ${options.formDescription || ''}
 - Language: ${options.language}
+- Total Pages: ${totalPages}
+
+MULTI-PAGE TAB NAVIGATION REQUIREMENTS:
+${totalPages > 1 ? `
+1. Create tab indicators as CIRCLES with page numbers (1, 2, 3, etc.)
+2. Display tabs horizontally centered below the header
+3. Active tab should have accent color background with white text
+4. Completed tabs should show green with checkmark
+5. Add connector lines between tabs
+6. Each page should be a separate div with class "form-page"
+7. Only show active page, hide others with CSS
+8. Add navigation buttons: "הקודם" (Previous) and "הבא" (Next)
+9. On last page, show "שלח טופס" (Submit) instead of Next
+10. Add page progress text: "עמוד X מתוך Y"
+11. Include smooth animations for page transitions
+12. Support keyboard navigation (arrow keys)
+` : `
+- Single page form, no tabs needed
+- Show submit button at bottom
+`}
 
 FIELD GROUPS (Sections):
 ${JSON.stringify(groups, null, 2)}
 
-FIELDS DATA:
+FIELDS DATA (grouped by page):
 ${JSON.stringify(
   fields.map((f) => ({
     id: f.id,
@@ -146,6 +170,7 @@ ${JSON.stringify(
     required: f.required,
     options: f.options,
     section: f.section,
+    page: f.position?.page ?? 1,
   })),
   null,
   2
@@ -154,14 +179,26 @@ ${JSON.stringify(
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, STANDALONE HTML document (with <!DOCTYPE html>, <html>, <head>, <body>)
 2. Include ALL CSS inline within a <style> tag in the <head>
-3. Include validation JavaScript inline within a <script> tag before </body>
+3. Include tab navigation JavaScript inline within a <script> tag before </body>
 4. Use semantic HTML5 (fieldset, legend, label, proper input types)
 5. Implement ${options.rtl ? 'RTL' : 'LTR'} layout correctly
-6. Group fields by their sections using the provided field groups
+6. Group fields by page number first, then by sections
 7. Make it responsive (works on mobile, tablet, desktop)
 8. Add ARIA attributes for accessibility
 9. The form should look premium, modern, and professional
 10. Use Hebrew labels exactly as provided
+11. Navigation buttons should be modern with hover effects
+
+TAB NAVIGATION CSS STRUCTURE:
+- .page-tabs: flex container for tab indicators
+- .page-tab: circle with page number (width: 40px, height: 40px, border-radius: 50%)
+- .page-tab.active: accent color background
+- .page-tab.completed: green background with checkmark
+- .tab-connector: horizontal line between tabs
+- .form-page: container for each page (display: none by default)
+- .form-page.active: visible page (display: block)
+- .page-navigation: flex container for prev/next buttons
+- .nav-btn: styled navigation button
 
 FIELD TYPE MAPPING:
 - "text" → <input type="text">

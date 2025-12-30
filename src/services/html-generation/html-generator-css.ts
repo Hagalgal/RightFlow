@@ -410,8 +410,257 @@ textarea:invalid:not(:placeholder-shown) {
     max-width: 100%;
   }
 
-  button[type="submit"] {
+  button[type="submit"],
+  .page-navigation,
+  .page-tabs {
     display: none;
+  }
+
+  .form-page {
+    display: block !important;
+    page-break-after: always;
+  }
+}
+
+/* ========================================
+   Multi-Page Tab Navigation
+   ======================================== */
+
+/* Page tabs container */
+.page-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Tab indicator (circle with page number) */
+.page-tab {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #fff;
+  color: #999;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.page-tab:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+.page-tab.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+  box-shadow: 0 4px 12px ${primaryColor}40;
+}
+
+.page-tab.completed {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: white;
+}
+
+.page-tab.completed::after {
+  content: '✓';
+  position: absolute;
+  top: -5px;
+  ${rtl ? 'left' : 'right'}: -5px;
+  width: 18px;
+  height: 18px;
+  background: #4caf50;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* Connector line between tabs */
+.tab-connector {
+  width: 30px;
+  height: 2px;
+  background: #ddd;
+  transition: background 0.3s ease;
+}
+
+.tab-connector.completed {
+  background: #4caf50;
+}
+
+/* Form pages container */
+.form-pages {
+  position: relative;
+  min-height: 300px;
+}
+
+/* Individual page */
+.form-page {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.form-page.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page title */
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title .page-number {
+  width: 28px;
+  height: 28px;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* Navigation buttons */
+.page-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  gap: 15px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 2px solid var(--accent-color);
+  background: white;
+  color: var(--accent-color);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: ${sv.borderRadius};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px ${primaryColor}30;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nav-btn.primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.nav-btn.primary:hover:not(:disabled) {
+  background: ${adjustColor(primaryColor, -15)};
+}
+
+/* Arrow icons for navigation */
+.nav-btn .arrow {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Page progress indicator */
+.page-progress {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.page-progress strong {
+  color: var(--accent-color);
+}
+
+/* Responsive adjustments for tabs */
+@media (max-width: 768px) {
+  .page-tabs {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .page-tab {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .tab-connector {
+    width: 20px;
+  }
+
+  .page-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-progress {
+    order: -1;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-tab {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .tab-connector {
+    width: 15px;
   }
 }
 `;
@@ -443,9 +692,13 @@ function adjustColor(hex: string, percent: number): string {
 }
 
 /**
- * Generates minimal JavaScript for form handling
+ * Generates JavaScript for form handling with multi-page tab navigation
  */
-export function generateFormJS(formId: string, rtl: boolean): string {
+export function generateFormJS(
+  formId: string,
+  rtl: boolean,
+  totalPages: number = 1
+): string {
   return `
 (function() {
   'use strict';
@@ -453,17 +706,86 @@ export function generateFormJS(formId: string, rtl: boolean): string {
   const form = document.getElementById('${formId}');
   if (!form) return;
 
-  // Form submission handler
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
+  // Multi-page navigation state
+  let currentPage = 1;
+  const totalPages = ${totalPages};
+  const completedPages = new Set();
 
-    // Basic validation
-    const requiredFields = form.querySelectorAll('[required]');
+  // Get navigation elements
+  const pages = form.querySelectorAll('.form-page');
+  const tabs = document.querySelectorAll('.page-tab');
+  const connectors = document.querySelectorAll('.tab-connector');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const submitBtn = document.getElementById('submit-btn');
+  const progressText = document.getElementById('page-progress-text');
+
+  // Initialize page display
+  function showPage(pageNum) {
+    // Hide all pages
+    pages.forEach(function(page) {
+      page.classList.remove('active');
+    });
+
+    // Show current page
+    const activePage = document.getElementById('page-' + pageNum);
+    if (activePage) {
+      activePage.classList.add('active');
+    }
+
+    // Update tabs
+    tabs.forEach(function(tab, index) {
+      tab.classList.remove('active');
+      if (index + 1 === pageNum) {
+        tab.classList.add('active');
+      }
+    });
+
+    // Update navigation buttons
+    if (prevBtn) {
+      prevBtn.disabled = pageNum === 1;
+    }
+    if (nextBtn) {
+      nextBtn.style.display = pageNum === totalPages ? 'none' : 'flex';
+    }
+    if (submitBtn) {
+      submitBtn.style.display = pageNum === totalPages ? 'flex' : 'none';
+    }
+
+    // Update progress text
+    if (progressText) {
+      progressText.innerHTML = '${rtl ? 'עמוד' : 'Page'} <strong>' + pageNum + '</strong> ${rtl ? 'מתוך' : 'of'} <strong>' + totalPages + '</strong>';
+    }
+
+    currentPage = pageNum;
+  }
+
+  // Mark page as completed
+  function markPageCompleted(pageNum) {
+    completedPages.add(pageNum);
+    const tab = tabs[pageNum - 1];
+    if (tab && pageNum !== currentPage) {
+      tab.classList.add('completed');
+    }
+    // Update connector
+    if (pageNum < totalPages && connectors[pageNum - 1]) {
+      connectors[pageNum - 1].classList.add('completed');
+    }
+  }
+
+  // Validate current page fields
+  function validateCurrentPage() {
+    const activePage = document.getElementById('page-' + currentPage);
+    if (!activePage) return true;
+
+    const requiredFields = activePage.querySelectorAll('[required]');
     let isValid = true;
 
     requiredFields.forEach(function(field) {
       const validation = document.getElementById(field.id + '_validation');
-      if (!field.value || field.value.trim() === '') {
+      const value = field.type === 'checkbox' ? field.checked : field.value;
+
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
         isValid = false;
         field.style.borderColor = '#e53935';
         if (validation) {
@@ -477,12 +799,100 @@ export function generateFormJS(formId: string, rtl: boolean): string {
       }
     });
 
-    if (isValid) {
+    return isValid;
+  }
+
+  // Navigation handlers
+  function goToPage(pageNum) {
+    if (pageNum < 1 || pageNum > totalPages) return;
+
+    // Mark current page as completed if moving forward
+    if (pageNum > currentPage) {
+      markPageCompleted(currentPage);
+    }
+
+    showPage(pageNum);
+    // Scroll to top of form
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function nextPage() {
+    if (currentPage < totalPages) {
+      if (validateCurrentPage()) {
+        markPageCompleted(currentPage);
+        goToPage(currentPage + 1);
+      }
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  }
+
+  // Tab click handlers
+  tabs.forEach(function(tab, index) {
+    tab.addEventListener('click', function() {
+      const targetPage = index + 1;
+      // Allow going back freely, but validate when going forward
+      if (targetPage <= currentPage || completedPages.has(targetPage - 1)) {
+        goToPage(targetPage);
+      } else if (targetPage === currentPage + 1) {
+        nextPage();
+      }
+    });
+  });
+
+  // Button click handlers
+  if (prevBtn) {
+    prevBtn.addEventListener('click', prevPage);
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', nextPage);
+  }
+
+  // Form submission handler
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Validate all pages
+    let allValid = true;
+    for (let i = 1; i <= totalPages; i++) {
+      const page = document.getElementById('page-' + i);
+      if (!page) continue;
+
+      const requiredFields = page.querySelectorAll('[required]');
+      requiredFields.forEach(function(field) {
+        const value = field.type === 'checkbox' ? field.checked : field.value;
+        if (!value || (typeof value === 'string' && value.trim() === '')) {
+          allValid = false;
+          if (i !== currentPage) {
+            goToPage(i);
+          }
+        }
+      });
+      if (!allValid) break;
+    }
+
+    if (!validateCurrentPage()) {
+      allValid = false;
+    }
+
+    if (allValid) {
       // Collect form data
       const formData = new FormData(form);
       const data = {};
       formData.forEach(function(value, key) {
-        data[key] = value;
+        if (data[key]) {
+          if (Array.isArray(data[key])) {
+            data[key].push(value);
+          } else {
+            data[key] = [data[key], value];
+          }
+        } else {
+          data[key] = value;
+        }
       });
 
       console.log('Form data:', data);
@@ -500,6 +910,20 @@ export function generateFormJS(formId: string, rtl: boolean): string {
       }
     });
   });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowRight') {
+      ${rtl ? 'prevPage()' : 'nextPage()'};
+    } else if (e.key === 'ArrowLeft') {
+      ${rtl ? 'nextPage()' : 'prevPage()'};
+    }
+  });
+
+  // Initialize first page
+  showPage(1);
 })();
 `;
 }

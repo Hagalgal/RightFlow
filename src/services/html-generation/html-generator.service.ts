@@ -145,43 +145,164 @@ function generateInputHtml(field: HtmlFormField): string {
   }
 }
 
-/**
- * Generates HTML for a field group (section)
- */
-function generateSectionHtml(
-  group: HtmlFieldGroup,
-  allFields: HtmlFormField[],
-  includeValidation: boolean
-): string {
-  const fieldsInGroup = allFields.filter((f) => group.fields.includes(f.id));
 
-  if (fieldsInGroup.length === 0) {
-    return '';
+/**
+ * Groups fields by page number
+ */
+function groupFieldsByPage(
+  fields: HtmlFormField[]
+): Map<number, HtmlFormField[]> {
+  const pageMap = new Map<number, HtmlFormField[]>();
+
+  for (const field of fields) {
+    const pageNum = field.position?.page ?? 1;
+    if (!pageMap.has(pageNum)) {
+      pageMap.set(pageNum, []);
+    }
+    pageMap.get(pageNum)!.push(field);
   }
 
-  const rows = groupFieldsIntoRows(fieldsInGroup);
+  return pageMap;
+}
+
+/**
+ * Generates tab indicators HTML
+ */
+function generateTabsHtml(totalPages: number): string {
+  if (totalPages <= 1) return '';
+
+  let html = '<div class="page-tabs" role="tablist">';
+
+  for (let i = 1; i <= totalPages; i++) {
+    html += `
+      <div class="page-tab${i === 1 ? ' active' : ''}"
+           role="tab"
+           aria-selected="${i === 1}"
+           aria-controls="page-${i}"
+           tabindex="${i === 1 ? 0 : -1}">
+        ${i}
+      </div>`;
+
+    // Add connector between tabs (except after last)
+    if (i < totalPages) {
+      html += '<div class="tab-connector"></div>';
+    }
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Generates navigation buttons HTML
+ */
+function generateNavigationHtml(
+  totalPages: number,
+  rtl: boolean
+): string {
+  if (totalPages <= 1) {
+    // Single page - just show submit button
+    return `
+    <div class="submit-wrapper">
+      <button type="submit" class="btn-submit">
+        ${rtl ? 'שלח טופס' : 'Submit Form'}
+      </button>
+    </div>`;
+  }
+
+  const prevArrow = rtl ? '→' : '←';
+  const nextArrow = rtl ? '←' : '→';
+
+  return `
+    <div class="page-navigation">
+      <button type="button" id="prev-btn" class="nav-btn" disabled>
+        <span class="arrow">${prevArrow}</span>
+        ${rtl ? 'הקודם' : 'Previous'}
+      </button>
+
+      <div class="page-progress" id="page-progress-text">
+        ${rtl ? 'עמוד' : 'Page'} <strong>1</strong> ${rtl ? 'מתוך' : 'of'} <strong>${totalPages}</strong>
+      </div>
+
+      <button type="button" id="next-btn" class="nav-btn primary">
+        ${rtl ? 'הבא' : 'Next'}
+        <span class="arrow">${nextArrow}</span>
+      </button>
+
+      <button type="submit" id="submit-btn" class="nav-btn primary" style="display: none;">
+        ${rtl ? 'שלח טופס' : 'Submit Form'}
+      </button>
+    </div>`;
+}
+
+/**
+ * Generates HTML for a single page of fields
+ */
+function generatePageHtml(
+  pageNum: number,
+  fields: HtmlFormField[],
+  groups: HtmlFieldGroup[],
+  includeValidation: boolean,
+  rtl: boolean,
+  isActive: boolean = false
+): string {
+  // Filter groups that have fields on this page
+  const pageFieldIds = new Set(fields.map((f) => f.id));
+  const pageGroups = groups.filter((g) =>
+    g.fields.some((fid) => pageFieldIds.has(fid))
+  );
 
   let html = `
-    <fieldset>
-      <legend>${escapeHtml(group.title)}</legend>
-      ${group.description ? `<p class="legend-note">${escapeHtml(group.description)}</p>` : ''}`;
+    <div class="form-page${isActive ? ' active' : ''}" id="page-${pageNum}" role="tabpanel">
+      <div class="page-title">
+        <span class="page-number">${pageNum}</span>
+        ${rtl ? `עמוד ${pageNum}` : `Page ${pageNum}`}
+      </div>`;
 
-  for (const row of rows) {
-    html += '<div class="form-row">';
-    for (const field of row) {
-      html += generateFieldHtml(field, includeValidation);
+  if (pageGroups.length > 0) {
+    for (const group of pageGroups) {
+      // Only include fields from this page
+      const groupFieldsOnPage = fields.filter((f) => group.fields.includes(f.id));
+      if (groupFieldsOnPage.length === 0) continue;
+
+      const rows = groupFieldsIntoRows(groupFieldsOnPage);
+
+      html += `
+      <fieldset>
+        <legend>${escapeHtml(group.title)}</legend>
+        ${group.description ? `<p class="legend-note">${escapeHtml(group.description)}</p>` : ''}`;
+
+      for (const row of rows) {
+        html += '<div class="form-row">';
+        for (const field of row) {
+          html += generateFieldHtml(field, includeValidation);
+        }
+        html += '</div>';
+      }
+
+      html += '</fieldset>';
     }
-    html += '</div>';
+  } else {
+    // No groups - render all page fields in rows
+    const rows = groupFieldsIntoRows(fields);
+    html += `<fieldset><legend>${rtl ? 'פרטים' : 'Details'}</legend>`;
+    for (const row of rows) {
+      html += '<div class="form-row">';
+      for (const field of row) {
+        html += generateFieldHtml(field, includeValidation);
+      }
+      html += '</div>';
+    }
+    html += '</fieldset>';
   }
 
-  html += `
-    </fieldset>`;
-
+  html += '</div>';
   return html;
 }
 
 /**
  * Main HTML generation function (template-based)
+ * Generates multi-page tabbed form with navigation
  */
 export async function generateHtmlFormTemplate(
   fields: FieldDefinition[],
@@ -214,9 +335,14 @@ export async function generateHtmlFormTemplate(
   const htmlFields = mapFieldsToHtml(fields);
   const groups = createFieldGroups(fields);
 
-  // Generate CSS and JS
+  // Group fields by page
+  const pageMap = groupFieldsByPage(htmlFields);
+  const pageNumbers = Array.from(pageMap.keys()).sort((a, b) => a - b);
+  const totalPages = pageNumbers.length || 1;
+
+  // Generate CSS and JS with page count
   const cssContent = generateDocsFlowCSS(finalOptions.rtl, finalOptions.theme);
-  const jsContent = generateFormJS(formId, finalOptions.rtl);
+  const jsContent = generateFormJS(formId, finalOptions.rtl, totalPages);
 
   // Build HTML document
   const dirAttr = finalOptions.rtl ? 'dir="rtl"' : '';
@@ -240,39 +366,41 @@ ${cssContent}
     ${finalOptions.formDescription ? `<p>${escapeHtml(finalOptions.formDescription)}</p>` : ''}
   </header>
 
+  ${generateTabsHtml(totalPages)}
+
   <form id="${formId}" novalidate>
+    <div class="form-pages">
 `;
 
-  // Generate sections
-  if (groups.length > 0) {
-    for (const group of groups) {
-      htmlContent += generateSectionHtml(
-        group,
-        htmlFields,
-        finalOptions.includeValidation
-      );
-    }
-  } else {
-    // No groups - render all fields in rows
-    const rows = groupFieldsIntoRows(htmlFields);
-    htmlContent += '<fieldset><legend>פרטים</legend>';
-    for (const row of rows) {
-      htmlContent += '<div class="form-row">';
-      for (const field of row) {
-        htmlContent += generateFieldHtml(field, finalOptions.includeValidation);
-      }
-      htmlContent += '</div>';
-    }
-    htmlContent += '</fieldset>';
+  // Generate pages
+  for (let i = 0; i < pageNumbers.length; i++) {
+    const pageNum = pageNumbers[i];
+    const pageFields = pageMap.get(pageNum) || [];
+    htmlContent += generatePageHtml(
+      i + 1, // Use 1-based index for display
+      pageFields,
+      groups,
+      finalOptions.includeValidation,
+      finalOptions.rtl,
+      i === 0 // First page is active
+    );
   }
 
-  // Submit button
+  // If no pages (shouldn't happen), create single page with all fields
+  if (pageNumbers.length === 0) {
+    htmlContent += generatePageHtml(
+      1,
+      htmlFields,
+      groups,
+      finalOptions.includeValidation,
+      finalOptions.rtl,
+      true
+    );
+  }
+
   htmlContent += `
-    <div class="submit-wrapper">
-      <button type="submit" class="btn-submit">
-        ${finalOptions.rtl ? 'שלח טופס' : 'Submit Form'}
-      </button>
     </div>
+    ${generateNavigationHtml(totalPages, finalOptions.rtl)}
   </form>
 </div>
 
