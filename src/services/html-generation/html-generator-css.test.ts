@@ -390,5 +390,218 @@ describe('html-generator-css', () => {
         expect(js).toContain('ArrowLeft');
       });
     });
+
+    // Date validation tests (parseDate function)
+    describe('date validation in parseDate function', () => {
+      // Helper to extract and test parseDate function
+      const testParseDate = (dateString: string): Date | null => {
+        const js = generateFormJS('myForm', true);
+
+        // Extract parseDate function from generated JS
+        const parseDateMatch = js.match(/function parseDate\(str\) \{[\s\S]*?\n    \}/);
+        if (!parseDateMatch) {
+          throw new Error('parseDate function not found in generated JS');
+        }
+
+        // Create a safe eval context with the function
+        const testCode = `
+          ${parseDateMatch[0]}
+          return parseDate('${dateString}');
+        `;
+
+        try {
+          // Using Function constructor is safer than eval for testing
+          const testFn = new Function(testCode);
+          return testFn();
+        } catch (e) {
+          return null;
+        }
+      };
+
+      describe('valid dates', () => {
+        it('should accept valid date: 15/06/2024', () => {
+          const result = testParseDate('15/06/2024');
+          expect(result).not.toBeNull();
+          expect(result?.getDate()).toBe(15);
+          expect(result?.getMonth()).toBe(5); // June is month 5 (0-indexed)
+          expect(result?.getFullYear()).toBe(2024);
+        });
+
+        it('should accept valid date: 01/01/2000', () => {
+          const result = testParseDate('01/01/2000');
+          expect(result).not.toBeNull();
+          expect(result?.getDate()).toBe(1);
+          expect(result?.getMonth()).toBe(0);
+          expect(result?.getFullYear()).toBe(2000);
+        });
+
+        it('should accept valid date: 31/12/2099', () => {
+          const result = testParseDate('31/12/2099');
+          expect(result).not.toBeNull();
+          expect(result?.getDate()).toBe(31);
+          expect(result?.getMonth()).toBe(11);
+          expect(result?.getFullYear()).toBe(2099);
+        });
+
+        it('should accept leap year date: 29/02/2024', () => {
+          const result = testParseDate('29/02/2024');
+          expect(result).not.toBeNull();
+          expect(result?.getDate()).toBe(29);
+          expect(result?.getMonth()).toBe(1);
+        });
+      });
+
+      describe('invalid month values', () => {
+        it('should reject month 0 (prevents array out of bounds)', () => {
+          const result = testParseDate('15/00/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject month 13', () => {
+          const result = testParseDate('15/13/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject negative month', () => {
+          const result = testParseDate('15/-1/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject month 99', () => {
+          const result = testParseDate('15/99/2024');
+          expect(result).toBeNull();
+        });
+      });
+
+      describe('invalid day values', () => {
+        it('should reject day 0', () => {
+          const result = testParseDate('00/06/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject day 32', () => {
+          const result = testParseDate('32/06/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject day 40', () => {
+          const result = testParseDate('40/06/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject negative day', () => {
+          const result = testParseDate('-5/06/2024');
+          expect(result).toBeNull();
+        });
+      });
+
+      describe('invalid year values', () => {
+        it('should reject year before 1900', () => {
+          const result = testParseDate('15/06/1899');
+          expect(result).toBeNull();
+        });
+
+        it('should reject year after 2100', () => {
+          const result = testParseDate('15/06/2101');
+          expect(result).toBeNull();
+        });
+
+        it('should reject negative year', () => {
+          const result = testParseDate('15/06/-100');
+          expect(result).toBeNull();
+        });
+
+        it('should reject year 0', () => {
+          const result = testParseDate('15/06/0000');
+          expect(result).toBeNull();
+        });
+      });
+
+      describe('invalid actual dates (calendar validity)', () => {
+        it('should reject February 30', () => {
+          const result = testParseDate('30/02/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject February 29 in non-leap year', () => {
+          const result = testParseDate('29/02/2023');
+          expect(result).toBeNull();
+        });
+
+        it('should reject April 31 (April has 30 days)', () => {
+          const result = testParseDate('31/04/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject June 31 (June has 30 days)', () => {
+          const result = testParseDate('31/06/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject September 31 (September has 30 days)', () => {
+          const result = testParseDate('31/09/2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject November 31 (November has 30 days)', () => {
+          const result = testParseDate('31/11/2024');
+          expect(result).toBeNull();
+        });
+      });
+
+      describe('invalid formats', () => {
+        it('should reject date with wrong separator', () => {
+          const result = testParseDate('15-06-2024');
+          expect(result).toBeNull();
+        });
+
+        it('should reject date with only 2 parts', () => {
+          const result = testParseDate('15/06');
+          expect(result).toBeNull();
+        });
+
+        it('should reject date with 4 parts', () => {
+          const result = testParseDate('15/06/2024/extra');
+          expect(result).toBeNull();
+        });
+
+        it('should reject empty string', () => {
+          const result = testParseDate('');
+          expect(result).toBeNull();
+        });
+
+        it('should reject non-numeric values', () => {
+          const result = testParseDate('aa/bb/cccc');
+          expect(result).toBeNull();
+        });
+      });
+
+      describe('edge cases', () => {
+        it('should accept dates at year boundary (1900)', () => {
+          const result = testParseDate('01/01/1900');
+          expect(result).not.toBeNull();
+        });
+
+        it('should accept dates at year boundary (2100)', () => {
+          const result = testParseDate('31/12/2100');
+          expect(result).not.toBeNull();
+        });
+
+        it('should accept minimum valid day (1)', () => {
+          const result = testParseDate('01/06/2024');
+          expect(result).not.toBeNull();
+        });
+
+        it('should accept maximum valid day for 31-day month', () => {
+          const result = testParseDate('31/01/2024');
+          expect(result).not.toBeNull();
+        });
+
+        it('should accept maximum valid day for 30-day month', () => {
+          const result = testParseDate('30/04/2024');
+          expect(result).not.toBeNull();
+        });
+      });
+    });
   });
 });
