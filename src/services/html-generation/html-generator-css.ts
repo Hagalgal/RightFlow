@@ -141,6 +141,7 @@ legend {
   margin-bottom: ${sp.gap};
   align-items: flex-end;
   flex-wrap: wrap;
+  ${rtl ? 'flex-direction: row-reverse;' : ''}
 }
 
 .form-group {
