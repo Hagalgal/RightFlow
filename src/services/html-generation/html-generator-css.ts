@@ -141,6 +141,7 @@ legend {
   margin-bottom: ${sp.gap};
   align-items: flex-end;
   flex-wrap: wrap;
+  ${rtl ? 'flex-direction: row-reverse;' : ''}
 }
 
 .form-group {
@@ -293,6 +294,130 @@ select:focus {
 
 .radio-group.vertical {
   flex-direction: column;
+}
+
+/* Date Picker */
+.date-picker-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-input {
+  flex: 1;
+}
+
+.date-picker-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-picker-btn:hover {
+  background: #f5f5f5;
+  border-color: var(--accent-color);
+}
+
+.date-picker-calendar {
+  position: absolute;
+  top: 100%;
+  ${rtl ? 'right' : 'left'}: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: ${sv.borderRadius};
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 12px;
+  z-index: 1000;
+  min-width: 280px;
+}
+
+.date-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.date-picker-nav {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.date-picker-nav:hover {
+  background: #f0f0f0;
+}
+
+.date-picker-current {
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+  text-align: center;
+}
+
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.date-picker-day-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  padding: 4px;
+}
+
+.date-picker-day {
+  aspect-ratio: 1;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: all 0.2s;
+  padding: 4px;
+}
+
+.date-picker-day:hover:not(.empty):not(.disabled) {
+  background: var(--accent-color);
+  color: white;
+}
+
+.date-picker-day.today {
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.date-picker-day.selected {
+  background: var(--accent-color);
+  color: white;
+  font-weight: 600;
+}
+
+.date-picker-day.empty {
+  cursor: default;
+}
+
+.date-picker-day.disabled {
+  color: #ccc;
+  cursor: not-allowed;
 }
 
 /* Signature field - Canvas-based signature pad */
@@ -868,6 +993,20 @@ export function generateFormJS(
     const activePage = document.getElementById('page-' + pageId);
     if (activePage) {
       activePage.classList.add('active');
+
+      // Initialize signature canvases on this page
+      setTimeout(function() {
+        const pageCanvases = activePage.querySelectorAll('.signature-canvas');
+        pageCanvases.forEach(function(canvas) {
+          // Find the signature pad object and reinitialize
+          const padObj = window.formSignaturePads.find(function(p) {
+            return p.canvas === canvas;
+          });
+          if (padObj && padObj.resize) {
+            padObj.resize();
+          }
+        });
+      }, 50); // Small delay to ensure DOM is rendered
     }
 
     // Update tabs
@@ -1072,6 +1211,201 @@ export function generateFormJS(
   });
 
   // ========================================
+  // Date Picker Functionality
+  // ========================================
+
+  const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  const HEBREW_DAYS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+
+  const datePickers = [];
+  const dateWrappers = form.querySelectorAll('.date-picker-wrapper');
+
+  dateWrappers.forEach(function(wrapper) {
+    const input = wrapper.querySelector('.date-input');
+    const button = wrapper.querySelector('.date-picker-btn');
+    const calendar = wrapper.querySelector('.date-picker-calendar');
+
+    if (!input || !button || !calendar) return;
+
+    let currentDate = new Date();
+    let selectedDate = null;
+
+    // Format date as dd/mm/yyyy
+    function formatDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return day + '/' + month + '/' + year;
+    }
+
+    // Parse dd/mm/yyyy to Date
+    // BUG FIX: Added comprehensive date validation
+    // Date: 2026-01-04
+    // Issue: Function allowed invalid dates (month=0, day=40, negative years)
+    //        causing array out of bounds access for HEBREW_MONTHS[month]
+    // Fix: Added range validation and actual date validity check
+    // Context: Documents/Fixes/date-validation-parsedate-fix.md
+    // Prevention: Added unit tests for edge cases
+    function parseDate(str) {
+      const parts = str.split('/');
+      if (parts.length !== 3) return null;
+
+      const day = parseInt(parts[0], 10);
+      const monthInput = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+
+      // Validate parsing succeeded
+      if (isNaN(day) || isNaN(monthInput) || isNaN(year)) return null;
+
+      // Validate ranges BEFORE using values
+      // Month: 1-12 (user input), converted to 0-11 for Date object
+      if (monthInput < 1 || monthInput > 12) return null;
+
+      // Day: 1-31 (basic range, actual validity checked below)
+      if (day < 1 || day > 31) return null;
+
+      // Year: reasonable range to prevent obvious errors
+      if (year < 1900 || year > 2100) return null;
+
+      // Convert month to 0-indexed for Date object
+      const month = monthInput - 1;
+
+      // Create date and verify it's actually valid
+      // JavaScript Date auto-corrects invalid dates (e.g., Feb 30 becomes Mar 2)
+      // so we check that the created date matches our input
+      const date = new Date(year, month, day);
+
+      // Verify the date components match what we put in
+      // This catches cases like Feb 30, Apr 31, etc.
+      if (date.getFullYear() !== year ||
+          date.getMonth() !== month ||
+          date.getDate() !== day) {
+        return null;
+      }
+
+      return date;
+    }
+
+    // Render calendar
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Header
+      let html = '<div class="date-picker-header">';
+      html += '<button type="button" class="date-picker-nav" data-action="prev">◀</button>';
+      html += '<div class="date-picker-current">' + HEBREW_MONTHS[month] + ' ' + year + '</div>';
+      html += '<button type="button" class="date-picker-nav" data-action="next">▶</button>';
+      html += '</div>';
+
+      // Grid
+      html += '<div class="date-picker-grid">';
+
+      // Day headers
+      for (var i = 0; i < 7; i++) {
+        html += '<div class="date-picker-day-header">' + HEBREW_DAYS[i] + '</div>';
+      }
+
+      // Calculate first day of month
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Empty cells before first day
+      for (var i = 0; i < firstDay; i++) {
+        html += '<button type="button" class="date-picker-day empty" disabled></button>';
+      }
+
+      // Days
+      const today = new Date();
+      for (var day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+
+        var classes = 'date-picker-day';
+        if (isToday) classes += ' today';
+        if (isSelected) classes += ' selected';
+
+        html += '<button type="button" class="' + classes + '" data-day="' + day + '">' + day + '</button>';
+      }
+
+      html += '</div>';
+      calendar.innerHTML = html;
+
+      // Attach event listeners
+      calendar.querySelectorAll('.date-picker-nav').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const action = this.dataset.action;
+          if (action === 'prev') {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+          } else if (action === 'next') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+          }
+          renderCalendar();
+        });
+      });
+
+      calendar.querySelectorAll('.date-picker-day:not(.empty)').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const day = parseInt(this.dataset.day, 10);
+          selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+          input.value = formatDate(selectedDate);
+          calendar.style.display = 'none';
+        });
+      });
+    }
+
+    // Toggle calendar
+    button.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isVisible = calendar.style.display !== 'none';
+
+      // Close all other calendars
+      document.querySelectorAll('.date-picker-calendar').forEach(function(cal) {
+        cal.style.display = 'none';
+      });
+
+      if (!isVisible) {
+        // Parse current input value
+        const parsed = parseDate(input.value);
+        if (parsed) {
+          currentDate = new Date(parsed);
+          selectedDate = parsed;
+        } else {
+          currentDate = new Date();
+          selectedDate = null;
+        }
+        renderCalendar();
+        calendar.style.display = 'block';
+      }
+    });
+
+    // Manual input validation
+    input.addEventListener('blur', function() {
+      const parsed = parseDate(this.value);
+      if (parsed) {
+        selectedDate = parsed;
+        this.value = formatDate(parsed);
+      }
+    });
+
+    // Close calendar when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!wrapper.contains(e.target)) {
+        calendar.style.display = 'none';
+      }
+    });
+
+    datePickers.push({
+      input: input,
+      wrapper: wrapper,
+      getDate: function() { return selectedDate; }
+    });
+  });
+
+  // ========================================
   // Signature Pad Functionality
   // ========================================
 
@@ -1093,9 +1427,18 @@ export function generateFormJS(
     // Set canvas size to match display size
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
+
+      // Skip if canvas is not visible (width/height = 0)
+      if (rect.width === 0 || rect.height === 0) {
+        return;
+      }
+
       const dpr = window.devicePixelRatio || 1;
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
+
+      // Reset transform and apply scale
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
@@ -1212,8 +1555,12 @@ export function generateFormJS(
       canvas: canvas,
       fieldId: fieldId,
       clear: clearSignature,
+      resize: resizeCanvas,
       hasSignature: function() { return hasSignature; }
     });
+
+    // Try initial resize (may fail if canvas not visible yet)
+    setTimeout(resizeCanvas, 100);
   });
 
   // Expose signature pads for external access

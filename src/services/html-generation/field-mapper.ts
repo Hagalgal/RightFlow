@@ -209,11 +209,12 @@ export function groupFieldsIntoRows(
     rows.push(currentRow);
   }
 
-  // Sort fields within each row by X position (RTL: right to left)
+  // Sort fields within each row by X position (left to right in DOM)
+  // Flexbox with dir="rtl" will automatically reverse visual order
   for (const row of rows) {
     row.sort((a, b) => {
       if (!a.position || !b.position) return 0;
-      return b.position.x - a.position.x; // RTL order
+      return a.position.x - b.position.x; // Left to right (lowest X first)
     });
   }
 

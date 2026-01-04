@@ -209,7 +209,13 @@ function generateInputHtml(field: HtmlFormField): string {
       return `<input type="tel" class="form-control" ${baseAttrs}>`;
 
     case 'date':
-      return `<input type="date" class="form-control" ${baseAttrs}>`;
+      return `
+        <div class="date-picker-wrapper" data-field-id="${escapeHtml(field.id)}">
+          <input type="text" class="form-control date-input" ${baseAttrs}
+                 placeholder="dd/mm/yyyy" pattern="\\d{2}/\\d{2}/\\d{4}">
+          <button type="button" class="date-picker-btn" aria-label="בחר תאריך">📅</button>
+          <div class="date-picker-calendar" style="display: none;"></div>
+        </div>`;
 
     case 'number':
       return `<input type="number" class="form-control" ${baseAttrs}>`;
