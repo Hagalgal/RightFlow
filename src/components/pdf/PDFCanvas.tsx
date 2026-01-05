@@ -115,9 +115,9 @@ export const PDFCanvas = ({
 
       const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
 
-      // Start drag for text field, dropdown, or signature (drag-to-create)
+      // Start drag for text field, dropdown, signature, or static text (drag-to-create)
       // But we'll check for minimum drag distance before creating
-      if ((activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field') && !isDragging) {
+      if ((activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field' || activeTool === 'static-text-field') && !isDragging) {
         startDrag(viewportCoords.x, viewportCoords.y);
         event.preventDefault(); // Prevent text selection during drag
         return;
@@ -335,7 +335,7 @@ export const PDFCanvas = ({
       if (!containerRef.current) return;
 
       // Handle drag for field creation
-      if (isDragging && (activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field')) {
+      if (isDragging && (activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field' || activeTool === 'static-text-field')) {
         const viewportCoords = getCanvasRelativeCoords(event, containerRef.current);
         updateDragPosition(viewportCoords.x, viewportCoords.y);
         event.preventDefault();
@@ -410,7 +410,7 @@ export const PDFCanvas = ({
       }
 
       // Handle drag-to-create field
-      if (!isDragging || (activeTool !== 'text-field' && activeTool !== 'dropdown-field' && activeTool !== 'signature-field') || !containerRef.current) return;
+      if (!isDragging || (activeTool !== 'text-field' && activeTool !== 'dropdown-field' && activeTool !== 'signature-field' && activeTool !== 'static-text-field') || !containerRef.current) return;
       if (!currentPageDimensions || !canvasWidth || dragStartX === null || dragStartY === null)
         return;
 
@@ -496,6 +496,27 @@ export const PDFCanvas = ({
           name: '',
           required: false,
           direction: 'ltr',
+        };
+      } else if (activeTool === 'static-text-field') {
+        newField = {
+          type: 'static-text',
+          pageNumber,
+          x: pdfTopCoords.x,
+          y: pdfBottomY, // Bottom edge in PDF coordinates
+          width: pdfWidth,
+          height: pdfHeight,
+          name: '',
+          required: false,
+          direction: settings.textField.direction,
+          content: 'טקסט סטטי',
+          textAlign: settings.textField.direction === 'rtl' ? 'right' : 'left',
+          fontSize: settings.textField.fontSize || 12,
+          fontWeight: 'normal',
+          fontStyle: 'normal',
+          textColor: '#1f2937',
+          backgroundColor: '#ffffff',
+          borderWidth: 1,
+          borderColor: '#9ca3af',
         };
       } else {
         newField = {
@@ -634,7 +655,7 @@ export const PDFCanvas = ({
   useEffect(() => {
     const handleGlobalMouseUp = (event: MouseEvent) => {
       // Handle drag-to-create field cancellation
-      if (isDragging && (activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field')) {
+      if (isDragging && (activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field' || activeTool === 'static-text-field')) {
         // If mouse released outside the canvas, just cancel the drag
         if (!containerRef.current?.contains(event.target as Node)) {
           endDrag(); // Cancel drag without creating field
@@ -671,7 +692,7 @@ export const PDFCanvas = ({
         onMouseUp={handleCanvasMouseUp}
         style={{
           cursor:
-            activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field'
+            activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field' || activeTool === 'static-text-field'
               ? 'crosshair'
               : activeTool === 'checkbox-field' || activeTool === 'radio-field'
                 ? 'copy' // Plus icon cursor for click-to-place

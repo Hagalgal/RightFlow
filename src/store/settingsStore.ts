@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AppSettings, DEFAULT_SETTINGS } from '@/types/settings';
+import { FormMetadata } from '@/types/fields';
 
 interface SettingsState {
   settings: AppSettings;
@@ -9,6 +10,7 @@ interface SettingsState {
   updateRadioFieldSettings: (settings: Partial<AppSettings['radioField']>) => void;
   updateDropdownFieldSettings: (settings: Partial<AppSettings['dropdownField']>) => void;
   updateNamingSettings: (settings: Partial<AppSettings['naming']>) => void;
+  autoPopulateFromMetadata: (metadata: FormMetadata) => void;
   resetSettings: () => void;
 }
 
@@ -94,6 +96,21 @@ export const useSettingsStore = create<SettingsState>()(
             },
           },
         })),
+
+      autoPopulateFromMetadata: (metadata) =>
+        set((state) => {
+          console.log('[Settings] Auto-populating from metadata:', metadata);
+          return {
+            settings: {
+              ...state.settings,
+              naming: {
+                ...state.settings.naming,
+                insuranceCompany: metadata.companyName,
+                formName: metadata.formName,
+              },
+            },
+          };
+        }),
 
       resetSettings: () =>
         set({

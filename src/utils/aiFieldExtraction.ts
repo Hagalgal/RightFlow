@@ -1,4 +1,4 @@
-import { FieldDefinition, PageMetadata, GuidanceText } from '@/types/fields';
+import { FieldDefinition, PageMetadata, GuidanceText, FormMetadata } from '@/types/fields';
 import { PDFDocument } from 'pdf-lib';
 import { detectRadioGroups } from './fieldGrouping';
 import { reindexFields } from './fieldSorting';
@@ -225,7 +225,7 @@ async function processPagesInBatches(
 export async function extractFieldsWithAI(
   pdfFile: File,
   onProgress?: (status: string) => void,
-): Promise<{ fields: FieldDefinition[], metadata: PageMetadata[] }> {
+): Promise<{ fields: FieldDefinition[], metadata: PageMetadata[], formMetadata?: FormMetadata }> {
   onProgress?.('טוען מסמך PDF...');
 
   // Load PDF document
@@ -241,6 +241,7 @@ export async function extractFieldsWithAI(
 
   let allFields: GeminiFieldResponse[] = [];
   let allGuidance: GeminiGuidanceResponse[] = [];
+  let extractedFormMetadata: FormMetadata | undefined;
 
   if (pageCount <= PAGE_THRESHOLD) {
     // Small document - process entire PDF at once
@@ -261,9 +262,10 @@ export async function extractFieldsWithAI(
       throw new Error(error.error || 'AI extraction failed');
     }
 
-    const { fields, guidanceTexts } = await response.json();
+    const { fields, guidanceTexts, formMetadata } = await response.json();
     allFields = fields;
     allGuidance = guidanceTexts || [];
+    extractedFormMetadata = formMetadata;
   } else {
     // Large document - process page by page
     onProgress?.(`מסמך גדול (${pageCount} עמודים) - מפצל לעמודים בודדים...`);
@@ -377,7 +379,13 @@ export async function extractFieldsWithAI(
   const sortedFields = reindexFields(processedFields, 'rtl');
 
   onProgress?.(`הושלם! זוהו ${sortedFields.length} שדות מ-${pageCount} עמודים`);
-  return { fields: sortedFields, metadata };
+
+  // Log form metadata if extracted
+  if (extractedFormMetadata) {
+    console.log('[AI Extraction] Form metadata:', extractedFormMetadata);
+  }
+
+  return { fields: sortedFields, metadata, formMetadata: extractedFormMetadata };
 }
 
 /**
@@ -386,7 +394,7 @@ export async function extractFieldsWithAI(
 export async function extractFieldsWithMetadata(
   pdfFile: File,
   onProgress?: (status: string) => void,
-): Promise<{ fields: FieldDefinition[], metadata: PageMetadata[] }> {
+): Promise<{ fields: FieldDefinition[], metadata: PageMetadata[], formMetadata?: FormMetadata }> {
   return extractFieldsWithAI(pdfFile, onProgress);
 }
 

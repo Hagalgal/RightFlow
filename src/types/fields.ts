@@ -109,3 +109,12 @@ export interface PageMetadata {
   sections: Array<{ name: string; y: number; height: number }>;
   guidanceTexts: GuidanceText[];
 }
+
+/**
+ * Form identification metadata extracted from PDF
+ */
+export interface FormMetadata {
+  companyName: string;
+  formName: string;
+  confidence: 'high' | 'medium' | 'low';
+}
