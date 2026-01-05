@@ -3,6 +3,7 @@ import { CheckboxField } from './CheckboxField';
 import { RadioField } from './RadioField';
 import { DropdownField } from './DropdownField';
 import { SignatureField } from './SignatureField';
+import { StaticTextField } from './StaticTextField';
 import { FieldDefinition } from '@/types/fields';
 
 interface PageDimensions {
@@ -76,6 +77,22 @@ export const FieldOverlay = ({
             return <DropdownField key={field.id} {...commonProps} />;
           } else if (field.type === 'signature') {
             return <SignatureField key={field.id} {...commonProps} />;
+          } else if (field.type === 'static-text') {
+            return (
+              <StaticTextField
+                key={field.id}
+                field={field}
+                scale={scaleFactor}
+                isSelected={isSelected}
+                onClick={(e) => {
+                  if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                    onToggleFieldSelection(field.id);
+                  } else {
+                    onFieldSelect(field.id);
+                  }
+                }}
+              />
+            );
           }
 
           return null;

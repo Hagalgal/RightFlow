@@ -17,6 +17,7 @@ function mapFieldType(type: FieldDefinition['type']): HtmlFieldType {
     case 'checkbox':
     case 'radio':
     case 'signature':
+    case 'static-text':
       return type;
     default:
       return 'text';
@@ -52,6 +53,19 @@ function mapFieldToHtml(field: FieldDefinition): HtmlFormField {
   if (field.validationType && field.validation?.enabled) {
     htmlField.validationType = field.validationType;
     htmlField.validators = field.validation.validators;
+  }
+
+  // Add static text properties if this is a static-text field
+  if (field.type === 'static-text') {
+    htmlField.content = field.content;
+    htmlField.textAlign = field.textAlign;
+    htmlField.backgroundColor = field.backgroundColor;
+    htmlField.textColor = field.textColor;
+    htmlField.fontWeight = field.fontWeight;
+    htmlField.fontStyle = field.fontStyle;
+    htmlField.fontSize = field.fontSize;
+    htmlField.borderColor = field.borderColor;
+    htmlField.borderWidth = field.borderWidth;
   }
 
   return htmlField;

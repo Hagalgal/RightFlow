@@ -240,7 +240,7 @@ export async function validatePDFFile(file: File): Promise<{
  * @param size - Font size input
  * @returns Clamped and validated font size
  */
-export function sanitizeFontSize(size: number | string | undefined): number {
+export function sanitizeFontSize(size: number | string | undefined | null): number {
   const MIN_FONT_SIZE = 8;
   const MAX_FONT_SIZE = 24;
   const DEFAULT_FONT_SIZE = 12;
@@ -271,4 +271,111 @@ export function sanitizeCoordinate(coord: number, max: number = 10000): number {
   }
 
   return Math.max(0, Math.min(max, coord));
+}
+
+/**
+ * Validate and sanitize hex color input
+ *
+ * Ensures color values are valid hex codes to prevent XSS and injection attacks.
+ * Supports 3-digit (#RGB) and 6-digit (#RRGGBB) hex color formats.
+ *
+ * @param color - Color input to validate
+ * @param fallback - Fallback color if invalid (default: '#000000')
+ * @returns Valid hex color or fallback
+ *
+ * @example
+ * sanitizeHexColor('#ff0000') // Returns: '#ff0000'
+ * sanitizeHexColor('#f00') // Returns: '#f00'
+ * sanitizeHexColor('red') // Returns: '#000000' (fallback)
+ * sanitizeHexColor('<script>alert(1)</script>') // Returns: '#000000' (fallback)
+ * sanitizeHexColor('#ff00') // Returns: '#000000' (invalid format)
+ */
+export function sanitizeHexColor(
+  color: string | undefined | null,
+  fallback: string = '#000000',
+): string {
+  if (!color) return fallback;
+
+  // Remove any whitespace
+  const cleaned = color.trim();
+
+  // Validate hex color format: # followed by either 3 or 6 hex digits
+  const hexColorPattern = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+  if (!hexColorPattern.test(cleaned)) {
+    console.warn(`Invalid hex color format: "${color}". Using fallback: ${fallback}`);
+    return fallback;
+  }
+
+  // Convert to lowercase for consistency
+  return cleaned.toLowerCase();
+}
+
+/**
+ * Sanitize font weight value to prevent CSS injection
+ *
+ * Uses whitelist approach - only allows specific CSS font-weight values.
+ *
+ * @param fontWeight - Font weight input
+ * @returns Validated font weight ('normal' or 'bold')
+ *
+ * @example
+ * sanitizeFontWeight('bold') // Returns: 'bold'
+ * sanitizeFontWeight('900') // Returns: 'normal' (invalid)
+ * sanitizeFontWeight('bold; color: red') // Returns: 'normal' (injection attempt)
+ */
+export function sanitizeFontWeight(fontWeight: string | undefined | null): 'normal' | 'bold' {
+  const allowedValues = ['normal', 'bold'] as const;
+  if (!fontWeight || !allowedValues.includes(fontWeight as 'normal' | 'bold')) {
+    return 'normal';
+  }
+  return fontWeight as 'normal' | 'bold';
+}
+
+/**
+ * Sanitize font style value to prevent CSS injection
+ *
+ * Uses whitelist approach - only allows specific CSS font-style values.
+ *
+ * @param fontStyle - Font style input
+ * @returns Validated font style ('normal' or 'italic')
+ *
+ * @example
+ * sanitizeFontStyle('italic') // Returns: 'italic'
+ * sanitizeFontStyle('oblique') // Returns: 'normal' (not allowed)
+ * sanitizeFontStyle('italic; display: none') // Returns: 'normal' (injection attempt)
+ */
+export function sanitizeFontStyle(fontStyle: string | undefined | null): 'normal' | 'italic' {
+  const allowedValues = ['normal', 'italic'] as const;
+  if (!fontStyle || !allowedValues.includes(fontStyle as 'normal' | 'italic')) {
+    return 'normal';
+  }
+  return fontStyle as 'normal' | 'italic';
+}
+
+/**
+ * Sanitize text alignment value to prevent CSS injection
+ *
+ * Uses whitelist approach - only allows specific CSS text-align values.
+ * Supports RTL default alignment.
+ *
+ * @param textAlign - Text alignment input
+ * @param defaultAlign - Default alignment if invalid (default: 'left')
+ * @returns Validated text alignment
+ *
+ * @example
+ * sanitizeTextAlign('center') // Returns: 'center'
+ * sanitizeTextAlign('justify') // Returns: 'left' (not allowed)
+ * sanitizeTextAlign('right', 'right') // Returns: 'right' (with RTL default)
+ * sanitizeTextAlign('left; display: none', 'left') // Returns: 'left' (injection attempt blocked)
+ */
+export function sanitizeTextAlign(
+  textAlign: string | undefined | null,
+  defaultAlign: 'left' | 'center' | 'right' = 'left',
+): 'left' | 'center' | 'right' {
+  const allowedValues = ['left', 'center', 'right'] as const;
+  if (!textAlign || !allowedValues.includes(textAlign as 'left' | 'center' | 'right')) {
+    return defaultAlign;
+  }
+  return textAlign as 'left' | 'center' | 'right';
 }

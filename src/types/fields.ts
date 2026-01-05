@@ -2,9 +2,9 @@
  * Field type definitions for PDF form fields
  */
 
-export type FieldType = 'text' | 'checkbox' | 'radio' | 'dropdown' | 'signature';
+export type FieldType = 'text' | 'checkbox' | 'radio' | 'dropdown' | 'signature' | 'static-text';
 
-export type ToolMode = 'select' | 'text-field' | 'checkbox-field' | 'radio-field' | 'dropdown-field' | 'signature-field';
+export type ToolMode = 'select' | 'text-field' | 'checkbox-field' | 'radio-field' | 'dropdown-field' | 'signature-field' | 'static-text-field';
 
 /**
  * Validator configuration for field validation
@@ -49,6 +49,16 @@ export interface FieldDefinition {
   // Signature specific
   signatureImage?: string; // Base64 encoded signature image (PNG/JPG)
   signatureTimestamp?: string; // ISO timestamp when signature was captured
+
+  // Static text specific
+  content?: string; // Static text content to display (static-text only)
+  textAlign?: 'left' | 'center' | 'right'; // Text alignment (static-text only)
+  backgroundColor?: string; // Background color (static-text only)
+  textColor?: string; // Text color (static-text only)
+  fontWeight?: 'normal' | 'bold'; // Font weight (static-text only)
+  fontStyle?: 'normal' | 'italic'; // Font style (static-text only)
+  borderColor?: string; // Border color (static-text only)
+  borderWidth?: number; // Border width in pixels (static-text only)
 
   // Validation
   validationType?: string; // Field type ID from validation rules (e.g., "identity.israeli_id")

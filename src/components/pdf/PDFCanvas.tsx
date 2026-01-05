@@ -5,6 +5,7 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { FieldOverlay } from '@/components/fields/FieldOverlay';
 import { FieldPropertiesPanel } from '@/components/fields/FieldPropertiesPanel';
 import { MultiSelectPropertiesPanel } from '@/components/fields/MultiSelectPropertiesPanel';
+import { StaticTextPropertiesPanel } from '@/components/fields/StaticTextPropertiesPanel';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -799,6 +800,20 @@ export const PDFCanvas = ({
       {selectedFieldIds.length <= 1 && selectedFieldId && (() => {
         const selectedField = fields.find(f => f.id === selectedFieldId);
         if (!selectedField) return null;
+
+        // Static text fields use a different properties panel
+        if (selectedField.type === 'static-text') {
+          return (
+            <StaticTextPropertiesPanel
+              field={selectedField}
+              onUpdate={(updates) => updateFieldWithUndo(selectedFieldId, updates)}
+              onDelete={() => {
+                deleteFieldWithUndo(selectedFieldId);
+                selectField(null);
+              }}
+            />
+          );
+        }
 
         return (
           <FieldPropertiesPanel

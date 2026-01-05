@@ -19,7 +19,8 @@ export type HtmlFieldType =
   | 'select'
   | 'checkbox'
   | 'radio'
-  | 'signature';
+  | 'signature'
+  | 'static-text';
 
 /**
  * HTML form field - converted from FieldDefinition
@@ -46,6 +47,16 @@ export interface HtmlFormField {
   // Validation properties
   validationType?: string; // e.g., "identity.israeli_id"
   validators?: ValidatorConfig[]; // Array of validators to apply
+  // Static text properties
+  content?: string; // Text content for static-text fields
+  textAlign?: 'left' | 'center' | 'right';
+  backgroundColor?: string;
+  textColor?: string;
+  fontWeight?: 'normal' | 'bold';
+  fontStyle?: 'normal' | 'italic';
+  fontSize?: number;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 /**
