@@ -39,6 +39,7 @@ export interface Translations {
   radioFieldTool: string;
   dropdownFieldTool: string;
   signatureFieldTool: string;
+  staticTextFieldTool: string;
 
   // Field types
   textField: string;
@@ -120,6 +121,7 @@ export interface Translations {
   radioProperties: string;
   dropdownProperties: string;
   signatureProperties: string;
+  staticTextProperties: string;
   fieldNameEnglish: string;
   fieldNameHint: string;
   labelTitle: string;
@@ -160,6 +162,24 @@ export interface Translations {
   typeLabel: string;
   widthLabel: string;
   heightLabel: string;
+
+  // Static text properties
+  content: string;
+  textAlignment: string;
+  alignLeft: string;
+  alignCenter: string;
+  alignRight: string;
+  fontWeight: string;
+  normal: string;
+  bold: string;
+  fontStyle: string;
+  italic: string;
+  textColor: string;
+  backgroundColor: string;
+  border: string;
+  width: string;
+  color: string;
+  enterStaticText: string;
 
   // Recovery dialog
   recoveryTitle: string;
@@ -289,6 +309,7 @@ const hebrewTranslations: Translations = {
   radioFieldTool: 'כפתורי בחירה',
   dropdownFieldTool: 'רשימה נפתחת',
   signatureFieldTool: 'חתימה',
+  staticTextFieldTool: 'טקסט סטטי',
 
   // Field types
   textField: 'טקסט',
@@ -370,6 +391,7 @@ const hebrewTranslations: Translations = {
   radioProperties: 'מאפייני כפתור רדיו',
   dropdownProperties: 'מאפייני רשימה נפתחת',
   signatureProperties: 'מאפייני שדה חתימה',
+  staticTextProperties: 'מאפייני טקסט סטטי',
   fieldNameEnglish: 'שם שדה (באנגלית)',
   fieldNameHint: 'שם השדה (רק אותיות אנגליות, מספרים וקו תחתון)',
   labelTitle: 'תווית (כותרת)',
@@ -410,6 +432,24 @@ const hebrewTranslations: Translations = {
   typeLabel: 'סוג',
   widthLabel: 'רוחב',
   heightLabel: 'גובה',
+
+  // Static text properties
+  content: 'תוכן',
+  textAlignment: 'יישור טקסט',
+  alignLeft: 'שמאל',
+  alignCenter: 'מרכז',
+  alignRight: 'ימין',
+  fontWeight: 'עובי גופן',
+  normal: 'רגיל',
+  bold: 'מודגש',
+  fontStyle: 'סגנון גופן',
+  italic: 'נטוי',
+  textColor: 'צבע טקסט',
+  backgroundColor: 'צבע רקע',
+  border: 'מסגרת',
+  width: 'רוחב',
+  color: 'צבע',
+  enterStaticText: 'הזן טקסט סטטי...',
 
   // Recovery dialog
   recoveryTitle: 'שחזור נתונים',
@@ -539,6 +579,7 @@ const englishTranslations: Translations = {
   radioFieldTool: 'Radio Buttons',
   dropdownFieldTool: 'Dropdown',
   signatureFieldTool: 'Signature',
+  staticTextFieldTool: 'Static Text',
 
   // Field types
   textField: 'Text',
@@ -620,6 +661,7 @@ const englishTranslations: Translations = {
   radioProperties: 'Radio Button Properties',
   dropdownProperties: 'Dropdown Properties',
   signatureProperties: 'Signature Field Properties',
+  staticTextProperties: 'Static Text Properties',
   fieldNameEnglish: 'Field Name (English)',
   fieldNameHint: 'Field name (only English letters, numbers and underscore)',
   labelTitle: 'Label (Title)',
@@ -660,6 +702,24 @@ const englishTranslations: Translations = {
   typeLabel: 'Type',
   widthLabel: 'Width',
   heightLabel: 'Height',
+
+  // Static text properties
+  content: 'Content',
+  textAlignment: 'Text Alignment',
+  alignLeft: 'Left',
+  alignCenter: 'Center',
+  alignRight: 'Right',
+  fontWeight: 'Font Weight',
+  normal: 'Normal',
+  bold: 'Bold',
+  fontStyle: 'Font Style',
+  italic: 'Italic',
+  textColor: 'Text Color',
+  backgroundColor: 'Background Color',
+  border: 'Border',
+  width: 'Width',
+  color: 'Color',
+  enterStaticText: 'Enter static text...',
 
   // Recovery dialog
   recoveryTitle: 'Data Recovery',

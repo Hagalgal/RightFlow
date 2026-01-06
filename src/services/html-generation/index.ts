@@ -3,7 +3,7 @@
  * Main entry point for generating HTML forms from field definitions
  */
 
-import type { FieldDefinition } from '@/types/fields';
+import type { FieldDefinition, FormMetadata } from '@/types/fields';
 import type {
   HtmlGenerationOptions,
   GeneratedHtmlResult,
@@ -11,6 +11,8 @@ import type {
 import { generateHtmlWithGemini } from './gemini-html-generation';
 import { generateHtmlFormTemplate } from './html-generator.service';
 import { detectFormDirection } from './field-mapper';
+import { generateFilename } from '@/utils/filenameGenerator';
+import { useSettingsStore } from '@/store/settingsStore';
 import JSZip from 'jszip';
 
 // Re-export types for convenience
@@ -151,9 +153,12 @@ export async function downloadFormPackageZip(
   pdfFile: File,
   fields: FieldDefinition[],
   htmlResult: GeneratedHtmlResult,
-  filename?: string
+  filename?: string,
+  formMetadata?: FormMetadata
 ): Promise<void> {
-  const baseName = filename || htmlResult.formId || 'form-package';
+  // Use existing filename generator from settings if no filename provided
+  const settings = useSettingsStore.getState().settings;
+  const baseName = filename || generateFilename(settings.naming, htmlResult.formId || 'form-package');
 
   // Create ZIP file
   const zip = new JSZip();
@@ -163,27 +168,36 @@ export async function downloadFormPackageZip(
   const pdfBytes = await generateFillablePDF(pdfFile, fields);
   zip.file(`${baseName}.pdf`, pdfBytes);
 
-  // 2. Add JSON with field definitions
-  const fieldMetadata = fields.map((field) => ({
-    id: field.id,
-    name: field.name,
-    type: field.type,
-    pageNumber: field.pageNumber,
-    label: field.label,
-    sectionName: field.sectionName,
-    index: field.index,
-    required: field.required,
-    autoFill: field.autoFill,
-    direction: field.direction,
-    x: field.x,
-    y: field.y,
-    width: field.width,
-    height: field.height,
-    defaultValue: field.defaultValue,
-    options: field.options,
-    radioGroup: field.radioGroup,
-  }));
-  const jsonString = JSON.stringify(fieldMetadata, null, 2);
+  // 2. Add JSON with field definitions and form metadata
+  const packageData = {
+    formMetadata: formMetadata || {
+      companyName: 'Unknown',
+      formName: 'Unknown',
+      confidence: 'low' as const
+    },
+    fields: fields.map((field) => ({
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      pageNumber: field.pageNumber,
+      label: field.label,
+      sectionName: field.sectionName,
+      index: field.index,
+      required: field.required,
+      autoFill: field.autoFill,
+      direction: field.direction,
+      x: field.x,
+      y: field.y,
+      width: field.width,
+      height: field.height,
+      defaultValue: field.defaultValue,
+      options: field.options,
+      radioGroup: field.radioGroup,
+    })),
+    generatedAt: new Date().toISOString(),
+    version: '1.0'
+  };
+  const jsonString = JSON.stringify(packageData, null, 2);
   zip.file(`${baseName}.json`, jsonString);
 
   // 3. Add HTML file

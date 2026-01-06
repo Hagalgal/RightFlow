@@ -417,13 +417,13 @@ export const FieldPropertiesPanel = ({
               <Input
                 id="radio-spacing"
                 type="number"
-                min="0"
-                max="50"
+                min="-5"
+                max="10"
                 step="0.01"
                 value={field.spacing !== undefined ? field.spacing : 1}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  onUpdate({ spacing: isNaN(val) ? 0 : Math.max(0, val) });
+                  onUpdate({ spacing: isNaN(val) ? 0 : Math.max(-5, Math.min(10, val)) });
                 }}
                 dir="ltr"
                 className="text-left"

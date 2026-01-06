@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 import { X, ExternalLink, Loader2, FileCode, Archive } from 'lucide-react';
-import type { FieldDefinition } from '@/types/fields';
+import type { FieldDefinition, FormMetadata } from '@/types/fields';
 import {
   downloadFormPackageZip,
   previewHtmlInNewTab,
@@ -23,6 +23,7 @@ interface HtmlPreviewDialogProps {
   pdfFileName?: string;
   pdfFile?: File | null;
   fields?: FieldDefinition[];
+  formMetadata?: FormMetadata;
 }
 
 export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
@@ -34,6 +35,7 @@ export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
   pdfFileName,
   pdfFile,
   fields,
+  formMetadata,
 }) => {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = React.useState(false);
@@ -56,7 +58,7 @@ export const HtmlPreviewDialog: React.FC<HtmlPreviewDialogProps> = ({
 
     setIsDownloading(true);
     try {
-      await downloadFormPackageZip(pdfFile, fields, result, getBaseFilename());
+      await downloadFormPackageZip(pdfFile, fields, result, getBaseFilename(), formMetadata);
     } catch (error) {
       console.error('Error downloading ZIP:', error);
       alert('שגיאה בהורדת הקובץ. אנא נסה שוב.');

@@ -58,9 +58,16 @@ interface GuidanceTextResponse {
   heightPercent: number;
 }
 
+interface FormMetadata {
+  companyName: string;
+  formName: string;
+  confidence: 'high' | 'medium' | 'low';
+}
+
 interface AIResponseWrapper {
   fields: AIFieldResponse[];
   guidanceTexts?: GuidanceTextResponse[];
+  formMetadata?: FormMetadata;
 }
 
 /**
@@ -148,6 +155,16 @@ export default async function handler(
     const prompt = `You are analyzing a Hebrew PDF form. Extract ALL fillable fields with PRECISE coordinates.
 Scan EVERY page (${pageCount ? `Total: ${pageCount}` : 'All'}). Use PERCENTAGE coordinates (0-100).
 
+FORM IDENTIFICATION (FIRST PAGE ONLY):
+- Scan the TOP 20-25% of the FIRST page to identify:
+  1. Company Name: Look for company logo, header text, or issuing organization name
+  2. Form Name: Look for form title, document name, or main heading
+- Return in "formMetadata" with confidence level:
+  - "high": Both company and form name clearly visible
+  - "medium": One of them clearly visible
+  - "low": Neither clearly visible or uncertain
+- Examples: "Phoenix", "פניקס", "כלל ביטוח", "טופס בקשה לביטוח חיים"
+
 CRITICAL - COORDINATE PRECISION:
 - Measure coordinates EXACTLY where the fillable box/circle appears on the page.
 - xPercent: distance from LEFT edge of page (0=left, 100=right).
@@ -190,6 +207,11 @@ FIELD TYPES: "text", "checkbox", "radio", "dropdown", "signature".
 
 JSON OUTPUT FORMAT (ONLY):
 {
+  "formMetadata": {
+    "companyName": "Phoenix",
+    "formName": "טופס בקשה לביטוח חיים",
+    "confidence": "high"
+  },
   "fields": [
     {
       "type": "radio",
@@ -279,9 +301,15 @@ JSON OUTPUT FORMAT (ONLY):
     const pageStats: Record<number, number> = {};
     fields.forEach(f => { pageStats[f.pageNumber] = (pageStats[f.pageNumber] || 0) + 1; });
 
+    // Log form metadata if present
+    if (aiResponse.formMetadata) {
+      console.log('[Gemini AI] Form metadata extracted:', aiResponse.formMetadata);
+    }
+
     return res.status(200).json({
       fields,
       guidanceTexts,
+      formMetadata: aiResponse.formMetadata,
       stats: {
         totalFields: fields.length,
         fieldsPerPage: pageStats,

@@ -19,6 +19,13 @@ import {
   groupFieldsIntoRows,
 } from './field-mapper';
 import { generateDocsFlowCSS, generateFormJS } from './html-generator-css';
+import {
+  sanitizeHexColor,
+  sanitizeFontSize,
+  sanitizeFontWeight,
+  sanitizeFontStyle,
+  sanitizeTextAlign,
+} from '@/utils/inputSanitization';
 
 /**
  * Escapes HTML special characters
@@ -92,6 +99,11 @@ function generateFieldHtml(
     ? Math.max(1, Math.round(field.position.width / 50))
     : 1;
   const displayLabel = field.label || field.name;
+  // Static text fields don't need form-group wrapper or label
+  if (field.type === 'static-text') {
+    return generateInputHtml(field);
+  }
+
   const requiredMark = field.required ? '<span class="required">*</span>' : '';
 
   let fieldHtml = `
@@ -201,6 +213,61 @@ function generateInputHtml(field: HtmlFormField): string {
             </button>
           </div>
         </div>`;
+
+    case 'static-text': {
+      // BUG FIX: Sanitize all CSS values to prevent CSS injection attacks
+      // Date: 2026-01-05
+      // Issue: CSS values were inserted directly into inline styles without validation
+      // Fix: Added comprehensive sanitization for all style properties
+      // Context: Fixes Bug #2 - CSS Injection Vulnerability
+      // Prevention: Added sanitization functions and validation
+
+      // Sanitize text alignment with RTL default
+      const defaultAlign = field.direction === 'rtl' ? 'right' : 'left';
+      const textAlign = sanitizeTextAlign(field.textAlign, defaultAlign);
+
+      // Sanitize colors (validate hex format, prevent injection)
+      const backgroundColor = sanitizeHexColor(field.backgroundColor, 'transparent');
+      const textColor = sanitizeHexColor(field.textColor, '#1f2937');
+
+      // Sanitize font properties (only allow specific values)
+      const fontWeight = sanitizeFontWeight(field.fontWeight);
+      const fontStyle = sanitizeFontStyle(field.fontStyle);
+
+      // Sanitize font size (clamp to safe range)
+      const fontSize = sanitizeFontSize(field.fontSize);
+
+      // BUG FIX: Border width check handles 0 correctly
+      // Date: 2026-01-05
+      // Issue: field.borderWidth && field.borderColor treated 0 as falsy
+      // Fix: Explicitly check for undefined/null instead of truthy check
+      // Context: Fixes Bug #1 - Border Width Check, same as StaticTextField fix
+      // Prevention: Border width 0 now correctly shows 'none' border
+      const borderColor = sanitizeHexColor(field.borderColor, '#000000');
+      const borderStyle =
+        field.borderWidth !== undefined &&
+        field.borderWidth !== null &&
+        field.borderColor
+          ? `${field.borderWidth}px solid ${borderColor}`
+          : 'none';
+
+      return `
+        <div class="static-text-field" style="
+          text-align: ${textAlign};
+          background-color: ${backgroundColor};
+          color: ${textColor};
+          font-weight: ${fontWeight};
+          font-style: ${fontStyle};
+          font-size: ${fontSize}pt;
+          border: ${borderStyle};
+          padding: 8px;
+          margin-bottom: 12px;
+          white-space: pre-wrap;
+          direction: ${field.direction};
+        ">
+          ${escapeHtml(field.content || '')}
+        </div>`;
+    }
 
     case 'email':
       return `<input type="email" class="form-control" ${baseAttrs}>`;

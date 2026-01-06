@@ -36,6 +36,7 @@ export const MultiSelectPropertiesPanel = ({
 
   // Check if all selected fields have the same type
   const hasTextFields = selectedFields.some(f => f.type === 'text');
+  const hasRadioFields = selectedFields.some(f => f.type === 'radio');
   const allSameType = selectedFields.every(f => f.type === selectedFields[0]?.type);
 
   const commonSectionName = getCommonValue('sectionName');
@@ -46,6 +47,8 @@ export const MultiSelectPropertiesPanel = ({
   const commonFont = getCommonValue('font');
   const commonFontSize = getCommonValue('fontSize');
   const commonValidationType = getCommonValue('validationType');
+  const commonOrientation = getCommonValue('orientation');
+  const commonSpacing = getCommonValue('spacing');
 
   // Get available field types based on the common field type (only if all same type)
   const availableFieldTypes = useMemo(() => {
@@ -341,6 +344,60 @@ export const MultiSelectPropertiesPanel = ({
                 dir="ltr"
                 className="text-left"
               />
+            </div>
+          </>
+        )}
+
+        {/* Radio-specific properties (only if there are radio fields) */}
+        {hasRadioFields && (
+          <>
+            <div className="pt-4 border-t border-border">
+              <p className="text-sm font-medium mb-3">{t.radioProperties}</p>
+              {!allSameType && (
+                <p className="text-xs text-amber-600 mb-2">
+                  {t.appliesToRadioFieldsOnly}
+                </p>
+              )}
+            </div>
+
+            {/* Radio Orientation */}
+            <div className="space-y-2">
+              <Label htmlFor="multi-radio-orientation">{t.radioOrientation}</Label>
+              <Select
+                id="multi-radio-orientation"
+                value={commonOrientation === 'mixed' ? '' : (commonOrientation || 'vertical')}
+                onChange={(e) => onUpdateAll({ orientation: e.target.value as 'vertical' | 'horizontal' })}
+              >
+                {commonOrientation === 'mixed' && <option value="">{t.mixed}</option>}
+                <option value="vertical">{t.vertical}</option>
+                <option value="horizontal">{t.horizontal}</option>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t.radioOrientationHint}
+              </p>
+            </div>
+
+            {/* Radio Spacing */}
+            <div className="space-y-2">
+              <Label htmlFor="multi-radio-spacing">{t.spacingBetweenButtons}</Label>
+              <Input
+                id="multi-radio-spacing"
+                type="number"
+                min="-5"
+                max="10"
+                step="0.01"
+                value={commonSpacing === 'mixed' ? '' : (commonSpacing !== undefined ? commonSpacing : 1)}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  onUpdateAll({ spacing: isNaN(val) ? 0 : Math.max(-5, Math.min(10, val)) });
+                }}
+                placeholder={commonSpacing === 'mixed' ? t.mixed : ''}
+                dir="ltr"
+                className="text-left"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t.spacingHint}
+              </p>
             </div>
           </>
         )}

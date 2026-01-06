@@ -38,6 +38,7 @@ function App() {
   const [isGeneratingHtml, setIsGeneratingHtml] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState<GeneratedHtmlResult | null>(null);
   const [htmlLoadingStatus, setHtmlLoadingStatus] = useState('');
+  const [extractedFormMetadata, setExtractedFormMetadata] = useState<import('@/types/fields').FormMetadata | undefined>();
 
   // Zustand stores
   const {
@@ -51,6 +52,7 @@ function App() {
     selectedFieldId,
     selectedFieldIds,
     setPdfFile,
+    setPdfDocument,
     setCurrentPage,
     setTotalPages,
     setThumbnails,
@@ -215,6 +217,7 @@ function App() {
 
   const handlePDFLoadSuccess = async (pdf: any) => {
     setTotalPages(pdf.numPages);
+    setPdfDocument(pdf); // Store PDF document for text extraction
     console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
 
     // Generate thumbnails asynchronously
@@ -348,13 +351,18 @@ function App() {
       // Import field template utilities
       const { saveFieldsToFile } = await import('@/utils/fieldTemplates');
       const { reindexFields } = await import('@/utils/fieldSorting');
+      const { generateFilename } = await import('@/utils/filenameGenerator');
 
       // Sort fields by position based on language direction
       const sortedFields = reindexFields(fields, direction);
       console.log(`📐 Fields sorted by position (${direction}) before template save`);
 
+      // Generate default filename from naming settings (similar to handleSave)
+      const fallbackName = pdfFile?.name.replace('.pdf', '_template') || 'template';
+      const defaultName = generateFilename(settings.naming, fallbackName);
+
       // Prompt for template name
-      const templateName = prompt('הכנס שם לתבנית:', `template_${Date.now()}`);
+      const templateName = prompt('הכנס שם לתבנית:', defaultName);
       if (!templateName) return; // User cancelled
 
       // Save sorted fields to JSON file
@@ -511,13 +519,21 @@ function App() {
       // Import AI field extraction utility
       const { extractFieldsWithAI } = await import('@/utils/aiFieldExtraction');
 
-      const { fields: extractedFields, metadata } = await extractFieldsWithAI(pdfFile, (status) => {
+      const { fields: extractedFields, metadata, formMetadata } = await extractFieldsWithAI(pdfFile, (status) => {
         console.log(`AI Extraction: ${status}`);
       });
 
       if (extractedFields.length === 0) {
         alert('לא נמצאו שדות ב-PDF.\n\nיתכן שה-PDF אינו מכיל טפסים או שה-AI לא הצליח לזהות שדות.');
         return;
+      }
+
+      // Auto-populate settings from form metadata if available and confident
+      if (formMetadata && formMetadata.confidence !== 'low') {
+        const { autoPopulateFromMetadata } = useSettingsStore.getState();
+        autoPopulateFromMetadata(formMetadata);
+        setExtractedFormMetadata(formMetadata);
+        console.log(`✓ Auto-populated settings: ${formMetadata.companyName} - ${formMetadata.formName}`);
       }
 
       // Store metadata for each page
@@ -546,10 +562,17 @@ function App() {
       } else {
         // No existing fields - just populate
         loadFields(extractedFields);
-        alert(
-          `✅ ${extractedFields.length} שדות זוהו בהצלחה באמצעות AI!\n\n` +
-          `ניתן לערוך אותם או להוסיף שדות נוספים.`,
-        );
+
+        // Build success message
+        let successMessage = `✅ ${extractedFields.length} שדות זוהו בהצלחה באמצעות AI!\n\n`;
+        if (formMetadata && formMetadata.confidence !== 'low') {
+          successMessage += `📋 זוהה טופס: ${formMetadata.formName}\n`;
+          successMessage += `🏢 חברה: ${formMetadata.companyName}\n\n`;
+          successMessage += `ההגדרות עודכנו אוטומטית.\n\n`;
+        }
+        successMessage += `ניתן לערוך אותם או להוסיף שדות נוספים.`;
+
+        alert(successMessage);
       }
 
       console.log(`✓ AI extracted ${extractedFields.length} fields from PDF`);
@@ -692,6 +715,7 @@ function App() {
         pdfFileName={pdfFile?.name}
         pdfFile={pdfFile}
         fields={fields}
+        formMetadata={extractedFormMetadata}
       />
 
       <MainLayout>

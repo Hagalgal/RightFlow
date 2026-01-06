@@ -1,4 +1,4 @@
-import { Type, CheckSquare, Circle, ChevronDown, PenTool, X } from 'lucide-react';
+import { Type, CheckSquare, Circle, ChevronDown, PenTool, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ToolMode } from '@/types/fields';
 import { useTranslation, useDirection } from '@/i18n';
@@ -72,6 +72,17 @@ export const ToolsBar = ({ activeTool, onToolChange }: ToolsBarProps) => {
       >
         <PenTool className="w-5 h-5" />
         {t.signatureFieldTool}
+      </Button>
+
+      <Button
+        variant={activeTool === 'static-text-field' ? 'default' : 'outline'}
+        size="default"
+        onClick={() => onToolChange('static-text-field')}
+        title={t.staticTextFieldTool}
+        className="gap-2"
+      >
+        <FileText className="w-5 h-5" />
+        {t.staticTextFieldTool}
       </Button>
 
       {/* Release button - only visible when a field tool is active */}
