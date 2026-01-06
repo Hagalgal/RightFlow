@@ -7,6 +7,7 @@ import {
   createUpdateFieldAction,
 } from '@/utils/undoManager';
 import { RecoveryData } from '@/utils/crashRecovery';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 // LocalStorage key for tracking field creation index
 const LAST_INDEX_KEY = 'rightflow_last_field_index';
@@ -50,6 +51,7 @@ interface PageDimensions {
 interface TemplateEditorStore {
   // PDF state
   pdfFile: File | null;
+  pdfDocument: PDFDocumentProxy | null; // The loaded PDF document for text extraction
   currentPage: number;
   totalPages: number;
   pageDimensions: Record<number, PageDimensions>; // page number -> dimensions
@@ -94,6 +96,7 @@ interface TemplateEditorStore {
 
   // Actions - PDF
   setPdfFile: (file: File | null) => void;
+  setPdfDocument: (document: PDFDocumentProxy | null) => void;
   setCurrentPage: (page: number) => void;
   setTotalPages: (total: number) => void;
   setPageDimensions: (page: number, dimensions: PageDimensions) => void;
@@ -160,6 +163,7 @@ interface TemplateEditorStore {
 
 const initialState = {
   pdfFile: null,
+  pdfDocument: null,
   currentPage: 1,
   totalPages: 0,
   pageDimensions: {},
@@ -192,6 +196,8 @@ export const useTemplateEditorStore = create<TemplateEditorStore>((set, get) => 
 
   // PDF actions
   setPdfFile: (file) => set({ pdfFile: file }),
+
+  setPdfDocument: (document) => set({ pdfDocument: document }),
 
   setCurrentPage: (page) => set({ currentPage: page }),
 

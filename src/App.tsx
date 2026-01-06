@@ -52,6 +52,7 @@ function App() {
     selectedFieldId,
     selectedFieldIds,
     setPdfFile,
+    setPdfDocument,
     setCurrentPage,
     setTotalPages,
     setThumbnails,
@@ -216,6 +217,7 @@ function App() {
 
   const handlePDFLoadSuccess = async (pdf: any) => {
     setTotalPages(pdf.numPages);
+    setPdfDocument(pdf); // Store PDF document for text extraction
     console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
 
     // Generate thumbnails asynchronously

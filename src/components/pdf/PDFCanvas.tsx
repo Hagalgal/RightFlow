@@ -57,6 +57,7 @@ export const PDFCanvas = ({
     marqueeEndX,
     marqueeEndY,
     pageDimensions,
+    pdfDocument,
     addFieldWithUndo,
     updateField,
     updateFieldWithUndo,
@@ -513,8 +514,8 @@ export const PDFCanvas = ({
           fontSize: settings.textField.fontSize || 12,
           fontWeight: 'normal',
           fontStyle: 'normal',
-          textColor: '#1f2937',
-          backgroundColor: '#ffffff',
+          textColor: '#000000', // Always black
+          backgroundColor: 'transparent', // Default transparent
           borderWidth: 1,
           borderColor: '#9ca3af',
         };
@@ -827,11 +828,10 @@ export const PDFCanvas = ({
           return (
             <StaticTextPropertiesPanel
               field={selectedField}
+              pdfDocument={pdfDocument}
+              pageNumber={pageNumber}
               onUpdate={(updates) => updateFieldWithUndo(selectedFieldId, updates)}
-              onDelete={() => {
-                deleteFieldWithUndo(selectedFieldId);
-                selectField(null);
-              }}
+              onClose={() => selectField(null)}
             />
           );
         }

@@ -78,21 +78,7 @@ export const FieldOverlay = ({
           } else if (field.type === 'signature') {
             return <SignatureField key={field.id} {...commonProps} />;
           } else if (field.type === 'static-text') {
-            return (
-              <StaticTextField
-                key={field.id}
-                field={field}
-                scale={scaleFactor}
-                isSelected={isSelected}
-                onClick={(e) => {
-                  if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                    onToggleFieldSelection(field.id);
-                  } else {
-                    onFieldSelect(field.id);
-                  }
-                }}
-              />
-            );
+            return <StaticTextField key={field.id} {...commonProps} />;
           }
 
           return null;
