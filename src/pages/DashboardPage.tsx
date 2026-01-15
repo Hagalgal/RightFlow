@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser, UserButton } from '@clerk/clerk-react';
 import { FormCard } from '../components/dashboard/FormCard';
 import type { FormRecord } from '../services/forms/forms.service';
+import { useMigrationOnMount } from '../utils/localStorageMigration';
 
 export function DashboardPage() {
   const { isSignedIn, isLoaded, user } = useUser();
@@ -25,6 +26,8 @@ export function DashboardPage() {
   useEffect(() => {
     if (isSignedIn && user) {
       loadForms();
+      // Run localStorage migration on first login
+      useMigrationOnMount(user.id, user.primaryEmailAddress?.id);
     }
   }, [isSignedIn, user]);
 
