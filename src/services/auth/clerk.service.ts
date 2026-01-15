@@ -5,7 +5,7 @@
  * DocsFlow-ready: Supports multi-tenant architecture
  */
 
-import { Clerk } from '@clerk/clerk-sdk-node';
+import Clerk from '@clerk/clerk-sdk-node';
 import { getDb } from '../../lib/db';
 import crypto from 'crypto';
 
@@ -31,13 +31,13 @@ export interface WebhookResult {
 }
 
 export class ClerkService {
-  private clerk: Clerk | null = null;
+  private clerk: typeof Clerk | null = null;
 
   constructor() {
     const secretKey = process.env.CLERK_SECRET_KEY;
 
     if (secretKey) {
-      this.clerk = new Clerk({ secretKey });
+      this.clerk = Clerk({ secretKey });
     }
   }
 
@@ -214,7 +214,7 @@ export class ClerkService {
    * Get Clerk client instance
    * For advanced Clerk API operations
    */
-  getClerkClient(): Clerk | null {
+  getClerkClient(): typeof Clerk | null {
     return this.clerk;
   }
 }
