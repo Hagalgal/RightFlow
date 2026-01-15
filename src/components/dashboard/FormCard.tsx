@@ -4,7 +4,6 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { FormRecord } from '../../services/forms/forms.service';
 
 interface FormCardProps {
