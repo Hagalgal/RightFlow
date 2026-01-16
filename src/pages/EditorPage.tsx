@@ -10,6 +10,9 @@ import { RecoveryDialog } from '@/components/dialogs/RecoveryDialog';
 import { UploadWarningDialog } from '@/components/dialogs/UploadWarningDialog';
 import { HtmlPreviewDialog } from '@/components/dialogs/HtmlPreviewDialog';
 import { SettingsModal } from '@/components/settings/SettingsModal';
+import { PublishDialog } from '@/components/publish/PublishDialog';
+import { VersionHistory } from '@/components/publish/VersionHistory';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import type { GeneratedHtmlResult } from '@/services/html-generation';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -39,6 +42,13 @@ export function EditorPage() {
   const [generatedHtml, setGeneratedHtml] = useState<GeneratedHtmlResult | null>(null);
   const [htmlLoadingStatus, setHtmlLoadingStatus] = useState('');
   const [extractedFormMetadata, setExtractedFormMetadata] = useState<import('@/types/fields').FormMetadata | undefined>();
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [formStatus, setFormStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [currentFormId, setCurrentFormId] = useState<string | null>(null);
 
   // Zustand stores
   const {
@@ -76,6 +86,8 @@ export function EditorPage() {
 
   const { settings } = useSettingsStore();
   const direction = useDirection();
+  const { user } = useUser();
+  const { getToken } = useAuth();
 
   // Calculate field validation errors
   const errorFieldIds = useMemo(() => {
@@ -395,7 +407,7 @@ export function EditorPage() {
     if (fields.length > 0) {
       const confirmed = confirm(
         'קיימים שדות במסמך הנוכחי.\n\n' +
-        'האם להחליף אותם בשדות מההיסטוריה?'
+        'האם להחליף אותם בשדות מההיסטוריה?',
       );
       if (!confirmed) return;
     }
@@ -414,7 +426,7 @@ export function EditorPage() {
     const confirmed = confirm(
       `עיבוד מחדש של עמוד ${pageNumber}\n\n` +
       `פעולה זו תמחק ${existingFieldsCount} שדות קיימים בעמוד זה ותחליף אותם בשדות חדשים.\n\n` +
-      `להמשיך?`
+      `להמשיך?`,
     );
 
     if (!confirmed) return;
@@ -429,7 +441,7 @@ export function EditorPage() {
       const { fields: newFields, metadata } = await reprocessSinglePage(
         pdfFile,
         pageNumber,
-        (status) => console.log(`[Reprocess] ${status}`)
+        (status) => console.log(`[Reprocess] ${status}`),
       );
 
       // Update metadata if available
@@ -440,7 +452,7 @@ export function EditorPage() {
       // Replace and re-sort all fields in a single store update
       const allFields = [
         ...fields.filter(f => f.pageNumber !== pageNumber),
-        ...newFields
+        ...newFields,
       ];
       const sortedFields = reindexFields(allFields, direction);
       loadFields(sortedFields);
@@ -448,7 +460,7 @@ export function EditorPage() {
       alert(
         `✅ עמוד ${pageNumber} עובד מחדש בהצלחה!\n` +
         `שדות קודמים: ${existingFieldsCount}\n` +
-        `שדות חדשים: ${newFields.length}`
+        `שדות חדשים: ${newFields.length}`,
       );
     } catch (error) {
       console.error('Error reprocessing page:', error);
@@ -613,7 +625,7 @@ export function EditorPage() {
           formTitle,
           generationMethod: 'auto', // Try AI first, fallback to template
         },
-        (status) => setHtmlLoadingStatus(status)
+        (status) => setHtmlLoadingStatus(status),
       );
 
       setGeneratedHtml(result);
@@ -622,7 +634,7 @@ export function EditorPage() {
       console.error('Error generating HTML:', error);
       alert(
         'שגיאה ביצירת HTML.\n\n' +
-        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`
+        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
       );
       setIsHtmlDialogOpen(false);
     } finally {
@@ -634,6 +646,156 @@ export function EditorPage() {
     setIsHtmlDialogOpen(false);
     setGeneratedHtml(null);
     setHtmlLoadingStatus('');
+  };
+
+  const handlePublish = () => {
+    if (!user) {
+      alert('יש להתחבר כדי לפרסם טפסים.');
+      return;
+    }
+
+    if (fields.length === 0) {
+      alert('אין שדות לפרסום. אנא הוסף לפחות שדה אחד.');
+      return;
+    }
+
+    // Open publish dialog
+    setIsPublishDialogOpen(true);
+  };
+
+  const handlePublishConfirm = async (notes?: string) => {
+    if (!user || !pdfFile) return;
+
+    setIsPublishing(true);
+
+    try {
+      const token = await getToken();
+
+      // Step 1: Create form in database (if not already created)
+      let formId = currentFormId;
+
+      if (!formId) {
+        const createResponse = await fetch('/api/forms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title: pdfFile.name.replace(/\.pdf$/i, '') || 'טופס',
+            description: extractedFormMetadata?.formName,
+            fields: fields,
+            settings: settings,
+          }),
+        });
+
+        if (!createResponse.ok) {
+          const error = await createResponse.json();
+          throw new Error(error.message || 'Failed to create form');
+        }
+
+        const createResult = await createResponse.json();
+        formId = createResult.form?.id;
+
+        if (!formId) {
+          throw new Error('Form created but no ID returned');
+        }
+
+        setCurrentFormId(formId);
+        console.log('✓ Form created with ID:', formId);
+      }
+
+      // Step 2: Publish the form
+      const publishResponse = await fetch(`/api/forms-publish?id=${formId}&action=publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: notes ? JSON.stringify({ notes }) : undefined,
+      });
+
+      if (!publishResponse.ok) {
+        const error = await publishResponse.json();
+        throw new Error(error.message || 'Failed to publish form');
+      }
+
+      const publishResult = await publishResponse.json();
+      const form = publishResult.form;
+
+      // Step 3: Update state with URLs
+      // Construct public URL from form slug
+      const baseUrl = window.location.origin;
+      const publicUrl = `${baseUrl}/form/${form.slug}`;
+
+      setPublishedUrl(publicUrl);
+      setShortUrl(form.short_url || null);
+      setFormStatus('published');
+
+      console.log('✓ Form published successfully');
+    } catch (error) {
+      console.error('Error publishing form:', error);
+      alert(
+        'שגיאה בפרסום הטופס.\n\n' +
+        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
+      );
+      setIsPublishDialogOpen(false);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleViewHistory = () => {
+    if (!currentFormId) {
+      alert('אין טופס פעיל לצפייה בהיסטוריה.');
+      return;
+    }
+
+    setIsHistoryDialogOpen(true);
+  };
+
+  const handleRestoreVersion = async (versionNumber: number, notes?: string) => {
+    if (!user || !currentFormId) return;
+
+    try {
+      const token = await getToken();
+      const response = await fetch(
+        `/api/form-versions?formId=${currentFormId}&action=restore&version=${versionNumber}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ notes }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to restore version');
+      }
+
+      const result = await response.json();
+
+      // Update form fields to show restored version
+      if (result.form && result.form.fields) {
+        loadFields(result.form.fields);
+      }
+
+      // Update form status
+      setFormStatus('published');
+      console.log(`✓ Version ${versionNumber} restored successfully`);
+
+      // Show success message to user
+      alert(`✅ גרסה ${versionNumber} שוחזרה בהצלחה!\n\nהטופס עודכן עם השדות מהגרסה המשוחזרת.`);
+    } catch (error) {
+      console.error('Error restoring version:', error);
+      alert(
+        'שגיאה בשחזור גרסה.\n\n' +
+        `שגיאה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`,
+      );
+    }
   };
 
   return (
@@ -697,6 +859,10 @@ export function EditorPage() {
         hasFields={fields.length > 0}
         onExportHtml={handleExportHtml}
         isGeneratingHtml={isGeneratingHtml}
+        onPublish={handlePublish}
+        isPublishing={isPublishing}
+        formStatus={formStatus}
+        onViewHistory={handleViewHistory}
       />
 
       {/* Tools Bar - Field Creation Tools */}
@@ -716,6 +882,27 @@ export function EditorPage() {
         pdfFile={pdfFile}
         fields={fields}
         formMetadata={extractedFormMetadata}
+      />
+
+      {/* Publish Dialog */}
+      <PublishDialog
+        open={isPublishDialogOpen}
+        onOpenChange={setIsPublishDialogOpen}
+        formId="temp-form-id"
+        formTitle={pdfFile?.name?.replace(/\.pdf$/i, '') || 'טופס'}
+        onPublish={handlePublishConfirm}
+        isPublishing={isPublishing}
+        publishedUrl={publishedUrl}
+        shortUrl={shortUrl}
+        isPremiumUser={false}
+      />
+
+      {/* Version History Dialog */}
+      <VersionHistory
+        open={isHistoryDialogOpen}
+        onOpenChange={setIsHistoryDialogOpen}
+        formId={currentFormId || ''}
+        onRestore={handleRestoreVersion}
       />
 
       <MainLayout>

@@ -78,7 +78,7 @@ interface AIResponseWrapper {
 function convertPercentToPoints(
   field: AIFieldResponse,
   pageWidth: number = PAGE_SIZES.A4.width,
-  pageHeight: number = PAGE_SIZES.A4.height
+  pageHeight: number = PAGE_SIZES.A4.height,
 ) {
   const x = (field.xPercent / 100) * pageWidth;
   const width = (field.widthPercent / 100) * pageWidth;
@@ -99,7 +99,7 @@ function convertPercentToPoints(
 function convertGuidanceToPoints(
   text: GuidanceTextResponse,
   pageWidth: number = PAGE_SIZES.A4.width,
-  pageHeight: number = PAGE_SIZES.A4.height
+  pageHeight: number = PAGE_SIZES.A4.height,
 ) {
   const x = (text.xPercent / 100) * pageWidth;
   const width = (text.widthPercent / 100) * pageWidth;
@@ -360,7 +360,7 @@ JSON OUTPUT FORMAT (ONLY):
       stats: {
         totalFields: fields.length,
         fieldsPerPage: pageStats,
-      }
+      },
     });
   } catch (error) {
     console.error('Gemini API error:', error);

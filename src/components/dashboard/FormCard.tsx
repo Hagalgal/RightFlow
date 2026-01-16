@@ -10,9 +10,10 @@ interface FormCardProps {
   form: FormRecord;
   onDelete: () => void;
   onEdit: () => void;
+  onViewResponses: () => void;
 }
 
-export function FormCard({ form, onDelete, onEdit }: FormCardProps) {
+export function FormCard({ form, onDelete, onEdit, onViewResponses }: FormCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const formattedDate = new Date(form.created_at).toLocaleDateString('he-IL', {
@@ -72,6 +73,15 @@ export function FormCard({ form, onDelete, onEdit }: FormCardProps) {
                   className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   ערוך
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onViewResponses();
+                  }}
+                  className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  צפה בתגובות
                 </button>
                 {form.status === 'published' && (
                   <>

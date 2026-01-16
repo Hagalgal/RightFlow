@@ -26,7 +26,7 @@ export interface StyleVariations {
  * Gets spacing values based on theme spacing
  */
 export function getSpacingValues(
-  spacing: 'compact' | 'normal' | 'spacious'
+  spacing: 'compact' | 'normal' | 'spacious',
 ): SpacingValues {
   const spacingValues = {
     compact: { padding: '15px', gap: '10px', margin: '15px' },
@@ -42,7 +42,7 @@ export function getSpacingValues(
  */
 export function getStyleVariations(
   style: 'modern' | 'classic' | 'minimal',
-  primaryColor: string
+  primaryColor: string,
 ): StyleVariations {
   const styleVariations = {
     modern: {

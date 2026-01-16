@@ -49,7 +49,7 @@ export class StorageService {
   async uploadFile(
     buffer: Buffer,
     fileName: string,
-    options: UploadOptions
+    _options: UploadOptions,
   ): Promise<UploadResult> {
     try {
       // Validate file size

@@ -11,7 +11,7 @@ import { adjustColor, getStyleVariations } from './css-utils';
  */
 export function generateTabsCss(
   rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const { primaryColor } = theme;
   const sv = getStyleVariations(theme.style, primaryColor);

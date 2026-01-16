@@ -23,7 +23,7 @@ export function getDb(): Knex {
   if (!databaseUrl) {
     throw new Error(
       'DATABASE_URL or DATABASE_PRIVATE_URL environment variable is required. ' +
-      'Configure Railway PostgreSQL connection string.'
+      'Configure Railway PostgreSQL connection string.',
     );
   }
 

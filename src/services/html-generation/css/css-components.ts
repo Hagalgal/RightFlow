@@ -11,7 +11,7 @@ import { getStyleVariations } from './css-utils';
  */
 export function generateComponentsCss(
   rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const { primaryColor, style } = theme;
   const sv = getStyleVariations(style, primaryColor);

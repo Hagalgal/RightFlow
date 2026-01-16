@@ -7,6 +7,7 @@
 
 import { getDb } from '../../lib/db';
 import crypto from 'crypto';
+import { createClerkClient } from '@clerk/clerk-sdk-node';
 
 export interface ClerkWebhookData {
   type: string;
@@ -30,9 +31,14 @@ export interface WebhookResult {
 }
 
 export class ClerkService {
-  // No need for Clerk client instance - we only process webhooks
+  private clerkClient: ReturnType<typeof createClerkClient> | null = null;
+
   constructor() {
-    // Clerk client not needed for webhook processing
+    // Initialize Clerk client if secret key is available
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (secretKey) {
+      this.clerkClient = createClerkClient({ secretKey });
+    }
   }
 
   /**
@@ -196,7 +202,7 @@ export class ClerkService {
       // Constant-time comparison to prevent timing attacks
       return crypto.timingSafeEqual(
         Buffer.from(signature),
-        Buffer.from(expectedSignature)
+        Buffer.from(expectedSignature),
       );
     } catch (error) {
       console.error('Signature validation error:', error);
@@ -206,11 +212,29 @@ export class ClerkService {
 
   /**
    * Get Clerk client instance
-   * For advanced Clerk API operations (not currently used)
+   * For advanced Clerk API operations
    */
-  getClerkClient(): null {
-    // Clerk client not initialized - use Clerk React hooks in frontend
-    return null;
+  getClerkClient() {
+    return this.clerkClient;
+  }
+
+  /**
+   * Verify JWT session token from Clerk
+   * Returns userId if valid, null otherwise
+   */
+  async verifySessionToken(token: string): Promise<string | null> {
+    if (!this.clerkClient) {
+      console.error('Clerk client not initialized. Check CLERK_SECRET_KEY environment variable.');
+      return null;
+    }
+
+    try {
+      const sessionToken = await this.clerkClient.verifyToken(token);
+      return sessionToken.sub || null;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return null;
+    }
   }
 }
 

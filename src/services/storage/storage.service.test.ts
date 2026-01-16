@@ -6,7 +6,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { StorageService } from './storage.service';
 import fs from 'fs/promises';
-import path from 'path';
 
 describe('StorageService (Railway Volume)', () => {
   let storageService: StorageService;

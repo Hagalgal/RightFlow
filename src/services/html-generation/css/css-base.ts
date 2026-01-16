@@ -11,7 +11,7 @@ import { getStyleVariations, getSpacingValues } from './css-utils';
  */
 export function generateBaseCss(
   rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const { primaryColor, fontFamily, spacing, style } = theme;
   const sp = getSpacingValues(spacing);

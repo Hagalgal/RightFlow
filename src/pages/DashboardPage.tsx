@@ -5,13 +5,14 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser, UserButton } from '@clerk/clerk-react';
+import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
 import { FormCard } from '../components/dashboard/FormCard';
 import type { FormRecord } from '../services/forms/forms.service';
 import { useMigrationOnMount } from '../utils/localStorageMigration';
 
 export function DashboardPage() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const [forms, setForms] = useState<FormRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,10 +37,16 @@ export function DashboardPage() {
       setIsLoading(true);
       setError(null);
 
+      // Get Clerk session token
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
       const response = await fetch('/api/forms', {
         headers: {
-          'Authorization': `Bearer ${await user?.primaryEmailAddress?.id}`,
-          'X-User-Id': user?.id || '',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -58,12 +65,18 @@ export function DashboardPage() {
 
   async function handleCreateForm() {
     try {
+      // Get Clerk session token
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
       const response = await fetch('/api/forms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user?.primaryEmailAddress?.id}`,
-          'X-User-Id': user?.id || '',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: 'Untitled Form',
@@ -92,11 +105,17 @@ export function DashboardPage() {
     }
 
     try {
+      // Get Clerk session token
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
       const response = await fetch(`/api/forms?id=${formId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${await user?.primaryEmailAddress?.id}`,
-          'X-User-Id': user?.id || '',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -187,6 +206,7 @@ export function DashboardPage() {
                   form={form}
                   onDelete={() => handleDeleteForm(form.id)}
                   onEdit={() => navigate(`/editor/${form.id}`)}
+                  onViewResponses={() => navigate(`/responses/${form.id}`)}
                 />
               ))}
             </div>

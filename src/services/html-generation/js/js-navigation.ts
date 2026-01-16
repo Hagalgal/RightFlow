@@ -11,7 +11,7 @@ export function generateNavigationJs(
   rtl: boolean,
   totalFormPages: number,
   includeWelcome: boolean,
-  userRole: 'client' | 'agent'
+  userRole: 'client' | 'agent',
 ): string {
   const totalTabs = includeWelcome ? totalFormPages + 1 : totalFormPages;
 

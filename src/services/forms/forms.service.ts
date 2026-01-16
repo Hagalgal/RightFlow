@@ -7,6 +7,9 @@
 
 import { getDb } from '../../lib/db';
 import crypto from 'crypto';
+import { UsageService } from '../billing/usage.service';
+import { premiumFeaturesService } from '../premium/premium-features.service';
+import { urlShortenerService } from '../url-shortener/url-shortener.service';
 
 export interface FormField {
   id: string;
@@ -47,6 +50,7 @@ export interface FormRecord {
   stations: string[];
   settings: Record<string, any>;
   pdf_storage_path: string | null;
+  short_url: string | null;  // Premium feature: shortened URL
   published_at: Date | null;
   created_at: Date;
   updated_at: Date | null;
@@ -59,7 +63,36 @@ export interface ServiceResult<T = FormRecord> {
   error?: string;
 }
 
+export interface FormVersion {
+  id: string;
+  form_id: string;
+  version_number: number;
+  title: string;
+  description: string | null;
+  fields: FormField[];
+  stations: string[];
+  settings: Record<string, any>;
+  published_by: string;
+  published_at: Date;
+  is_current: boolean;
+  notes: string | null;
+  created_at: Date;
+}
+
+export interface VersionResult {
+  success: boolean;
+  version?: FormVersion;
+  versions?: FormVersion[];
+  error?: string;
+}
+
 export class FormsService {
+  private usageService: UsageService;
+
+  constructor() {
+    this.usageService = new UsageService();
+  }
+
   /**
    * Create new form
    */
@@ -97,6 +130,9 @@ export class FormsService {
       };
 
       await db('forms').insert(formRecord);
+
+      // Track usage (increment forms count)
+      await this.usageService.incrementFormsCount(data.userId);
 
       // Fetch the created form
       const created = await this.getFormById(formId);
@@ -174,7 +210,7 @@ export class FormsService {
   async updateForm(
     formId: string,
     userId: string,
-    data: UpdateFormData
+    data: UpdateFormData,
   ): Promise<ServiceResult> {
     try {
       const db = getDb();
@@ -245,6 +281,9 @@ export class FormsService {
         .where({ id: formId })
         .update({ deleted_at: new Date() });
 
+      // Track usage (decrement forms count)
+      await this.usageService.decrementFormsCount(userId);
+
       return { success: true };
     } catch (error) {
       return {
@@ -255,9 +294,9 @@ export class FormsService {
   }
 
   /**
-   * Publish form
+   * Publish form (creates a new version)
    */
-  async publishForm(formId: string, userId: string): Promise<ServiceResult> {
+  async publishForm(formId: string, userId: string, notes?: string): Promise<ServiceResult> {
     try {
       const db = getDb();
 
@@ -274,10 +313,53 @@ export class FormsService {
         };
       }
 
+      // Parse the form data
+      const form = this.parseFormRecord(existing);
+
+      // Create new version
+      const versionResult = await this.createVersion({
+        formId,
+        userId,
+        title: form.title,
+        description: form.description || undefined,
+        fields: form.fields,
+        stations: form.stations,
+        settings: form.settings,
+        notes,
+      });
+
+      if (!versionResult.success) {
+        return {
+          success: false,
+          error: versionResult.error || 'Failed to create version',
+        };
+      }
+
+      // Check if user has premium access for URL shortening
+      const canShorten = await premiumFeaturesService.canUseUrlShortening(userId);
+      let shortUrl: string | null = null;
+
+      if (canShorten.allowed) {
+        console.log(`[Publish] User has premium access, creating short URL for form ${form.slug}`);
+        const shortenResult = await urlShortenerService.shortenFormUrl(form.slug);
+
+        if (shortenResult.success && shortenResult.shortUrl) {
+          shortUrl = shortenResult.shortUrl;
+          console.log(`[Publish] Short URL created: ${shortUrl}`);
+        } else {
+          console.warn(`[Publish] Failed to create short URL: ${shortenResult.error}`);
+          // Don't fail the publish if shortening fails
+        }
+      } else {
+        console.log(`[Publish] User does not have premium access, skipping short URL creation`);
+      }
+
+      // Update form status and short URL
       await db('forms')
         .where({ id: formId })
         .update({
           status: 'published',
+          short_url: shortUrl,
           published_at: new Date(),
           updated_at: new Date(),
         });
@@ -342,9 +424,10 @@ export class FormsService {
    */
   private async generateUniqueSlug(title: string): Promise<string> {
     const db = getDb();
+    const MAX_RETRIES = 10;
 
     // Convert to lowercase and replace spaces/special chars with dashes
-    let slug = title
+    let baseSlug = title
       .toLowerCase()
       .trim()
       // Remove Hebrew and other non-ASCII characters
@@ -359,20 +442,34 @@ export class FormsService {
       .replace(/^-+|-+$/g, '');
 
     // If slug is empty after sanitization, use a random string
-    if (!slug) {
-      slug = 'form-' + crypto.randomBytes(4).toString('hex');
+    if (!baseSlug) {
+      baseSlug = 'form-' + crypto.randomBytes(4).toString('hex');
     }
 
-    // Check if slug exists
-    const existing = await db('forms').where({ slug }).first();
+    let slug = baseSlug;
+    let attempt = 0;
 
-    if (existing) {
-      // Append random suffix
+    // Retry loop to ensure uniqueness
+    while (attempt < MAX_RETRIES) {
+      // Check if slug exists
+      const existing = await db('forms').where({ slug }).first();
+
+      if (!existing) {
+        // Slug is unique, return it
+        return slug;
+      }
+
+      // Collision detected, generate new slug with random suffix
+      attempt++;
       const suffix = crypto.randomBytes(3).toString('hex');
-      slug = `${slug}-${suffix}`;
+      slug = `${baseSlug}-${suffix}`;
     }
 
-    return slug;
+    // If we exhausted all retries, throw an error
+    throw new Error(
+      `Failed to generate unique slug after ${MAX_RETRIES} attempts. ` +
+      `This is highly unlikely and may indicate a database issue.`,
+    );
   }
 
   /**
@@ -380,11 +477,255 @@ export class FormsService {
    * Converts JSON strings back to objects
    */
   private parseFormRecord(dbForm: any): FormRecord {
+    const parseJsonSafely = <T>(value: any, defaultValue: T, fieldName: string): T => {
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value) as T;
+        } catch (error) {
+          console.warn(
+            `Failed to parse ${fieldName} for form ${dbForm.id}: ${error instanceof Error ? error.message : 'Unknown error'}. Using default value.`,
+          );
+          return defaultValue;
+        }
+      }
+      return value;
+    };
+
     return {
       ...dbForm,
-      fields: typeof dbForm.fields === 'string' ? JSON.parse(dbForm.fields) : dbForm.fields,
-      stations: typeof dbForm.stations === 'string' ? JSON.parse(dbForm.stations) : dbForm.stations,
-      settings: typeof dbForm.settings === 'string' ? JSON.parse(dbForm.settings) : dbForm.settings,
+      fields: parseJsonSafely<FormField[]>(dbForm.fields, [], 'fields'),
+      stations: parseJsonSafely<string[]>(dbForm.stations, [], 'stations'),
+      settings: parseJsonSafely<Record<string, any>>(dbForm.settings, {}, 'settings'),
+    };
+  }
+
+  // ============================================================================
+  // VERSION MANAGEMENT METHODS
+  // ============================================================================
+
+  /**
+   * Create a new version snapshot
+   */
+  async createVersion(data: {
+    formId: string;
+    userId: string;
+    title: string;
+    description?: string;
+    fields: FormField[];
+    stations: string[];
+    settings: Record<string, any>;
+    notes?: string;
+  }): Promise<VersionResult> {
+    try {
+      const db = getDb();
+
+      // Get next version number
+      const latestVersion = await db('form_versions')
+        .where({ form_id: data.formId })
+        .orderBy('version_number', 'desc')
+        .first();
+
+      const versionNumber = latestVersion ? latestVersion.version_number + 1 : 1;
+
+      // Set all previous versions to not current
+      await db('form_versions')
+        .where({ form_id: data.formId })
+        .update({ is_current: false });
+
+      // Create new version
+      const versionId = crypto.randomUUID();
+      const versionRecord = {
+        id: versionId,
+        form_id: data.formId,
+        version_number: versionNumber,
+        title: data.title,
+        description: data.description || null,
+        fields: JSON.stringify(data.fields),
+        stations: JSON.stringify(data.stations),
+        settings: JSON.stringify(data.settings),
+        published_by: data.userId,
+        published_at: new Date(),
+        is_current: true,
+        notes: data.notes || null,
+        created_at: new Date(),
+      };
+
+      await db('form_versions').insert(versionRecord);
+
+      const version = await this.getVersion(data.formId, versionNumber);
+
+      return {
+        success: true,
+        version: version || undefined,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create version',
+      };
+    }
+  }
+
+  /**
+   * Get specific version
+   */
+  async getVersion(formId: string, versionNumber: number): Promise<FormVersion | null> {
+    try {
+      const db = getDb();
+      const version = await db('form_versions')
+        .where({ form_id: formId, version_number: versionNumber })
+        .first();
+
+      if (!version) return null;
+
+      return this.parseVersionRecord(version);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Get current published version
+   */
+  async getCurrentVersion(formId: string): Promise<FormVersion | null> {
+    try {
+      const db = getDb();
+      const version = await db('form_versions')
+        .where({ form_id: formId, is_current: true })
+        .first();
+
+      if (!version) return null;
+
+      return this.parseVersionRecord(version);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Get version history for a form
+   */
+  async getVersionHistory(formId: string): Promise<VersionResult> {
+    try {
+      const db = getDb();
+      const versions = await db('form_versions')
+        .where({ form_id: formId })
+        .orderBy('version_number', 'desc');
+
+      const parsed = versions.map(v => this.parseVersionRecord(v));
+
+      return {
+        success: true,
+        versions: parsed,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get version history',
+      };
+    }
+  }
+
+  /**
+   * Restore a specific version
+   * Creates a new version with the content from an old version
+   */
+  async restoreVersion(
+    formId: string,
+    versionNumber: number,
+    userId: string,
+    notes?: string,
+  ): Promise<ServiceResult> {
+    try {
+      const db = getDb();
+
+      // Check ownership
+      const form = await db('forms')
+        .where({ id: formId, user_id: userId })
+        .whereNull('deleted_at')
+        .first();
+
+      if (!form) {
+        return {
+          success: false,
+          error: 'Form not found or unauthorized',
+        };
+      }
+
+      // Get the version to restore
+      const oldVersion = await this.getVersion(formId, versionNumber);
+      if (!oldVersion) {
+        return {
+          success: false,
+          error: `Version ${versionNumber} not found`,
+        };
+      }
+
+      // Update the form with old version's content
+      await db('forms')
+        .where({ id: formId })
+        .update({
+          title: oldVersion.title,
+          description: oldVersion.description,
+          fields: JSON.stringify(oldVersion.fields),
+          stations: JSON.stringify(oldVersion.stations),
+          settings: JSON.stringify(oldVersion.settings),
+          updated_at: new Date(),
+        });
+
+      // Create new version with restored content
+      const versionResult = await this.createVersion({
+        formId,
+        userId,
+        title: oldVersion.title,
+        description: oldVersion.description || undefined,
+        fields: oldVersion.fields,
+        stations: oldVersion.stations,
+        settings: oldVersion.settings,
+        notes: notes || `Restored from version ${versionNumber}`,
+      });
+
+      if (!versionResult.success) {
+        return {
+          success: false,
+          error: versionResult.error || 'Failed to create restored version',
+        };
+      }
+
+      const updated = await this.getFormById(formId);
+
+      return {
+        success: true,
+        form: updated || undefined,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to restore version',
+      };
+    }
+  }
+
+  /**
+   * Parse version record from database
+   */
+  private parseVersionRecord(dbVersion: any): FormVersion {
+    const parseJsonSafely = <T>(value: any, defaultValue: T): T => {
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value) as T;
+        } catch {
+          return defaultValue;
+        }
+      }
+      return value;
+    };
+
+    return {
+      ...dbVersion,
+      fields: parseJsonSafely<FormField[]>(dbVersion.fields, []),
+      stations: parseJsonSafely<string[]>(dbVersion.stations, []),
+      settings: parseJsonSafely<Record<string, any>>(dbVersion.settings, {}),
     };
   }
 }

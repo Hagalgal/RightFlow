@@ -71,7 +71,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 async function extractPageAsBase64(
   pdfDoc: PDFDocument,
   pageIndex: number,
-  pdfName: string
+  pdfName: string,
 ): Promise<string> {
   const cacheKey = getCacheKey(pdfName, pageIndex + 1);
 
@@ -103,7 +103,7 @@ async function extractPageAsBase64(
 async function processPageWithAI(
   pageBase64: string,
   pageNumber: number,
-  totalPages: number
+  totalPages: number,
 ): Promise<PageExtractionResult> {
   try {
     const response = await fetch('/api/extract-fields', {
@@ -185,7 +185,7 @@ async function processPagesInBatches(
   pdfName: string,
   totalPages: number,
   batchSize: number,
-  onProgress?: (status: string) => void
+  onProgress?: (status: string) => void,
 ): Promise<PageExtractionResult[]> {
   const results: PageExtractionResult[] = [];
 
@@ -193,7 +193,7 @@ async function processPagesInBatches(
     const batchEnd = Math.min(batchStart + batchSize, totalPages);
     const batchPageNumbers = Array.from(
       { length: batchEnd - batchStart },
-      (_, i) => batchStart + i
+      (_, i) => batchStart + i,
     );
 
     onProgress?.(`מעבד עמודים ${batchStart + 1}-${batchEnd} מתוך ${totalPages}...`);
@@ -277,7 +277,7 @@ export async function extractFieldsWithAI(
       pdfFile.name,
       pageCount,
       BATCH_SIZE,
-      onProgress
+      onProgress,
     );
 
     // Collect all fields and report errors
@@ -372,9 +372,9 @@ export async function extractFieldsWithAI(
       sections: sections.map(name => ({
         name,
         y: Math.min(...pageFields.filter(f => f.sectionName === name).map(f => f.y)),
-        height: 20 // Default height for section visualization
+        height: 20, // Default height for section visualization
       })),
-      guidanceTexts: guidanceByPage.get(pageNum) || []
+      guidanceTexts: guidanceByPage.get(pageNum) || [],
     });
   });
 

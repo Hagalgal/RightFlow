@@ -128,7 +128,7 @@ describe('ClerkService (Authentication)', () => {
         data: {
           id: 'user_rightflow123',
           email_addresses: [{ email_address: 'rightflow@example.com' }],
-          public_metadata: { tenant_type: 'rightflow' },
+          public_metadata: { tenant_type: 'rightflow' as const },
         },
       };
 
@@ -144,7 +144,7 @@ describe('ClerkService (Authentication)', () => {
         data: {
           id: 'user_docsflow123',
           email_addresses: [{ email_address: 'docsflow@example.com' }],
-          public_metadata: { tenant_type: 'docsflow' },
+          public_metadata: { tenant_type: 'docsflow' as const },
         },
       };
 

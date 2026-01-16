@@ -10,7 +10,7 @@ import { clerkService } from '../../src/services/auth/clerk.service';
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -37,7 +37,7 @@ export default async function handler(
     const isValid = clerkService.validateWebhookSignature(
       payload,
       signature,
-      webhookSecret
+      webhookSecret,
     );
 
     if (!isValid) {

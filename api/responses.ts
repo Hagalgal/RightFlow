@@ -1,34 +1,42 @@
 /**
- * Responses API Endpoint (Phase 1)
+ * Responses API Endpoint (Phase 3)
  * Handles form response submissions and retrieval
  *
  * Routes:
  * - GET /api/responses?formId=xxx - Get responses for a form
+ * - GET /api/responses?id=xxx - Get single response by ID
+ * - GET /api/responses?formId=xxx&export=csv|json - Export responses
  * - POST /api/responses - Submit a response
  * - DELETE /api/responses?id=xxx - Delete a response
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ResponsesService } from '../src/services/responses/responses.service';
+import { getDb } from '../src/lib/db';
+import { getUserFromAuth } from './lib/auth';
 
 const responsesService = new ResponsesService();
 
 /**
- * Get user ID from auth header (for protected endpoints)
+ * Verify user owns the form
  */
-async function getUserFromAuth(req: VercelRequest): Promise<string | null> {
-  // TODO: Implement proper Clerk JWT verification
-  return req.headers['x-user-id'] as string || null;
+async function verifyFormOwnership(formId: string, userId: string): Promise<boolean> {
+  const form = await getDb()('forms')
+    .where({ id: formId, user_id: userId })
+    .whereNull('deleted_at')
+    .first();
+
+  return !!form;
 }
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-id');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -62,22 +70,37 @@ export default async function handler(
 
 /**
  * GET /api/responses?formId=xxx
- * Get responses for a form (requires authentication)
+ * GET /api/responses?id=xxx
+ * GET /api/responses?formId=xxx&export=csv|json
  */
 async function handleGetResponses(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
-  const { formId, export: exportFormat } = req.query;
+  const { formId, id, export: exportFormat } = req.query;
 
+  // Get single response by ID
+  if (id && typeof id === 'string') {
+    try {
+      const response = await responsesService.getResponse(id);
+      return res.status(200).json(response);
+    } catch (error) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: error instanceof Error ? error.message : 'Response not found',
+      });
+    }
+  }
+
+  // Get responses for a form (requires auth and ownership)
   if (!formId || typeof formId !== 'string') {
     return res.status(400).json({
       error: 'Bad request',
-      message: 'formId is required',
+      message: 'formId or id is required',
     });
   }
 
-  // Authenticate user
+  // Authenticate user for form responses
   const userId = await getUserFromAuth(req);
   if (!userId) {
     return res.status(401).json({
@@ -86,23 +109,40 @@ async function handleGetResponses(
     });
   }
 
-  // Handle export formats
-  if (exportFormat === 'csv') {
-    const csv = await responsesService.exportResponsesAsCSV(formId, userId);
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="responses-${formId}.csv"`);
-    return res.status(200).send(csv);
+  // Verify ownership
+  const ownsForm = await verifyFormOwnership(formId, userId);
+  if (!ownsForm) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'You do not have access to this form',
+    });
   }
 
-  if (exportFormat === 'json') {
-    const json = await responsesService.exportResponsesAsJSON(formId, userId);
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="responses-${formId}.json"`);
-    return res.status(200).send(json);
+  // Handle export formats
+  if (exportFormat === 'csv' || exportFormat === 'json') {
+    try {
+      const format = exportFormat as 'csv' | 'json';
+      const exported = await responsesService.exportResponses(formId, format);
+
+      if (format === 'csv') {
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="responses-${formId}.csv"`);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="responses-${formId}.json"`);
+      }
+
+      return res.status(200).send(exported);
+    } catch (error) {
+      return res.status(400).json({
+        error: 'Export failed',
+        message: error instanceof Error ? error.message : 'Failed to export responses',
+      });
+    }
   }
 
   // Get responses
-  const responses = await responsesService.getFormResponses(formId, userId);
+  const responses = await responsesService.getFormResponses(formId);
 
   return res.status(200).json({
     responses,
@@ -116,7 +156,7 @@ async function handleGetResponses(
  */
 async function handleSubmitResponse(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   const { formId, data } = req.body;
 
@@ -133,34 +173,34 @@ async function handleSubmitResponse(
                       'unknown';
   const submitterUserAgent = req.headers['user-agent'] || 'unknown';
 
-  const result = await responsesService.submitResponse({
-    formId,
-    data,
-    submitterIp,
-    submitterUserAgent,
-  });
+  try {
+    const response = await responsesService.submitResponse({
+      formId,
+      data,
+      submitterIp,
+      submitterUserAgent,
+    });
 
-  if (!result.success) {
+    return res.status(201).json({
+      success: true,
+      response,
+      message: 'Response submitted successfully',
+    });
+  } catch (error) {
     return res.status(400).json({
       error: 'Failed to submit response',
-      message: result.error,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-
-  return res.status(201).json({
-    success: true,
-    response: result.response,
-    message: 'Response submitted successfully',
-  });
 }
 
 /**
  * DELETE /api/responses?id=xxx
- * Delete a response (requires authentication)
+ * Delete a response (requires authentication and ownership)
  */
 async function handleDeleteResponse(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   const { id } = req.query;
 
@@ -180,17 +220,39 @@ async function handleDeleteResponse(
     });
   }
 
-  const result = await responsesService.deleteResponse(id, userId);
+  try {
+    // Get response to check ownership
+    const response = await responsesService.getResponse(id);
 
-  if (!result.success) {
-    return res.status(result.error?.includes('unauthorized') ? 403 : 400).json({
+    // Get form to verify ownership
+    const form = await getDb()('forms')
+      .where({ id: response.formId })
+      .first();
+
+    if (!form || form.user_id !== userId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to delete this response',
+      });
+    }
+
+    await responsesService.deleteResponse(id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Response deleted successfully',
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('not found')) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Response not found',
+      });
+    }
+
+    return res.status(500).json({
       error: 'Failed to delete response',
-      message: result.error,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: 'Response deleted successfully',
-  });
 }

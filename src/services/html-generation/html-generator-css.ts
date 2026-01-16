@@ -23,7 +23,7 @@ export { adjustColor } from './css/css-utils';
  */
 export function generateDocsFlowCSS(
   rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const baseCss = generateBaseCss(rtl, theme);
   const componentsCss = generateComponentsCss(rtl, theme);
@@ -46,14 +46,14 @@ export function generateFormJS(
   rtl: boolean,
   totalFormPages: number = 1,
   includeWelcome: boolean = true,
-  userRole: 'client' | 'agent' = 'client'
+  userRole: 'client' | 'agent' = 'client',
 ): string {
   const navigationJs = generateNavigationJs(
     formId,
     rtl,
     totalFormPages,
     includeWelcome,
-    userRole
+    userRole,
   );
   const datePickerJs = generateDatePickerJs();
   const signatureJs = generateSignatureJs();

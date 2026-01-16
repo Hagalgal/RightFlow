@@ -11,7 +11,7 @@ import { adjustColor } from './css-utils';
  */
 export function generateButtonsCss(
   _rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const { primaryColor, style } = theme;
 

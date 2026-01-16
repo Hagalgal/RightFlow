@@ -3,9 +3,9 @@
  * Following TDD methodology - tests written before implementation
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FormsService } from './forms.service';
-import { getDb, closeDb } from '../../lib/db';
+import { closeDb } from '../../lib/db';
 import crypto from 'crypto';
 
 describe('FormsService (Form CRUD)', () => {
@@ -311,6 +311,69 @@ describe('FormsService (Form CRUD)', () => {
         });
 
         expect(result.form?.slug).toMatch(/^[a-z0-9-]+$/);
+      }
+    });
+
+    it('handles slug collision race condition with retry logic', async () => {
+      // This test verifies the race condition fix
+      // When multiple forms with the same title are created concurrently,
+      // each should get a unique slug
+
+      const title = 'Duplicate Title Test';
+      const promises = [
+        formsService.createForm({ userId: testUserId, title, fields: [] }),
+        formsService.createForm({ userId: testUserId, title, fields: [] }),
+        formsService.createForm({ userId: testUserId, title, fields: [] }),
+        formsService.createForm({ userId: testUserId, title, fields: [] }),
+        formsService.createForm({ userId: testUserId, title, fields: [] }),
+      ];
+
+      const results = await Promise.all(promises);
+
+      // All should succeed
+      expect(results.every(r => r.success)).toBe(true);
+
+      // Extract slugs
+      const slugs = results.map(r => r.form?.slug).filter(Boolean);
+
+      // All slugs should be unique
+      const uniqueSlugs = new Set(slugs);
+      expect(uniqueSlugs.size).toBe(slugs.length);
+
+      // All slugs should be valid
+      slugs.forEach(slug => {
+        expect(slug).toMatch(/^[a-z0-9-]+$/);
+      });
+    });
+
+    it('generates different suffixes on collision', async () => {
+      // Create first form
+      const result1 = await formsService.createForm({
+        userId: testUserId,
+        title: 'Collision Test',
+        fields: [],
+      });
+
+      // Create second form with same title (will trigger retry logic)
+      const result2 = await formsService.createForm({
+        userId: testUserId,
+        title: 'Collision Test',
+        fields: [],
+      });
+
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+
+      const slug1 = result1.form?.slug;
+      const slug2 = result2.form?.slug;
+
+      // Slugs must be different
+      expect(slug1).not.toBe(slug2);
+
+      // Second slug should have a suffix
+      if (slug1 && slug2) {
+        expect(slug2).toContain('-');
+        expect(slug2.startsWith(slug1.split('-')[0]!)).toBe(true);
       }
     });
   });

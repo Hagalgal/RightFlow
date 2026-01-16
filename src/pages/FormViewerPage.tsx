@@ -27,6 +27,7 @@ export function FormViewerPage() {
       setIsLoading(true);
       setError(null);
 
+      // Step 1: Load basic form info
       const response = await fetch(`/api/forms?slug=${slug}`);
 
       if (!response.ok) {
@@ -44,6 +45,33 @@ export function FormViewerPage() {
       if (loadedForm.status !== 'published') {
         setError('This form is not published');
         return;
+      }
+
+      // Step 2: Load current published version
+      try {
+        const versionResponse = await fetch(`/api/form-versions?formId=${loadedForm.id}`);
+
+        if (versionResponse.ok) {
+          const versionData = await versionResponse.json();
+          const versions = versionData.versions || [];
+
+          // Find the current version
+          const currentVersion = versions.find((v: any) => v.is_current);
+
+          if (currentVersion) {
+            // Use fields from the current version
+            loadedForm.fields = currentVersion.fields;
+            console.log('✓ Loaded current version:', currentVersion.version_number);
+          } else {
+            console.warn('No current version found, using form fields');
+          }
+        } else {
+          // If version API fails, fall back to form fields
+          console.warn('Failed to load versions, using form fields');
+        }
+      } catch (versionError) {
+        // If version loading fails, continue with form fields
+        console.warn('Error loading version:', versionError);
       }
 
       setForm(loadedForm);

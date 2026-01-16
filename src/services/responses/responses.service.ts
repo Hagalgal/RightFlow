@@ -1,284 +1,307 @@
 /**
- * Responses Service (Phase 1)
- * Handles form response submission and retrieval
+ * Response Service (Phase 3)
+ * Handles form response submissions, retrieval, and export
  */
 
 import { getDb } from '../../lib/db';
 import crypto from 'crypto';
+import { UsageService } from '../billing/usage.service';
 
-export interface SubmitResponseData {
+export interface SubmitResponseParams {
   formId: string;
   data: Record<string, any>;
   submitterIp?: string;
   submitterUserAgent?: string;
 }
 
-export interface ResponseRecord {
+export interface Response {
   id: string;
-  form_id: string;
+  formId: string;
   data: Record<string, any>;
-  filled_pdf_path: string | null;
-  submitter_ip: string | null;
-  submitter_user_agent: string | null;
+  filledPdfPath?: string | null;
+  submitterIp?: string | null;
+  submitterUserAgent?: string | null;
   metadata: Record<string, any>;
-  submitted_at: Date;
-}
-
-export interface ServiceResult<T = ResponseRecord> {
-  success: boolean;
-  response?: T;
-  error?: string;
+  submittedAt: Date;
 }
 
 export class ResponsesService {
+  private usageService: UsageService;
+
+  constructor() {
+    this.usageService = new UsageService();
+  }
+
   /**
-   * Submit form response
+   * Submit a form response
+   * Validates required fields, sanitizes input, and tracks usage
    */
-  async submitResponse(data: SubmitResponseData): Promise<ServiceResult> {
-    try {
-      const db = getDb();
+  async submitResponse(params: SubmitResponseParams): Promise<Response> {
+    const db = getDb();
 
-      // Verify form exists and is published
-      const form = await db('forms')
-        .where({ id: data.formId })
-        .whereNull('deleted_at')
-        .first();
+    // Get the form to validate against
+    const form = await db('forms')
+      .where({ id: params.formId })
+      .whereNull('deleted_at')
+      .first();
 
-      if (!form) {
-        return {
-          success: false,
-          error: 'Form not found',
-        };
+    if (!form) {
+      throw new Error('Form not found');
+    }
+
+    // Parse form fields
+    const fields = typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields;
+
+    // Validate required fields
+    for (const field of fields) {
+      if (field.required && !params.data[field.id]) {
+        throw new Error(`Missing required field: ${field.label}`);
       }
-
-      if (form.status !== 'published') {
-        return {
-          success: false,
-          error: 'Form is not published',
-        };
-      }
-
-      // Create response record
-      const responseId = crypto.randomUUID();
-      const responseRecord = {
-        id: responseId,
-        form_id: data.formId,
-        data: JSON.stringify(data.data),
-        filled_pdf_path: null,
-        submitter_ip: data.submitterIp || null,
-        submitter_user_agent: data.submitterUserAgent || null,
-        metadata: JSON.stringify({}),
-        submitted_at: new Date(),
-      };
-
-      await db('responses').insert(responseRecord);
-
-      // Increment response count for user's usage metrics
-      await this.incrementResponseCount(form.user_id);
-
-      // Fetch the created response
-      const created = await this.getResponseById(responseId);
-
-      return {
-        success: true,
-        response: created || undefined,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to submit response',
-      };
     }
-  }
 
-  /**
-   * Get response by ID
-   */
-  async getResponseById(responseId: string): Promise<ResponseRecord | null> {
-    try {
-      const db = getDb();
-      const response = await db('responses')
-        .where({ id: responseId })
-        .first();
+    // Sanitize HTML in text fields
+    const sanitizedData = this.sanitizeData(params.data);
 
-      if (!response) return null;
+    // Create response record
+    const responseId = crypto.randomUUID();
+    const responseRecord = {
+      id: responseId,
+      form_id: params.formId,
+      data: JSON.stringify(sanitizedData),
+      filled_pdf_path: null,
+      submitter_ip: params.submitterIp || null,
+      submitter_user_agent: params.submitterUserAgent || null,
+      metadata: JSON.stringify({}),
+      submitted_at: new Date(),
+    };
 
-      return this.parseResponseRecord(response);
-    } catch (error) {
-      return null;
-    }
-  }
+    await db('responses').insert(responseRecord);
 
-  /**
-   * Get all responses for a form
-   */
-  async getFormResponses(formId: string, userId: string): Promise<ResponseRecord[]> {
-    try {
-      const db = getDb();
+    // Increment response count for the form owner
+    await this.usageService.incrementResponsesCount(form.user_id);
 
-      // Verify user owns the form
-      const form = await db('forms')
-        .where({ id: formId, user_id: userId })
-        .whereNull('deleted_at')
-        .first();
-
-      if (!form) {
-        return [];
-      }
-
-      const responses = await db('responses')
-        .where({ form_id: formId })
-        .orderBy('submitted_at', 'desc');
-
-      return responses.map(r => this.parseResponseRecord(r));
-    } catch (error) {
-      return [];
-    }
-  }
-
-  /**
-   * Get response count for a form
-   */
-  async getFormResponseCount(formId: string): Promise<number> {
-    try {
-      const db = getDb();
-      const result = await db('responses')
-        .where({ form_id: formId })
-        .count('* as count')
-        .first();
-
-      return parseInt(result?.count as string || '0', 10);
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  /**
-   * Delete response
-   */
-  async deleteResponse(responseId: string, userId: string): Promise<ServiceResult<void>> {
-    try {
-      const db = getDb();
-
-      // Verify user owns the form
-      const response = await db('responses')
-        .where({ 'responses.id': responseId })
-        .join('forms', 'responses.form_id', 'forms.id')
-        .where({ 'forms.user_id': userId })
-        .first();
-
-      if (!response) {
-        return {
-          success: false,
-          error: 'Response not found or unauthorized',
-        };
-      }
-
-      await db('responses').where({ id: responseId }).delete();
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete response',
-      };
-    }
-  }
-
-  /**
-   * Increment response count for user's usage metrics
-   */
-  private async incrementResponseCount(userId: string): Promise<void> {
-    try {
-      const db = getDb();
-      const now = new Date();
-      const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-      // Check if metrics record exists for this period
-      const existing = await db('usage_metrics')
-        .where({ user_id: userId })
-        .where('period_start', '>=', periodStart)
-        .where('period_end', '<=', periodEnd)
-        .first();
-
-      if (existing) {
-        // Increment existing record
-        await db('usage_metrics')
-          .where({ id: existing.id })
-          .increment('responses_count', 1)
-          .update({ updated_at: now });
-      } else {
-        // Create new metrics record for this period
-        await db('usage_metrics').insert({
-          id: crypto.randomUUID(),
-          user_id: userId,
-          forms_count: 0,
-          responses_count: 1,
-          storage_used_bytes: 0,
-          period_start: periodStart,
-          period_end: periodEnd,
-          created_at: now,
-          updated_at: now,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to increment response count:', error);
-      // Don't throw - this is not critical
-    }
-  }
-
-  /**
-   * Parse response record from database
-   */
-  private parseResponseRecord(dbResponse: any): ResponseRecord {
+    // Return the created response
     return {
-      ...dbResponse,
-      data: typeof dbResponse.data === 'string' ? JSON.parse(dbResponse.data) : dbResponse.data,
-      metadata: typeof dbResponse.metadata === 'string' ? JSON.parse(dbResponse.metadata) : dbResponse.metadata,
+      id: responseId,
+      formId: params.formId,
+      data: sanitizedData,
+      filledPdfPath: null,
+      submitterIp: params.submitterIp || null,
+      submitterUserAgent: params.submitterUserAgent || null,
+      metadata: {},
+      submittedAt: responseRecord.submitted_at,
     };
   }
 
   /**
-   * Export responses as CSV
+   * Get a single response by ID
    */
-  async exportResponsesAsCSV(formId: string, userId: string): Promise<string> {
-    const responses = await this.getFormResponses(formId, userId);
+  async getResponse(responseId: string): Promise<Response> {
+    const db = getDb();
 
-    if (responses.length === 0) {
-      return '';
+    const response = await db('responses')
+      .where({ id: responseId })
+      .first();
+
+    if (!response) {
+      throw new Error('Response not found');
     }
 
-    // Get all unique field keys
-    const fieldKeys = new Set<string>();
-    responses.forEach(r => {
-      Object.keys(r.data).forEach(key => fieldKeys.add(key));
-    });
+    return this.parseResponseRecord(response);
+  }
 
-    const headers = ['Response ID', 'Submitted At', ...Array.from(fieldKeys)];
-    const rows = responses.map(r => {
-      const row = [
-        r.id,
-        r.submitted_at.toISOString(),
-        ...Array.from(fieldKeys).map(key => {
-          const value = r.data[key];
-          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-          if (value === null || value === undefined) return '';
-          return String(value);
-        }),
-      ];
-      return row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',');
-    });
+  /**
+   * Get all responses for a form
+   * Ordered by submitted_at DESC (most recent first)
+   */
+  async getFormResponses(formId: string): Promise<Response[]> {
+    const db = getDb();
 
-    return [headers.join(','), ...rows].join('\n');
+    const responses = await db('responses')
+      .where({ form_id: formId })
+      .orderBy('submitted_at', 'desc');
+
+    return responses.map(r => this.parseResponseRecord(r));
+  }
+
+  /**
+   * Delete a response
+   * Decrements the user's response count
+   */
+  async deleteResponse(responseId: string): Promise<void> {
+    const db = getDb();
+
+    // Get the response to find the form owner
+    const response = await db('responses')
+      .where({ id: responseId })
+      .first();
+
+    if (!response) {
+      return; // Already deleted or doesn't exist
+    }
+
+    // Get the form to find the owner
+    const form = await db('forms')
+      .where({ id: response.form_id })
+      .first();
+
+    // Delete the response
+    await db('responses')
+      .where({ id: responseId })
+      .del();
+
+    // Decrement response count for the form owner
+    if (form) {
+      await this.usageService.decrementResponsesCount(form.user_id);
+    }
+  }
+
+  /**
+   * Export responses in specified format
+   * Supports JSON and CSV formats
+   */
+  async exportResponses(formId: string, format: 'json' | 'csv'): Promise<string> {
+    const responses = await this.getFormResponses(formId);
+
+    if (format === 'json') {
+      return this.exportAsJson(responses);
+    } else if (format === 'csv') {
+      return this.exportAsCsv(responses, formId);
+    }
+
+    throw new Error(`Unsupported export format: ${format}`);
   }
 
   /**
    * Export responses as JSON
    */
-  async exportResponsesAsJSON(formId: string, userId: string): Promise<string> {
-    const responses = await this.getFormResponses(formId, userId);
-    return JSON.stringify(responses, null, 2);
+  private exportAsJson(responses: Response[]): string {
+    const data = responses.map(r => r.data);
+    return JSON.stringify(data, null, 2);
+  }
+
+  /**
+   * Export responses as CSV
+   * Follows RFC 4180 standard: values are wrapped in quotes and internal quotes are escaped
+   */
+  private async exportAsCsv(responses: Response[], formId: string): Promise<string> {
+    if (responses.length === 0) {
+      return '';
+    }
+
+    const db = getDb();
+
+    // Get form to extract field labels
+    const form = await db('forms')
+      .where({ id: formId })
+      .first();
+
+    const fields = form ? (typeof form.fields === 'string' ? JSON.parse(form.fields) : form.fields) : [];
+
+    // Create CSV headers from field labels (wrapped in quotes for consistency)
+    const headers = fields.map((f: any) => `"${String(f.label).replace(/"/g, '""')}"`).join(',');
+
+    // Create CSV rows
+    const rows = responses.map(response => {
+      return fields.map((field: any) => {
+        const value = response.data[field.id] || '';
+        // Escape quotes by doubling them, then wrap in quotes (RFC 4180)
+        const escaped = String(value).replace(/"/g, '""');
+        return `"${escaped}"`;
+      }).join(',');
+    });
+
+    return [headers, ...rows].join('\n');
+  }
+
+  /**
+   * Sanitize data to prevent XSS attacks
+   * Removes ALL HTML tags and dangerous characters
+   * Since this is form data, we don't need to preserve any HTML
+   */
+  private sanitizeData(data: Record<string, any>): Record<string, any> {
+    const sanitized: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'string') {
+        let cleaned = value;
+
+        // Step 1: Remove ALL HTML tags (script, img, iframe, object, embed, etc.)
+        // This prevents: <img src=x onerror="alert(1)"> and similar attacks
+        cleaned = cleaned.replace(/<[^>]*>/g, '');
+
+        // Step 2: Remove any remaining angle brackets that might form partial tags
+        // This prevents: <script without closing tag
+        cleaned = cleaned.replace(/[<>]/g, '');
+
+        // Step 3: Remove javascript: protocol and data: URIs
+        // This prevents: javascript:alert(1) and data:text/html,<script>...
+        cleaned = cleaned.replace(/javascript:/gi, '');
+        cleaned = cleaned.replace(/data:text\/html/gi, '');
+
+        // Step 4: Remove dangerous Unicode control characters (RTL marks can hide malicious code)
+        // This prevents: RTL override attacks that hide malicious content
+        cleaned = cleaned.replace(/[\u202A-\u202E\u2066-\u2069]/g, '');
+
+        // Step 5: Remove NULL bytes and other control characters
+        cleaned = cleaned.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+
+        sanitized[key] = cleaned;
+      } else if (typeof value === 'object' && value !== null) {
+        // Recursively sanitize nested objects and arrays
+        sanitized[key] = this.sanitizeData(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Parse response record from database
+   * Handles malformed JSON gracefully to prevent crashes
+   */
+  private parseResponseRecord(dbResponse: any): Response {
+    let data: Record<string, any>;
+    let metadata: Record<string, any>;
+
+    // Parse data field with error handling
+    if (typeof dbResponse.data === 'string') {
+      try {
+        data = JSON.parse(dbResponse.data);
+      } catch (error) {
+        console.error(`Failed to parse response data for ID ${dbResponse.id}:`, error);
+        // Return empty object as fallback for malformed data
+        data = {};
+      }
+    } else {
+      data = dbResponse.data || {};
+    }
+
+    // Parse metadata field with error handling
+    if (typeof dbResponse.metadata === 'string') {
+      try {
+        metadata = JSON.parse(dbResponse.metadata);
+      } catch (error) {
+        console.error(`Failed to parse response metadata for ID ${dbResponse.id}:`, error);
+        // Return empty object as fallback for malformed metadata
+        metadata = {};
+      }
+    } else {
+      metadata = dbResponse.metadata || {};
+    }
+
+    return {
+      id: dbResponse.id,
+      formId: dbResponse.form_id,
+      data,
+      filledPdfPath: dbResponse.filled_pdf_path,
+      submitterIp: dbResponse.submitter_ip,
+      submitterUserAgent: dbResponse.submitter_user_agent,
+      metadata,
+      submittedAt: new Date(dbResponse.submitted_at),
+    };
   }
 }
 

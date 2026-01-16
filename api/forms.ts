@@ -11,49 +11,16 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { FormsService } from '../src/services/forms/forms.service';
-import { clerkService } from '../src/services/auth/clerk.service';
+import { getUserFromAuth } from './lib/auth';
 
 const formsService = new FormsService();
-
-/**
- * Verify user authentication from Clerk
- */
-async function getUserFromAuth(req: VercelRequest): Promise<string | null> {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.substring(7);
-
-  try {
-    // In production, verify the JWT token with Clerk
-    // For now, we'll extract the user ID from the token
-    // This should be replaced with proper Clerk JWT verification
-
-    const clerkClient = clerkService.getClerkClient();
-    if (!clerkClient) {
-      return null;
-    }
-
-    // TODO: Implement proper JWT verification
-    // const session = await clerkClient.sessions.verifySession(token);
-    // return session.userId;
-
-    // Temporary: extract from header (replace with proper auth)
-    return req.headers['x-user-id'] as string || null;
-  } catch (error) {
-    return null;
-  }
-}
 
 /**
  * Main API handler
  */
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -111,7 +78,7 @@ export default async function handler(
 async function handleGetForms(
   req: VercelRequest,
   res: VercelResponse,
-  userId: string
+  userId: string,
 ) {
   const { id, slug } = req.query;
 
@@ -164,7 +131,7 @@ async function handleGetForms(
 async function handleCreateForm(
   req: VercelRequest,
   res: VercelResponse,
-  userId: string
+  userId: string,
 ) {
   const { title, description, fields, stations, settings } = req.body;
 
@@ -204,7 +171,7 @@ async function handleCreateForm(
 async function handleUpdateForm(
   req: VercelRequest,
   res: VercelResponse,
-  userId: string
+  userId: string,
 ) {
   const { id } = req.query;
 
@@ -245,7 +212,7 @@ async function handleUpdateForm(
 async function handleDeleteForm(
   req: VercelRequest,
   res: VercelResponse,
-  userId: string
+  userId: string,
 ) {
   const { id } = req.query;
 

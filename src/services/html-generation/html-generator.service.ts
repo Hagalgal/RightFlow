@@ -45,7 +45,7 @@ function escapeHtml(text: string): string {
  */
 function generateWelcomePageHtml(
   rtl: boolean,
-  welcomeConfig?: Partial<WelcomePageConfig>
+  welcomeConfig?: Partial<WelcomePageConfig>,
 ): string {
   const config: WelcomePageConfig = {
     enabled: true,
@@ -93,7 +93,7 @@ function generateWelcomePageHtml(
  */
 function generateFieldHtml(
   field: HtmlFormField,
-  includeValidation: boolean
+  includeValidation: boolean,
 ): string {
   const flexGrow = field.position?.width
     ? Math.max(1, Math.round(field.position.width / 50))
@@ -305,7 +305,7 @@ function generateInputHtml(field: HtmlFormField): string {
  * Groups fields by page number
  */
 function groupFieldsByPage(
-  fields: HtmlFormField[]
+  fields: HtmlFormField[],
 ): Map<number, HtmlFormField[]> {
   const pageMap = new Map<number, HtmlFormField[]>();
 
@@ -327,7 +327,7 @@ function groupFieldsByPage(
  */
 function generateTabsHtml(
   totalPages: number,
-  includeWelcome: boolean
+  includeWelcome: boolean,
 ): string {
   const totalTabs = includeWelcome ? totalPages + 1 : totalPages;
   if (totalTabs <= 1) return '';
@@ -368,7 +368,7 @@ function generateTabsHtml(
 function generateNavigationHtml(
   totalPages: number,
   rtl: boolean,
-  includeWelcome: boolean
+  includeWelcome: boolean,
 ): string {
   const totalTabs = includeWelcome ? totalPages + 1 : totalPages;
 
@@ -416,12 +416,12 @@ function generatePageHtml(
   groups: HtmlFieldGroup[],
   includeValidation: boolean,
   rtl: boolean,
-  isActive: boolean = false
+  isActive: boolean = false,
 ): string {
   // Filter groups that have fields on this page
   const pageFieldIds = new Set(fields.map((f) => f.id));
   const pageGroups = groups.filter((g) =>
-    g.fields.some((fid) => pageFieldIds.has(fid))
+    g.fields.some((fid) => pageFieldIds.has(fid)),
   );
 
   let html = `
@@ -479,7 +479,7 @@ function generatePageHtml(
  */
 export async function generateHtmlFormTemplate(
   fields: FieldDefinition[],
-  options: Partial<HtmlGenerationOptions> = {}
+  options: Partial<HtmlGenerationOptions> = {},
 ): Promise<GeneratedHtmlResult> {
   const formId = `form_${crypto.randomUUID().replace(/-/g, '').substring(0, 12)}`;
 
@@ -564,7 +564,7 @@ ${cssContent}
       groups,
       finalOptions.includeValidation,
       finalOptions.rtl,
-      !includeWelcome && i === 0 // Only first form page is active if no welcome page
+      !includeWelcome && i === 0, // Only first form page is active if no welcome page
     );
   }
 
@@ -576,7 +576,7 @@ ${cssContent}
       groups,
       finalOptions.includeValidation,
       finalOptions.rtl,
-      !includeWelcome // Active only if no welcome page
+      !includeWelcome, // Active only if no welcome page
     );
   }
 

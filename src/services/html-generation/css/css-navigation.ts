@@ -13,7 +13,7 @@ import { generateTabsCss } from './css-tabs';
  */
 export function generateNavigationCss(
   rtl: boolean,
-  theme: HtmlFormTheme
+  theme: HtmlFormTheme,
 ): string {
   const buttonsCss = generateButtonsCss(rtl, theme);
   const tabsCss = generateTabsCss(rtl, theme);

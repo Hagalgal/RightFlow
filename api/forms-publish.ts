@@ -9,20 +9,13 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { FormsService } from '../src/services/forms/forms.service';
+import { getUserFromAuth } from './lib/auth';
 
 const formsService = new FormsService();
 
-/**
- * Get user ID from auth header (temporary implementation)
- */
-async function getUserFromAuth(req: VercelRequest): Promise<string | null> {
-  // TODO: Implement proper Clerk JWT verification
-  return req.headers['x-user-id'] as string || null;
-}
-
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');

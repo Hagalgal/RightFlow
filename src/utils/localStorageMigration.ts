@@ -73,7 +73,7 @@ export function clearLegacyForms(): void {
  */
 export async function migrateLocalStorageForms(
   userId: string,
-  authToken: string
+  authToken: string,
 ): Promise<{ success: boolean; count: number; errors: string[] }> {
   // Check if already migrated
   if (isMigrationCompleted()) {
@@ -149,7 +149,7 @@ export async function migrateLocalStorageForms(
  */
 export async function useMigrationOnMount(
   userId: string | undefined,
-  authToken: string | undefined
+  authToken: string | undefined,
 ): Promise<void> {
   if (!userId || !authToken) {
     return;
@@ -166,7 +166,7 @@ export async function useMigrationOnMount(
         console.warn('Some forms failed to migrate:', result.errors);
         alert(
           `Migrated ${result.count} forms from localStorage.\n\n` +
-          `${result.errors.length} form(s) failed to migrate. Check console for details.`
+          `${result.errors.length} form(s) failed to migrate. Check console for details.`,
         );
       } else {
         alert(`Successfully migrated ${result.count} form(s) from localStorage to your account!`);
