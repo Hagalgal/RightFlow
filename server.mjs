@@ -193,7 +193,10 @@ app.use((req, res) => {
 // ============================================================================
 
 // 404 handler for API routes
-app.use('/api/*', (req, res) => {
+// Note: This middleware is positioned after the SPA fallback,
+// but won't be reached because the SPA fallback handles /api/* routes separately
+// Keeping this for explicit API error handling if needed in future
+app.use(/^\/api\/.*/, (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `API endpoint ${req.method} ${req.path} not found`
