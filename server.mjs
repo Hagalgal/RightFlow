@@ -177,7 +177,7 @@ app.use(express.static(distPath, {
  * Fallback to index.html for all non-API routes
  * This enables React Router to handle client-side routing
  */
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   // Don't fallback for API routes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
