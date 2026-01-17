@@ -24,7 +24,6 @@ interface FormCardProps {
 export function FormCard({ form, onDelete, onEdit, onViewResponses }: FormCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const formattedDate = new Date(form.created_at).toLocaleDateString('he-IL', {
@@ -57,15 +56,6 @@ export function FormCard({ form, onDelete, onEdit, onViewResponses }: FormCardPr
   }
 
   function handleMenuToggle() {
-    if (!isMenuOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      // Position menu: align right edge of menu with right edge of button
-      // Menu width is 192px (w-48)
-      setMenuPosition({
-        top: rect.bottom + 8,
-        left: rect.right - 192,
-      });
-    }
     setIsMenuOpen(!isMenuOpen);
   }
 
@@ -106,11 +96,7 @@ export function FormCard({ form, onDelete, onEdit, onViewResponses }: FormCardPr
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    className="fixed w-48 glass backdrop-blur-2xl rounded-xl shadow-2xl border border-border z-[101] py-2"
-                    style={{
-                      top: `${menuPosition.top}px`,
-                      left: `${menuPosition.left}px`,
-                    }}
+                    className="absolute top-full left-0 mt-2 w-48 bg-popover backdrop-blur-xl rounded-xl shadow-2xl border border-border z-[101] py-2 outline-none"
                   >
                     <button
                       onClick={() => { setIsMenuOpen(false); onEdit(); }}
@@ -189,6 +175,13 @@ export function FormCard({ form, onDelete, onEdit, onViewResponses }: FormCardPr
             <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
               <MessageSquare className="w-3 h-3" />
               {form.fields.length} שדות
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <FileText className="w-3 h-3" />
+              {(() => {
+                const pages = new Set(form.fields.map((f: any) => f.pageNumber || 1));
+                return `${pages.size} עמודים`;
+              })()}
             </div>
           </div>
 

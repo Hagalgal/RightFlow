@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layout, Home, ChevronLeft, ChevronRight, Check } from 'lucide-react';
@@ -24,6 +24,9 @@ export function FormViewerPage() {
   const [completedPages, setCompletedPages] = useState<Set<number>>(new Set());
   const [totalPages, setTotalPages] = useState(1);
   const [fieldsByPage, setFieldsByPage] = useState<Map<number, any[]>>(new Map());
+
+  // Track initialized signature canvases to prevent re-initialization on re-render
+  const initializedCanvasesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (slug) {
@@ -76,16 +79,16 @@ export function FormViewerPage() {
       // Organize fields by page
       const pageMap = new Map<number, any[]>();
       loadedForm.fields.forEach((field: any) => {
-        const page = field.position?.page || 1;
+        const page = field.pageNumber || 1;
         if (!pageMap.has(page)) {
           pageMap.set(page, []);
         }
         pageMap.get(page)!.push(field);
       });
 
-      // Sort fields within each page by position.y
+      // Sort fields within each page by y position
       pageMap.forEach((fields, page) => {
-        fields.sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0));
+        fields.sort((a, b) => (b.y || 0) - (a.y || 0)); // Higher y = higher on page
       });
 
       setFieldsByPage(pageMap);
@@ -393,7 +396,8 @@ export function FormViewerPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(fieldsByPage.get(currentPage) || []).map((field: any, index: number) => {
                     const isMobileField = ['qr-scan', 'barcode-scan', 'camera', 'gps-location'].includes(field.type);
-                    const isFullWidth = field.type === 'textarea' || isMobileField;
+                    const isFullWidth = field.type === 'textarea' || field.type === 'static-text' || isMobileField;
+                    const showLabel = !isMobileField && field.type !== 'static-text';
 
                     return (
                       <motion.div
@@ -403,7 +407,7 @@ export function FormViewerPage() {
                         transition={{ duration: 0.3, delay: index * 0.03 }}
                         className={`flex flex-col gap-2 ${isFullWidth ? 'md:col-span-2' : ''}`}
                       >
-                        {!isMobileField && (
+                        {showLabel && (
                           <label className="text-sm font-semibold text-foreground/80">
                             {field.label || field.name}
                             {field.required && <span className="text-destructive mr-1">*</span>}
@@ -432,6 +436,193 @@ export function FormViewerPage() {
                             <span className="text-sm font-medium text-muted-foreground cursor-pointer select-none">
                               {field.label || field.name}
                             </span>
+                          </div>
+                        )}
+
+                        {field.type === 'dropdown' && (
+                          <select
+                            value={formData[field.id] || ''}
+                            onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                            className="px-4 py-3 border-2 border-border rounded-lg text-base transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 bg-white"
+                            required={field.required}
+                            dir={field.direction || 'ltr'}
+                          >
+                            <option value="">{direction === 'rtl' ? 'בחר אפשרות' : 'Select option'}</option>
+                            {(field.options || []).map((option: string, idx: number) => (
+                              <option key={idx} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {field.type === 'radio' && (
+                          <div className="flex flex-col gap-2 py-2">
+                            {(field.options || []).map((option: string, idx: number) => (
+                              <label key={idx} className="flex items-center gap-3 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name={field.id}
+                                  value={option}
+                                  checked={formData[field.id] === option}
+                                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                                  className="w-4 h-4 accent-primary cursor-pointer"
+                                  required={field.required}
+                                />
+                                <span className="text-sm font-medium text-muted-foreground select-none">
+                                  {option}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+
+                        {field.type === 'signature' && (
+                          <div className="border-2 border-border rounded-lg p-4 bg-muted/10">
+                            <canvas
+                              ref={(canvas) => {
+                                if (!canvas) return;
+
+                                const canvasId = `signature-${field.id}`;
+
+                                // Check if already initialized to prevent re-init on re-render
+                                if (initializedCanvasesRef.current.has(canvasId)) {
+                                  return;
+                                }
+
+                                // Setup canvas for high-DPI displays
+                                const rect = canvas.getBoundingClientRect();
+                                const dpr = window.devicePixelRatio || 1;
+                                canvas.width = rect.width * dpr;
+                                canvas.height = 128 * dpr;
+                                const ctx = canvas.getContext('2d');
+                                if (ctx) {
+                                  ctx.scale(dpr, dpr);
+                                  ctx.lineWidth = 2;
+                                  ctx.lineCap = 'round';
+                                  ctx.lineJoin = 'round';
+                                  ctx.strokeStyle = '#000000';
+
+                                  // Restore existing signature if available
+                                  const existingSignature = formData[field.id];
+                                  if (existingSignature && existingSignature.startsWith('data:image')) {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                      ctx.drawImage(img, 0, 0, rect.width, 128);
+                                    };
+                                    img.src = existingSignature;
+                                  }
+                                }
+
+                                // Mark as initialized
+                                initializedCanvasesRef.current.add(canvasId);
+
+                                let isDrawing = false;
+                                let lastX = 0;
+                                let lastY = 0;
+
+                                const getCoordinates = (e: MouseEvent | TouchEvent) => {
+                                  const rect = canvas.getBoundingClientRect();
+                                  if (e instanceof MouseEvent) {
+                                    return {
+                                      x: e.clientX - rect.left,
+                                      y: e.clientY - rect.top,
+                                    };
+                                  } else {
+                                    const touch = e.touches[0];
+                                    return {
+                                      x: touch.clientX - rect.left,
+                                      y: touch.clientY - rect.top,
+                                    };
+                                  }
+                                };
+
+                                const startDrawing = (e: MouseEvent | TouchEvent) => {
+                                  e.preventDefault();
+                                  isDrawing = true;
+                                  const coords = getCoordinates(e);
+                                  lastX = coords.x;
+                                  lastY = coords.y;
+                                };
+
+                                const draw = (e: MouseEvent | TouchEvent) => {
+                                  if (!isDrawing) return;
+                                  e.preventDefault();
+
+                                  const ctx = canvas.getContext('2d');
+                                  if (!ctx) return;
+
+                                  const coords = getCoordinates(e);
+                                  ctx.beginPath();
+                                  ctx.moveTo(lastX, lastY);
+                                  ctx.lineTo(coords.x, coords.y);
+                                  ctx.stroke();
+
+                                  lastX = coords.x;
+                                  lastY = coords.y;
+                                };
+
+                                const stopDrawing = () => {
+                                  if (isDrawing) {
+                                    isDrawing = false;
+                                    // Save signature as base64 PNG
+                                    const signatureData = canvas.toDataURL('image/png');
+                                    handleFieldChange(field.id, signatureData);
+                                  }
+                                };
+
+                                // Mouse events
+                                canvas.addEventListener('mousedown', startDrawing);
+                                canvas.addEventListener('mousemove', draw);
+                                canvas.addEventListener('mouseup', stopDrawing);
+                                canvas.addEventListener('mouseleave', stopDrawing);
+
+                                // Touch events for mobile
+                                canvas.addEventListener('touchstart', startDrawing);
+                                canvas.addEventListener('touchmove', draw);
+                                canvas.addEventListener('touchend', stopDrawing);
+                              }}
+                              id={`signature-${field.id}`}
+                              className="w-full h-32 border border-dashed border-border rounded bg-white cursor-crosshair"
+                            />
+                            <div className="flex justify-between mt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const canvas = document.getElementById(`signature-${field.id}`) as HTMLCanvasElement;
+                                  if (canvas) {
+                                    const ctx = canvas.getContext('2d');
+                                    if (ctx) {
+                                      ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                      handleFieldChange(field.id, '');
+                                    }
+                                  }
+                                }}
+                                className="text-sm text-destructive hover:underline"
+                              >
+                                {direction === 'rtl' ? 'נקה' : 'Clear'}
+                              </button>
+                              <span className="text-xs text-muted-foreground">
+                                {direction === 'rtl' ? 'חתום כאן' : 'Sign here'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {field.type === 'static-text' && (
+                          <div
+                            className="px-4 py-3 rounded-lg text-base"
+                            style={{
+                              textAlign: field.textAlign || (field.direction === 'rtl' ? 'right' : 'left'),
+                              backgroundColor: field.backgroundColor || 'transparent',
+                              color: field.textColor || '#1f2937',
+                              fontWeight: field.fontWeight || 'normal',
+                              fontStyle: field.fontStyle || 'normal',
+                              fontSize: `${field.fontSize || 12}pt`,
+                              border: field.borderWidth ? `${field.borderWidth}px solid ${field.borderColor || '#000'}` : 'none',
+                              direction: field.direction || 'ltr',
+                              whiteSpace: 'pre-wrap',
+                            }}
+                          >
+                            {field.content || ''}
                           </div>
                         )}
 
