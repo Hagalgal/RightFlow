@@ -40,6 +40,10 @@ export interface Translations {
   dropdownFieldTool: string;
   signatureFieldTool: string;
   staticTextFieldTool: string;
+  cameraFieldTool: string;
+  gpsLocationFieldTool: string;
+  qrScanFieldTool: string;
+  barcodeScanFieldTool: string;
 
   // Field types
   textField: string;
@@ -341,6 +345,28 @@ export interface Translations {
   featureOfflineTitle: string;
   featureOfflineDesc: string;
   socialProofTitle: string;
+
+  // Landing Page V3 Niches
+  medicalTitle: string;
+  medicalDesc: string;
+  technicalTitle: string;
+  technicalDesc: string;
+  constructionTitle: string;
+  constructionDesc: string;
+  salesTitle: string;
+  salesDesc: string;
+  securityTitle: string;
+  securityDesc: string;
+
+  // New Features Grid
+  pwaTitle: string;
+  pwaDesc: string;
+  offlineFirstTitle: string;
+  offlineFirstDesc: string;
+  signatureSmoothingTitle: string;
+  signatureSmoothingDesc: string;
+  aiDetectionTitle: string;
+  aiDetectionDesc: string;
 }
 
 const hebrewTranslations: Translations = {
@@ -383,6 +409,10 @@ const hebrewTranslations: Translations = {
   dropdownFieldTool: 'רשימה נפתחת',
   signatureFieldTool: 'חתימה',
   staticTextFieldTool: 'טקסט סטטי',
+  cameraFieldTool: 'מצלמה',
+  gpsLocationFieldTool: 'מיקום GPS',
+  qrScanFieldTool: 'סורק QR',
+  barcodeScanFieldTool: 'סורק ברקוד',
 
   // Field types
   textField: 'טקסט',
@@ -684,6 +714,28 @@ const hebrewTranslations: Translations = {
   featureOfflineTitle: 'מאובטח ואופליין',
   featureOfflineDesc: 'איסוף נתונים ללא צורך בחיבור לאינטרנט. מוצפן ומאוחסן בענן ישראלי.',
   socialProofTitle: 'הבחירה של החברות המובילות בישראל',
+
+  // Landing Page V3 Niches
+  medicalTitle: 'ציוד רפואי ולוגיסטיקה',
+  medicalDesc: 'מילוי טפסים במרתפי בתי חולים ללא קליטה, עם סנכרון אוטומטי כשעולים למעלה.',
+  technicalTitle: 'שירות טכני ו-HVAC',
+  technicalDesc: 'תיעוד תקלות בשטח, צילום תמונות דחוסות וחתימת לקוח מהירה עם חותמת זמן.',
+  constructionTitle: 'פיקוח בנייה ובטיחות',
+  constructionDesc: 'סריקת קודי QR על ציוד, מילוי צ׳קליסטים ודיווח ליקויים עם מיקום GPS מדויק.',
+  salesTitle: 'מכירות וביטוח',
+  salesDesc: 'חתימת לקוח על פוליסות וחוזים בממשק פרימיום שמרגיש כמו דיו אמיתי.',
+  securityTitle: 'אבטחה וסיור',
+  securityDesc: 'תיעוד נוכחות בסיורים מבוסס GPS ודיווח על אירועים חריגים בזמן אמת.',
+
+  // New Features Grid
+  pwaTitle: 'אפליקציית PWA מתקדמת',
+  pwaDesc: 'התקן את RightFlow למסך הבית ללא צורך בחנות אפליקציות. עובד מיידית.',
+  offlineFirstTitle: 'Offline-First אמיתי',
+  offlineFirstDesc: 'כל היכולות זמינות גם ללא אינטרנט. המידע נשמר על המכשיר ומסתנכרן ברקע.',
+  signatureSmoothingTitle: 'חתימה דיגיטלית חלקה',
+  signatureSmoothingDesc: 'אלגוריתם Bézier ליצירת חתימות מקצועיות שנראות סרוקות בתוך ה-PDF.',
+  aiDetectionTitle: 'זיהוי שדות ב-AI',
+  aiDetectionDesc: 'העלה כל קובץ PDF והמערכת שלנו תזהה ותמפה את השדות עבורך בשניות.',
 };
 
 const englishTranslations: Translations = {
@@ -726,6 +778,10 @@ const englishTranslations: Translations = {
   dropdownFieldTool: 'Dropdown',
   signatureFieldTool: 'Signature',
   staticTextFieldTool: 'Static Text',
+  cameraFieldTool: 'Camera',
+  gpsLocationFieldTool: 'GPS Location',
+  qrScanFieldTool: 'QR Scanner',
+  barcodeScanFieldTool: 'Barcode Scanner',
 
   // Field types
   textField: 'Text',
@@ -1026,7 +1082,29 @@ const englishTranslations: Translations = {
   featureAiDesc: 'Turn paper forms into digital interfaces in seconds using our advanced AI engine.',
   featureOfflineTitle: 'Secure & Offline',
   featureOfflineDesc: 'Collect data without internet. Fully encrypted and hosted on Israeli cloud.',
-  socialProofTitle: 'Trusted by leading Israeli companies',
+  socialProofTitle: 'TRUSTED BY LEADING ISRAELI COMPANIES',
+
+  // Landing Page V3 Niches
+  medicalTitle: 'Medical Equipment',
+  medicalDesc: 'Form filling in hospital basements with zero signal, auto-syncing when online.',
+  technicalTitle: 'Technical Services',
+  technicalDesc: 'Document field faults with compressed photos and fast timestamped signatures.',
+  constructionTitle: 'Construction & Safety',
+  constructionDesc: 'Scan equipment QR codes, complete checklists and report defects with GPS.',
+  salesTitle: 'Sales & Insurance',
+  salesDesc: 'Client signatures on policies with a premium interface that feels like real ink.',
+  securityTitle: 'Security & Patrol',
+  securityDesc: 'GPS-based patrol tracking and real-time incident reporting.',
+
+  // New Features Grid
+  pwaTitle: 'Progressive Web App',
+  pwaDesc: 'Install RightFlow to home screen without app stores. Works instantly.',
+  offlineFirstTitle: 'True Offline-First',
+  offlineFirstDesc: 'All capabilities available offline. Data stays on device and syncs in background.',
+  signatureSmoothingTitle: 'Smooth Digital Signature',
+  signatureSmoothingDesc: 'Bézier algorithm for professional signatures that look scanned in the PDF.',
+  aiDetectionTitle: 'AI Field Detection',
+  aiDetectionDesc: 'Upload any PDF and our system will detect and map fields for you in seconds.',
 };
 
 const translations: Record<Language, Translations> = {
