@@ -236,6 +236,7 @@ router.get('/:id', async (req, res, next) => {
       `
       SELECT
         s.id,
+        s.organization_id AS "organizationId",
         s.form_id AS "formId",
         f.name AS "formName",
         s.submitted_by_id AS "submittedById",

@@ -160,6 +160,7 @@ router.get('/:id', async (req, res, next) => {
       `
       SELECT
         id,
+        organization_id AS "organizationId",
         name,
         description,
         fields,
@@ -179,13 +180,7 @@ router.get('/:id', async (req, res, next) => {
     const form = forms[0];
 
     // Verify form belongs to user's org
-    // (separate query needed since we selected only specific columns)
-    const [orgCheck] = await query(
-      'SELECT organization_id FROM forms WHERE id = $1',
-      [id]
-    );
-
-    if (orgCheck.organization_id !== organizationId) {
+    if (form.organizationId !== organizationId) {
       throw new OrganizationMismatchError();
     }
 

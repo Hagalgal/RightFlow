@@ -165,6 +165,7 @@ router.get('/:id', async (req, res, next) => {
       `
       SELECT
         id,
+        organization_id AS "organizationId",
         url,
         events,
         secret,
@@ -184,12 +185,7 @@ router.get('/:id', async (req, res, next) => {
     const webhook = webhooks[0];
 
     // Verify webhook belongs to user's org
-    const [orgCheck] = await query(
-      'SELECT organization_id FROM webhooks WHERE id = $1',
-      [id]
-    );
-
-    if (orgCheck.organization_id !== organizationId) {
+    if (webhook.organizationId !== organizationId) {
       throw new OrganizationMismatchError();
     }
 
