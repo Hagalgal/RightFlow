@@ -42,6 +42,7 @@ export const webhookWorker = new Worker<WebhookJob>(
       if (response.ok) {
         // Success: HTTP 200-299
         await logWebhookEvent(webhookId, payload.id, 'delivered', {
+          eventType: payload.type,
           statusCode: response.status,
           responseBody: responseBody.substring(0, 1000), // Limit to 1000 chars
           attempt: job.attemptsMade + 1,
@@ -57,6 +58,7 @@ export const webhookWorker = new Worker<WebhookJob>(
       } else {
         // Failure: HTTP 4xx/5xx
         await logWebhookEvent(webhookId, payload.id, 'failed', {
+          eventType: payload.type,
           statusCode: response.status,
           responseBody: responseBody.substring(0, 1000),
           attempt: job.attemptsMade + 1,
@@ -69,6 +71,7 @@ export const webhookWorker = new Worker<WebhookJob>(
     } catch (error: any) {
       // Network error, timeout, or DNS error
       await logWebhookEvent(webhookId, payload.id, 'failed', {
+        eventType: payload.type,
         error: error.message,
         attempt: job.attemptsMade + 1,
       });
