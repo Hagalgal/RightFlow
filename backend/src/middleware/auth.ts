@@ -1,0 +1,133 @@
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+import { AuthenticationError, InvalidTokenError } from '../utils/errors';
+import logger from '../utils/logger';
+
+// Clerk's public key endpoint (for JWT signature verification)
+const client = jwksClient({
+  jwksUri: `https://${process.env.CLERK_PUBLISHABLE_KEY?.split('_')[1]}.clerk.accounts.dev/.well-known/jwks.json`,
+  cache: true,
+  cacheMaxAge: 600000, // 10 minutes
+});
+
+// Get Clerk's public key for signature verification
+function getKey(header: any, callback: any) {
+  client.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
+    const signingKey = key?.getPublicKey();
+    callback(null, signingKey);
+  });
+}
+
+// Extend Express Request type
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        organizationId: string;
+        role: string;
+        email: string;
+        name: string;
+      };
+      id?: string;
+    }
+  }
+}
+
+// Middleware: Authenticate JWT
+export async function authenticateJWT(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  try {
+    // 1. Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new AuthenticationError('נא להתחבר מחדש');
+    }
+
+    const token = authHeader.substring(7); // Remove "Bearer "
+
+    // 2. Verify JWT signature and expiration
+    const decoded: any = await new Promise((resolve, reject) => {
+      jwt.verify(
+        token,
+        getKey,
+        {
+          algorithms: ['RS256'],
+        },
+        (err, decoded) => {
+          if (err) reject(err);
+          else resolve(decoded);
+        }
+      );
+    });
+
+    // 3. Extract user info from JWT claims
+    const userId = decoded.sub; // Clerk user ID
+    const organizationId = decoded.org_id;
+    const role = decoded.metadata?.role || 'worker';
+    const email = decoded.email;
+    const name = decoded.name;
+
+    if (!userId || !organizationId) {
+      throw new InvalidTokenError('אסימון לא תקין - חסרים נתונים');
+    }
+
+    // 4. Attach user info to request object
+    req.user = {
+      id: userId,
+      organizationId,
+      role,
+      email,
+      name,
+    };
+
+    // 5. Continue to next middleware/route handler
+    next();
+  } catch (error: any) {
+    logger.error('JWT validation failed', { error: error.message });
+
+    if (error instanceof AuthenticationError || error instanceof InvalidTokenError) {
+      return next(error);
+    }
+
+    // JWT library errors
+    if (error.name === 'TokenExpiredError') {
+      return next(new AuthenticationError('אסימון פג תוקף, נא להתחבר מחדש'));
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return next(new InvalidTokenError('אסימון לא תקין'));
+    }
+
+    return next(new AuthenticationError());
+  }
+}
+
+// Middleware: Require minimum role
+export function requireRole(minRole: 'admin' | 'manager' | 'worker') {
+  const roleHierarchy: Record<string, number> = {
+    admin: 3,
+    manager: 2,
+    worker: 1,
+  };
+
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const userRole = req.user?.role;
+
+    if (!userRole || roleHierarchy[userRole] < roleHierarchy[minRole]) {
+      return next(
+        new InvalidTokenError(
+          `נדרשת הרשאת ${minRole} - יש לך הרשאת ${userRole || 'none'}`
+        )
+      );
+    }
+
+    next();
+  };
+}
