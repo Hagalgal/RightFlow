@@ -53,8 +53,8 @@ const listSubmissionsSchema = z.object({
   submittedById: z.string().uuid().optional(),
   fromDate: z.string().datetime().optional(),
   toDate: z.string().datetime().optional(),
-  page: z.string().default('1').transform(Number),
-  limit: z.string().default('20').transform(Number),
+  page: z.coerce.number().default(1),
+  limit: z.coerce.number().default(20),
 });
 
 // ============================================================================
@@ -105,7 +105,9 @@ router.get('/', async (req, res, next) => {
     const whereClause = conditions.join(' AND ');
 
     // Query with pagination
-    const offset = (filters.page - 1) * filters.limit;
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const offset = (page - 1) * limit;
     const submissions = await query(
       `
       SELECT
@@ -126,7 +128,7 @@ router.get('/', async (req, res, next) => {
       ORDER BY s.created_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `,
-      [...params, filters.limit, offset]
+      [...params, limit, offset]
     );
 
     // Get total count
@@ -138,10 +140,10 @@ router.get('/', async (req, res, next) => {
     res.json({
       data: submissions,
       pagination: {
-        page: filters.page,
-        limit: filters.limit,
+        page,
+        limit,
         total: parseInt(count),
-        totalPages: Math.ceil(parseInt(count) / filters.limit),
+        totalPages: Math.ceil(parseInt(count) / limit),
       },
     });
   } catch (error) {

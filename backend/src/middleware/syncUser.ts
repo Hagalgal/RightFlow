@@ -8,7 +8,7 @@ import logger from '../utils/logger';
  * This middleware runs AFTER authenticateJWT.
  * It ensures the user exists in our database (upsert).
  */
-export async function syncUser(req: Request, res: Response, next: NextFunction) {
+export async function syncUser(req: Request, _res: Response, next: NextFunction) {
   try {
     if (!req.user) {
       // authenticateJWT should have set req.user

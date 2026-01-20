@@ -178,7 +178,8 @@ router.get('/:id', async (req, res, next) => {
 
     const form = forms[0];
 
-    // Verify form belongs to user's org (must do separate query since we selected only specific columns)
+    // Verify form belongs to user's org
+    // (separate query needed since we selected only specific columns)
     const [orgCheck] = await query(
       'SELECT organization_id FROM forms WHERE id = $1',
       [id]

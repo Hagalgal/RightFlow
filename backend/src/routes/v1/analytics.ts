@@ -2,7 +2,6 @@ import express from 'express';
 import { authenticateJWT, requireRole } from '../../middleware/auth';
 import { syncUser } from '../../middleware/syncUser';
 import { query } from '../../config/database';
-import logger from '../../utils/logger';
 
 const router = express.Router();
 

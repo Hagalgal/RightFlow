@@ -6,7 +6,7 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   // Attach request ID to error (for log correlation)
   const requestId = (req as any).id || `req_${Date.now()}`;

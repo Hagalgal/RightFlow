@@ -22,6 +22,7 @@ function getKey(header: any, callback: any) {
 
 // Extend Express Request type
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: {
@@ -39,7 +40,7 @@ declare global {
 // Middleware: Authenticate JWT
 export async function authenticateJWT(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   try {
@@ -116,7 +117,7 @@ export function requireRole(minRole: 'admin' | 'manager' | 'worker') {
     worker: 1,
   };
 
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     const userRole = req.user?.role;
 
     if (!userRole || roleHierarchy[userRole] < roleHierarchy[minRole]) {

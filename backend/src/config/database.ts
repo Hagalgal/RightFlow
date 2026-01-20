@@ -1,4 +1,4 @@
-import { Pool, QueryResult } from 'pg';
+import { Pool, QueryResult, QueryResultRow } from 'pg';
 import { config } from './env';
 import logger from '../utils/logger';
 
@@ -22,13 +22,13 @@ pool.on('connect', () => {
 });
 
 // Type-safe query helper
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = any>(
   sql: string,
   params: any[] = []
 ): Promise<T[]> {
   const start = Date.now();
   try {
-    const result: QueryResult<T> = await pool.query(sql, params);
+    const result: QueryResult<T> = await pool.query<T>(sql, params);
     const duration = Date.now() - start;
 
     logger.debug('Database query executed', {

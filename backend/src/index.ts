@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestId);
 
 // Health check endpoint (for Railway)
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbHealthy = await checkDatabaseConnection();
 
   if (!dbHealthy) {
@@ -44,7 +44,7 @@ app.get('/health', async (req, res) => {
     });
   }
 
-  res.json({
+  return res.json({
     status: 'ok',
     database: 'connected',
     timestamp: new Date().toISOString(),
@@ -59,12 +59,12 @@ app.use('/api/v1/webhooks', webhooksRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',
       message: 'נתיב לא נמצא',
-      path: req.path,
+      path: _req.path,
       timestamp: new Date().toISOString(),
     },
   });

@@ -29,21 +29,9 @@ export const webhookQueue = new Queue<WebhookJob>('webhook-delivery', {
   },
 });
 
-// Queue event listeners (for monitoring)
-webhookQueue.on('waiting', (job) => {
-  // Job is waiting to be processed
-});
-
-webhookQueue.on('active', (job) => {
-  // Job is being processed
-});
-
-webhookQueue.on('completed', (job) => {
-  // Job completed successfully
-});
-
-webhookQueue.on('failed', (job, err) => {
-  // Job failed after all retries
-});
+// Queue event listeners can be added here for monitoring
+// Example:
+// webhookQueue.on('completed', (job) => { console.log('Job completed:', job.id); });
+// webhookQueue.on('failed', (job, err) => { console.log('Job failed:', job.id, err); });
 
 export default webhookQueue;

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { query } from '../config/database';
-import { webhookQueue, WebhookJob } from '../queues/webhookQueue';
+import { webhookQueue } from '../queues/webhookQueue';
 import logger from '../utils/logger';
 import { WebhookEvent } from '../types';
 
