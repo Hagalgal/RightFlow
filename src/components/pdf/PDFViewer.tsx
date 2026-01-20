@@ -8,6 +8,7 @@ interface PDFViewerProps {
   onLoadSuccess: (pdf: any) => void;
   onLoadError: (error: Error) => void;
   onPageRender: (page: any) => void;
+  onZoomChange?: (zoom: number) => void; // Callback for gesture-based zoom
 }
 
 export const PDFViewer = ({
@@ -18,6 +19,7 @@ export const PDFViewer = ({
   onLoadSuccess,
   onLoadError,
   onPageRender,
+  onZoomChange,
 }: PDFViewerProps) => {
   return (
     <div className="flex-1 pdf-viewer-container">
@@ -30,6 +32,7 @@ export const PDFViewer = ({
           onLoadSuccess={onLoadSuccess}
           onLoadError={onLoadError}
           onPageRender={onPageRender}
+          onZoomChange={onZoomChange}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center">

@@ -1,66 +1,57 @@
 /**
  * Camera Field Component
- * Allows users to capture photos using device camera
+ * Allows users to capture multiple photos using device camera
+ * Uses fullscreen camera interface and IndexedDB for offline storage
  */
 
-import { useRef, useEffect } from 'react';
-import { Camera, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { Camera as CameraIcon } from 'lucide-react';
 import type { FieldDefinition } from '@/types/fields';
 import { useDirection } from '@/i18n';
-import { useCameraCapture } from '@/hooks/useCameraCapture';
+import { Camera } from '@/components/Camera';
+import { PhotoGallery } from '@/components/PhotoGallery';
 
 interface CameraFieldProps {
   field: FieldDefinition;
-  value: string;
-  onChange: (value: string) => void;
+  value: string | string[]; // Support both single photo (string) and multiple photos (array)
+  onChange: (value: string[]) => void;
 }
 
+/**
+ * Camera Field - Capture and display photos
+ * Supports multiple photos with fullscreen camera and gallery view
+ *
+ * @example
+ * ```tsx
+ * <CameraField
+ *   field={{ type: 'camera', name: 'photos', label: 'תמונות' }}
+ *   value={photoIds}
+ *   onChange={setPhotoIds}
+ * />
+ * ```
+ */
 export function CameraField({ field, value, onChange }: CameraFieldProps) {
   const direction = useDirection();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const {
-    isCapturing,
-    image,
-    error,
-    stream,
-    startCapture,
-    stopCapture,
-    captureImage,
-    clearImage,
-  } = useCameraCapture();
+  const [showCamera, setShowCamera] = useState(false);
 
-  // Set video source when stream is available
-  useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
+  // Normalize value to array
+  const photoIds = Array.isArray(value) ? value : value ? [value] : [];
 
-  const handleStartCamera = async () => {
-    await startCapture();
+  const handleCapture = (photoId: string) => {
+    // Add new photo to array
+    const updatedPhotos = [...photoIds, photoId];
+    onChange(updatedPhotos);
+    setShowCamera(false);
   };
 
-  const handleCapture = () => {
-    if (videoRef.current) {
-      captureImage(videoRef.current);
-      stopCapture();
-    }
+  const handleDelete = (photoId: string) => {
+    // Remove photo from array
+    const updatedPhotos = photoIds.filter(id => id !== photoId);
+    onChange(updatedPhotos);
   };
 
-  // When image is captured, call onChange
-  useEffect(() => {
-    if (image) {
-      onChange(image);
-    }
-  }, [image, onChange]);
-
-  const handleRetake = () => {
-    clearImage();
-    onChange('');
-  };
-
-  const handleCancel = () => {
-    stopCapture();
+  const handleOpenCamera = () => {
+    setShowCamera(true);
   };
 
   return (
@@ -71,87 +62,53 @@ export function CameraField({ field, value, onChange }: CameraFieldProps) {
         {field.required && <span className="text-destructive mr-1">*</span>}
       </label>
 
-      {/* Camera preview (while capturing) */}
-      {isCapturing && !image && (
-        <div className="relative rounded-lg overflow-hidden border-2 border-primary bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-auto"
-            style={{ maxHeight: '400px' }}
+      {/* Photo Gallery (if photos exist) */}
+      {photoIds.length > 0 && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <PhotoGallery
+            photoIds={photoIds}
+            onDelete={handleDelete}
+            columns={3}
           />
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={handleCapture}
-              className="px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-            >
-              {direction === 'rtl' ? 'צלם' : 'Capture'}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-6 py-3 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors font-medium"
-            >
-              {direction === 'rtl' ? 'ביטול' : 'Cancel'}
-            </button>
-          </div>
         </div>
       )}
 
-      {/* Captured image display */}
-      {(image || value) && !isCapturing && (
-        <div className="space-y-2">
-          <div className="relative rounded-lg overflow-hidden border-2 border-green-600 bg-black">
-            <img
-              src={image || value}
-              alt={direction === 'rtl' ? 'תמונה שצולמה' : 'Captured photo'}
-              className="w-full h-auto"
-              style={{ maxHeight: '400px', objectFit: 'contain' }}
-            />
-            <div className="absolute top-2 right-2 bg-green-600 text-white rounded-full p-2">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleRetake}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
-          >
-            <Camera className="w-5 h-5" />
-            {direction === 'rtl' ? 'צלם שוב' : 'Retake Photo'}
-          </button>
-        </div>
-      )}
-
-      {/* Camera button (when not capturing and no image) */}
-      {!isCapturing && !image && !value && (
-        <button
-          type="button"
-          onClick={handleStartCamera}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <Camera className="w-5 h-5" />
-          {direction === 'rtl' ? 'פתח מצלמה' : 'Open Camera'}
-        </button>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-2">
-          {error}
-        </div>
-      )}
+      {/* Add Photo Button */}
+      <button
+        type="button"
+        onClick={handleOpenCamera}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+      >
+        <CameraIcon className="w-5 h-5" />
+        {photoIds.length > 0
+          ? (direction === 'rtl' ? 'הוסף תמונה נוספת' : 'Add Another Photo')
+          : (direction === 'rtl' ? 'פתח מצלמה' : 'Open Camera')}
+      </button>
 
       {/* Help text */}
-      {!value && !image && !isCapturing && !error && (
+      {photoIds.length === 0 && (
         <p className="text-xs text-muted-foreground">
           {direction === 'rtl'
-            ? 'לחץ על הכפתור כדי לצלם תמונה באמצעות המצלמה'
-            : 'Click the button to capture a photo using your camera'}
+            ? 'לחץ על הכפתור כדי לצלם תמונות באמצעות המצלמה'
+            : 'Click the button to capture photos using your camera'}
         </p>
+      )}
+
+      {/* Photo count */}
+      {photoIds.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {direction === 'rtl'
+            ? `${photoIds.length} ${photoIds.length === 1 ? 'תמונה' : 'תמונות'} נשמרו`
+            : `${photoIds.length} photo${photoIds.length === 1 ? '' : 's'} saved`}
+        </p>
+      )}
+
+      {/* Fullscreen Camera */}
+      {showCamera && (
+        <Camera
+          onCapture={handleCapture}
+          onClose={() => setShowCamera(false)}
+        />
       )}
     </div>
   );

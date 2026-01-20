@@ -8,6 +8,7 @@ import { QRScannerField } from '../components/fields/QRScannerField';
 import { BarcodeScannerField } from '../components/fields/BarcodeScannerField';
 import { CameraField } from '../components/fields/CameraField';
 import { GPSLocationField } from '../components/fields/GPSLocationField';
+import { DatePickerField } from '../components/fields/DatePickerField';
 
 export function FormViewerPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -414,7 +415,17 @@ export function FormViewerPage() {
                           </label>
                         )}
 
-                        {field.type === 'text' && (
+                        {/* Date fields - check for type='date' or validationType starting with 'date.' */}
+                        {(field.type === 'date' || (field.validationType && field.validationType.startsWith('date.'))) && (
+                          <DatePickerField
+                            field={field}
+                            value={formData[field.id] || ''}
+                            onChange={(value) => handleFieldChange(field.id, value)}
+                          />
+                        )}
+
+                        {/* Text fields - exclude date fields */}
+                        {field.type === 'text' && !field.validationType?.startsWith('date.') && (
                           <input
                             type="text"
                             value={formData[field.id] || ''}

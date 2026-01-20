@@ -11,6 +11,8 @@ import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { usePDFCanvasHandlers } from './hooks/usePDFCanvasHandlers';
 import { PDFCanvasOverlays } from './PDFCanvasOverlays';
 import { PDFCanvasPropertiesPanels } from './PDFCanvasPropertiesPanels';
+import { usePinchZoom } from '@/hooks/usePinchZoom';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -23,6 +25,7 @@ interface PDFCanvasProps {
   onLoadSuccess: (pdf: any) => void;
   onLoadError: (error: Error) => void;
   onPageRender: (page: any) => void;
+  onZoomChange?: (zoom: number) => void; // Callback for gesture-based zoom
 }
 
 export const PDFCanvas = ({
@@ -33,11 +36,13 @@ export const PDFCanvas = ({
   onLoadSuccess,
   onLoadError,
   onPageRender,
+  onZoomChange,
 }: PDFCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const justDraggedRef = useRef(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isMobile = useIsMobile();
 
   // Zustand stores
   const {
@@ -94,6 +99,15 @@ export const PDFCanvas = ({
     setShowDeleteConfirm,
   });
 
+  // Touch gestures - Pinch to zoom on mobile
+  usePinchZoom(containerRef, {
+    minZoom: 50,
+    maxZoom: 200,
+    initialZoom: scale,
+    onZoomChange,
+    enabled: isMobile && !!onZoomChange,
+  });
+
   if (!file) {
     return null;
   }
@@ -114,6 +128,7 @@ export const PDFCanvas = ({
               : activeTool === 'checkbox-field' || activeTool === 'radio-field'
                 ? 'copy'
                 : 'default',
+          touchAction: isMobile ? 'none' : 'auto', // Enable gesture handling on mobile
         }}
       >
         <Document

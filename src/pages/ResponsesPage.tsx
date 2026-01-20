@@ -15,20 +15,24 @@ interface Response {
   submitterUserAgent?: string | null;
 }
 
+interface FormField {
+  id: string;
+  label?: string;
+  name?: string;
+  type: string;
+}
+
 export function ResponsesPage() {
   const { formId } = useParams<{ formId: string }>();
   const { isSignedIn, isLoaded, user } = useUser();
-  const { getToken, orgId, orgRole } = useAuth();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const t = useTranslation();
   const direction = useDirection();
   const [responses, setResponses] = useState<Response[]>([]);
+  const [formFields, setFormFields] = useState<FormField[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Simplified role-based access (Clerk free tier)
-  // Both admin and basic_member can view responses
-  const canViewResponses = !orgId || orgRole === 'admin' || orgRole === 'basic_member';
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -41,17 +45,24 @@ export function ResponsesPage() {
       setIsLoading(true);
       setError(null);
 
-      // Check permissions in organization context
-      if (orgId && !canViewResponses) {
-        setError(direction === 'rtl'
-          ? 'אין לך הרשאה לצפות בתגובות בארגון זה.'
-          : 'You do not have permission to view responses in this organization.');
-        setIsLoading(false);
-        return;
-      }
-
       const token = await getToken();
 
+      // Load form to get field labels
+      const formResponse = await fetch(`/api/forms?id=${formId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        signal,
+      });
+
+      if (formResponse.ok) {
+        const formData = await formResponse.json();
+        if (formData.form && formData.form.fields) {
+          setFormFields(formData.form.fields);
+        }
+      }
+
+      // Load responses
       const response = await fetch(`/api/responses?formId=${formId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -60,7 +71,15 @@ export function ResponsesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load responses');
+        // Try to get error message from server response
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message ||
+          (response.status === 403
+            ? (direction === 'rtl'
+              ? 'אין לך הרשאה לצפות בתגובות של טופס זה'
+              : 'You do not have permission to view responses for this form')
+            : (direction === 'rtl' ? 'טעינת התגובות נכשלה' : 'Failed to load responses'));
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -73,7 +92,7 @@ export function ResponsesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [formId, getToken, orgId, canViewResponses, direction]);
+  }, [formId, getToken, direction]);
 
   useEffect(() => {
     if (!isSignedIn || !formId) {
@@ -194,14 +213,43 @@ export function ResponsesPage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                      {Object.entries(response.data).map(([key, value]) => (
-                        <div key={key} className="flex flex-col gap-1">
-                          <span className="text-xs font-bold text-muted-foreground uppercase">{key}</span>
-                          <span className="text-foreground font-medium bg-muted/30 p-2 rounded-lg border border-border/20">
-                            {value === true ? (direction === 'rtl' ? 'כן' : 'Yes') : (value === false ? (direction === 'rtl' ? 'לא' : 'No') : String(value || '-'))}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(response.data).map(([fieldId, value]) => {
+                        const field = formFields.find(f => f.id === fieldId);
+                        const label = field?.label || field?.name || fieldId;
+
+                        // Handle signature fields (base64 images)
+                        if (field?.type === 'signature' && typeof value === 'string' && value.startsWith('data:image')) {
+                          return (
+                            <div key={fieldId} className="flex flex-col gap-1 md:col-span-2">
+                              <span className="text-xs font-bold text-muted-foreground uppercase">{label}</span>
+                              <div className="bg-muted/30 p-2 rounded-lg border border-border/20">
+                                <img src={value} alt={label} className="max-h-32 border border-border rounded" />
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Handle camera fields (base64 images)
+                        if (field?.type === 'camera' && typeof value === 'string' && value.startsWith('data:image')) {
+                          return (
+                            <div key={fieldId} className="flex flex-col gap-1 md:col-span-2">
+                              <span className="text-xs font-bold text-muted-foreground uppercase">{label}</span>
+                              <div className="bg-muted/30 p-2 rounded-lg border border-border/20">
+                                <img src={value} alt={label} className="max-h-64 border border-border rounded" />
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div key={fieldId} className="flex flex-col gap-1">
+                            <span className="text-xs font-bold text-muted-foreground uppercase">{label}</span>
+                            <span className="text-foreground font-medium bg-muted/30 p-2 rounded-lg border border-border/20">
+                              {value === true ? (direction === 'rtl' ? 'כן' : 'Yes') : (value === false ? (direction === 'rtl' ? 'לא' : 'No') : String(value || '-'))}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </motion.div>

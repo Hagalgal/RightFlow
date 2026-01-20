@@ -28,16 +28,6 @@ export default async function handler(
   }
 
   try {
-    // Authenticate user
-    const userId = await getUserFromAuth(req);
-
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Valid authentication required',
-      });
-    }
-
     const { formId, version, action } = req.query;
 
     if (!formId || typeof formId !== 'string') {
@@ -45,6 +35,38 @@ export default async function handler(
         error: 'Bad request',
         message: 'Form ID is required',
       });
+    }
+
+    // For GET requests, check if the form is published and allow public access
+    const isPublicGetRequest = req.method === 'GET';
+    let userId: string | null = null;
+
+    if (isPublicGetRequest) {
+      // Try to get the form to check if it's published
+      const form = await formsService.getFormById(formId);
+
+      if (form && form.status === 'published') {
+        // Allow unauthenticated access for published forms
+        userId = null;
+      } else {
+        // For non-published forms, require authentication
+        userId = await getUserFromAuth(req);
+        if (!userId) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Valid authentication required',
+          });
+        }
+      }
+    } else {
+      // For POST requests (restore, etc.), always require authentication
+      userId = await getUserFromAuth(req);
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Valid authentication required',
+        });
+      }
     }
 
     // GET - Version history or specific version
@@ -111,6 +133,14 @@ export default async function handler(
       }
 
       const { notes } = req.body;
+
+      // userId is guaranteed to be non-null for POST requests due to auth check above
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication required for restore operation',
+        });
+      }
 
       const result = await formsService.restoreVersion(
         formId,
