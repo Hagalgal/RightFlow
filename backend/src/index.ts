@@ -6,6 +6,11 @@ import { checkDatabaseConnection, closeDatabaseConnection } from './config/datab
 import { requestId } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
 import logger from './utils/logger';
+import submissionsRouter from './routes/v1/submissions';
+import formsRouter from './routes/v1/forms';
+import webhooksRouter from './routes/v1/webhooks';
+import analyticsRouter from './routes/v1/analytics';
+import './workers/webhookWorker'; // Initialize webhook worker
 
 const app = express();
 
@@ -47,10 +52,11 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// API routes (placeholder - will be added in Stage 3)
-// app.use('/api/v1/submissions', submissionsRouter);
-// app.use('/api/v1/forms', formsRouter);
-// app.use('/api/v1/webhooks', webhooksRouter);
+// API routes
+app.use('/api/v1/submissions', submissionsRouter);
+app.use('/api/v1/forms', formsRouter);
+app.use('/api/v1/webhooks', webhooksRouter);
+app.use('/api/v1/analytics', analyticsRouter);
 
 // 404 handler
 app.use((req, res) => {
