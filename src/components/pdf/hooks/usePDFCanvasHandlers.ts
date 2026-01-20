@@ -219,6 +219,118 @@ export function usePDFCanvasHandlers({
         addFieldWithUndo(newField);
         return;
       }
+
+      // Click-to-place camera field
+      if (activeTool === 'camera-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'camera',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - 40,
+          width: 120,
+          height: 40,
+          name: '',
+          required: false,
+          autoFill: false,
+          label: 'צלם תמונה',
+          direction: 'rtl',
+        };
+
+        addFieldWithUndo(newField);
+        return;
+      }
+
+      // Click-to-place GPS location field
+      if (activeTool === 'gps-location-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'gps-location',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - 40,
+          width: 120,
+          height: 40,
+          name: '',
+          required: false,
+          autoFill: false,
+          label: 'קבל מיקום',
+          direction: 'rtl',
+        };
+
+        addFieldWithUndo(newField);
+        return;
+      }
+
+      // Click-to-place QR scanner field
+      if (activeTool === 'qr-scan-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'qr-scan',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - 40,
+          width: 120,
+          height: 40,
+          name: '',
+          required: false,
+          autoFill: false,
+          label: 'סרוק QR',
+          direction: 'rtl',
+        };
+
+        addFieldWithUndo(newField);
+        return;
+      }
+
+      // Click-to-place barcode scanner field
+      if (activeTool === 'barcode-scan-field') {
+        const pdfCoords = viewportToPDFCoords(
+          viewportCoords.x,
+          viewportCoords.y,
+          currentPageDimensions,
+          scale,
+          canvasWidth,
+        );
+
+        const newField: Omit<FieldDefinition, 'id'> = {
+          type: 'barcode-scan',
+          pageNumber,
+          x: pdfCoords.x,
+          y: pdfCoords.y - 40,
+          width: 120,
+          height: 40,
+          name: '',
+          required: false,
+          autoFill: false,
+          label: 'סרוק ברקוד',
+          direction: 'rtl',
+        };
+
+        addFieldWithUndo(newField);
+        return;
+      }
     },
     [
       activeTool,

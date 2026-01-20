@@ -4,6 +4,7 @@ import { RadioField } from './RadioField';
 import { DropdownField } from './DropdownField';
 import { SignatureField } from './SignatureField';
 import { StaticTextField } from './StaticTextField';
+import { MobileFieldOverlay } from './MobileFieldOverlay';
 import { FieldDefinition } from '@/types/fields';
 
 interface PageDimensions {
@@ -97,6 +98,13 @@ export const FieldOverlay = ({
             return <SignatureField key={field.id} {...commonProps} />;
           } else if (field.type === 'static-text') {
             return <StaticTextField key={field.id} {...commonProps} />;
+          } else if (
+            field.type === 'camera' ||
+            field.type === 'gps-location' ||
+            field.type === 'qr-scan' ||
+            field.type === 'barcode-scan'
+          ) {
+            return <MobileFieldOverlay key={field.id} {...commonProps} />;
           }
 
           return null;

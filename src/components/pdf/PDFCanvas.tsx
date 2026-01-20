@@ -125,7 +125,7 @@ export const PDFCanvas = ({
           cursor:
             activeTool === 'text-field' || activeTool === 'dropdown-field' || activeTool === 'signature-field' || activeTool === 'static-text-field'
               ? 'crosshair'
-              : activeTool === 'checkbox-field' || activeTool === 'radio-field'
+              : activeTool === 'checkbox-field' || activeTool === 'radio-field' || activeTool === 'camera-field' || activeTool === 'gps-location-field' || activeTool === 'qr-scan-field' || activeTool === 'barcode-scan-field'
                 ? 'copy'
                 : 'default',
           touchAction: isMobile ? 'none' : 'auto', // Enable gesture handling on mobile
