@@ -26,7 +26,7 @@ export async function syncUser(req: Request, _res: Response, next: NextFunction)
       SET updated_at = NOW()
       RETURNING id
     `,
-      [organizationId, name.split(' ')[0] + "'s Organization"] // Default org name
+      [organizationId, (name?.split(' ')[0] || 'User') + "'s Organization"] // Default org name
     );
 
     // 2. Upsert user
