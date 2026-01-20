@@ -63,7 +63,7 @@ export interface FormSubmission {
  */
 export interface SubmissionMetadata {
   // User & Organization
-  userId: string;
+  userId?: string; // Optional to allow PII stripping
   organizationId?: string;
 
   // Timing
@@ -76,7 +76,7 @@ export interface SubmissionMetadata {
   pauseCount?: number; // Number of pauses
 
   // Device Information
-  deviceId: string;
+  deviceId?: string; // Optional to allow PII stripping
   deviceType?: 'mobile' | 'tablet' | 'desktop';
   os?: string;
   osVersion?: string;
