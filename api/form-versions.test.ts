@@ -269,7 +269,7 @@ describe('Form Versions API', () => {
   });
 
   describe('Authentication', () => {
-    it('requires Authorization header', async () => {
+    it('allows GET requests without auth for published forms', async () => {
       const req = createMockRequest({
         method: 'GET',
         query: { formId: testFormId },
@@ -280,19 +280,27 @@ describe('Form Versions API', () => {
 
       await handler(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
+      // Should succeed for published forms
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: expect.stringContaining('Authorization'),
+          versions: expect.any(Array),
         }),
       );
     });
 
-    it('validates JWT token format', async () => {
+    it('requires auth for GET requests on draft forms', async () => {
+      // Create a draft form
+      const draftForm = await formsService.createForm({
+        userId: testUserId,
+        title: 'Draft Form',
+        fields: [{ id: '1', type: 'text', label: 'Test' }],
+      });
+
       const req = createMockRequest({
         method: 'GET',
-        query: { formId: testFormId },
-        headers: { authorization: 'InvalidToken' },
+        query: { formId: draftForm.form?.id },
+        headers: {}, // No authorization
       });
 
       const res = createMockResponse();
@@ -302,7 +310,26 @@ describe('Form Versions API', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: expect.stringMatching(/token|authorization/i),
+          error: expect.stringContaining('Unauthorized'),
+        }),
+      );
+    });
+
+    it('requires auth for POST requests', async () => {
+      const req = createMockRequest({
+        method: 'POST',
+        query: { formId: testFormId, action: 'restore', version: '1' },
+        headers: {}, // No authorization
+      });
+
+      const res = createMockResponse();
+
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.stringContaining('Unauthorized'),
         }),
       );
     });

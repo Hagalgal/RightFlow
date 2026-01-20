@@ -10,14 +10,20 @@ import { ResponsesPage } from './ResponsesPage';
 
 // Mock Clerk
 vi.mock('@clerk/clerk-react', () => ({
-  useUser: () => ({
+  useUser: vi.fn(() => ({
     isSignedIn: true,
     isLoaded: true,
     user: {
       id: 'test-user-123',
-      primaryEmailAddress: { id: 'test@example.com' },
+      fullName: 'Test User',
+      primaryEmailAddress: { emailAddress: 'test@example.com' },
     },
-  }),
+  })),
+  useAuth: vi.fn(() => ({
+    getToken: vi.fn(async () => 'mock-token'),
+    orgId: null,
+    orgRole: null,
+  })),
   UserButton: () => <div>User Button</div>,
 }));
 
@@ -51,7 +57,8 @@ describe('ResponsesPage', () => {
         </BrowserRouter>
       );
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      // Component shows Hebrew loading text since direction is RTL
+      expect(screen.getByText(/טוען תגובות/i)).toBeInTheDocument();
     });
   });
 
@@ -69,7 +76,8 @@ describe('ResponsesPage', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/no responses yet/i)).toBeInTheDocument();
+        // Component shows Hebrew text since direction is RTL
+        expect(screen.getByText(/אין עדיין תגובות/i)).toBeInTheDocument();
       });
     });
   });
@@ -107,7 +115,8 @@ describe('ResponsesPage', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/2 responses/i)).toBeInTheDocument();
+        // Component shows Hebrew text: "2 תגובות נמצאו"
+        expect(screen.getByText(/2 תגובות נמצאו/i)).toBeInTheDocument();
       });
     });
 
@@ -148,7 +157,7 @@ describe('ResponsesPage', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/network error/i)).toBeInTheDocument();
+        expect(screen.getByText(/Network error/i)).toBeInTheDocument();
       });
     });
 
@@ -156,6 +165,7 @@ describe('ResponsesPage', () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 403,
+        json: async () => ({ message: 'Forbidden' }),
       });
 
       render(
@@ -165,7 +175,8 @@ describe('ResponsesPage', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/failed to load responses/i)).toBeInTheDocument();
+        // Component shows Hebrew text: "אין לך הרשאה לצפות בתגובות של טופס זה"
+        expect(screen.getByText(/אין לך הרשאה/i)).toBeInTheDocument();
       });
     });
   });

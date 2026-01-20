@@ -12,11 +12,13 @@ import { ErrorDialog } from '@/components/dialogs/ErrorDialog';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { PublishDialog } from '@/components/publish/PublishDialog';
 import { VersionHistory } from '@/components/publish/VersionHistory';
+import { EditorMobileToolbar, EditorMobileToolbarSpacer } from '@/components/mobile/EditorMobileToolbar';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import type { GeneratedHtmlResult } from '@/services/html-generation';
 import { useTemplateEditorStore } from '@/store/templateEditorStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useDirection } from '@/i18n';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 import { generateThumbnails } from '@/utils/pdfThumbnails';
 import { getFieldsWithErrors } from '@/utils/inputSanitization';
 import {
@@ -91,6 +93,7 @@ export function EditorPage() {
   const direction = useDirection();
   const { user } = useUser();
   const { getToken, orgId, orgRole } = useAuth();
+  const isMobile = useIsMobile();
 
   // Simplified role-based access (Clerk free tier)
   // Both admin and basic_member can create and update forms
@@ -879,7 +882,16 @@ export function EditorPage() {
       />
 
       {/* Tools Bar - Field Creation Tools */}
-      {pdfFile && <ToolsBar activeTool={activeTool} onToolChange={setActiveTool} />}
+      {pdfFile && !isMobile && <ToolsBar activeTool={activeTool} onToolChange={setActiveTool} />}
+
+      {/* Mobile Toolbar - Bottom Navigation (Mobile Only) */}
+      {pdfFile && isMobile && (
+        <EditorMobileToolbar
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          showLabels={true}
+        />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
@@ -928,7 +940,8 @@ export function EditorPage() {
       />
 
       <MainLayout>
-        {pdfFile && totalPages > 0 && (
+        {/* Page Thumbnail Sidebar - Desktop Only */}
+        {pdfFile && totalPages > 0 && !isMobile && (
           <PageThumbnailSidebar
             currentPage={currentPage}
             totalPages={totalPages}
@@ -939,6 +952,8 @@ export function EditorPage() {
             reprocessingPage={reprocessingPage}
           />
         )}
+
+        {/* PDF Viewer - Main Canvas */}
         <PDFViewer
           file={pdfFile}
           pageNumber={currentPage}
@@ -947,8 +962,11 @@ export function EditorPage() {
           onLoadSuccess={handlePDFLoadSuccess}
           onLoadError={handlePDFLoadError}
           onPageRender={handlePageRender}
+          onZoomChange={setZoomLevel}
         />
-        {pdfFile && (
+
+        {/* Field List Sidebar - Desktop Only */}
+        {pdfFile && !isMobile && (
           <FieldListSidebar
             fields={fields}
             selectedFieldId={selectedFieldId}
@@ -964,6 +982,9 @@ export function EditorPage() {
             onLoadFieldsFromHistory={handleLoadFieldsFromHistory}
           />
         )}
+
+        {/* Mobile Toolbar Spacer - Prevents content from being hidden behind toolbar */}
+        {pdfFile && isMobile && <EditorMobileToolbarSpacer />}
       </MainLayout>
     </div>
   );
