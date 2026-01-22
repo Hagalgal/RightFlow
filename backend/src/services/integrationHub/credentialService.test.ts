@@ -123,9 +123,10 @@ describe('CredentialService', () => {
 
       const decrypted = await credentialService.getCredentials(testConnectorId);
 
-      expect(decrypted.username).toBe('משתמש');
-      expect(decrypted.password).toBe('סיסמה123');
-      expect(decrypted.companyName).toBe('חברת דוגמה');
+      expect(decrypted).not.toBeNull();
+      expect(decrypted!.username).toBe('משתמש');
+      expect(decrypted!.password).toBe('סיסמה123');
+      expect(decrypted!.companyName).toBe('חברת דוגמה');
     });
 
     it('should not expose credentials in error messages (CRITICAL SECURITY)', async () => {
@@ -210,7 +211,8 @@ describe('CredentialService', () => {
 
       const decrypted = await credentialService.getCredentials(testConnectorId);
 
-      expect(decrypted.apiKey).toBe('new-key');
+      expect(decrypted).not.toBeNull();
+      expect(decrypted!.apiKey).toBe('new-key');
 
       // Verify only one row exists
       const count = await query(

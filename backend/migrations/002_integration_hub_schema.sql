@@ -96,13 +96,16 @@ CREATE TABLE connectors (
   deleted_at TIMESTAMPTZ,
 
   -- Constraints
-  CONSTRAINT uq_connectors_org_name UNIQUE (organization_id, name),
+  -- NOTE: Cannot use UNIQUE constraint with WHERE clause in PostgreSQL
+  -- Using partial unique index instead (see idx_connectors_org_name_active below)
   CONSTRAINT chk_health_status CHECK (health_status IN ('healthy', 'degraded', 'unhealthy', 'unknown'))
 );
 
 CREATE INDEX idx_connectors_org ON connectors(organization_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_connectors_definition ON connectors(definition_id);
 CREATE INDEX idx_connectors_health ON connectors(health_status) WHERE deleted_at IS NULL;
+-- Partial unique index to allow reusing connector names after soft delete
+CREATE UNIQUE INDEX idx_connectors_org_name_active ON connectors(organization_id, name) WHERE deleted_at IS NULL;
 
 CREATE TRIGGER update_connectors_updated_at
 BEFORE UPDATE ON connectors

@@ -17,7 +17,6 @@ import * as connectorService from './connectorService';
 // Test database setup
 let testOrgId: string;
 let testOrgId2: string; // For cross-tenant tests
-let priorityDefinitionId: string;
 
 beforeAll(async () => {
   // Create test organizations
@@ -34,13 +33,6 @@ beforeAll(async () => {
     ['test-org-2', 'Test Organization 2']
   );
   testOrgId2 = org2[0].id;
-
-  // Get Priority definition ID (from migration initial data)
-  const def = await query(
-    `SELECT id FROM connector_definitions WHERE slug = $1`,
-    ['priority-cloud']
-  );
-  priorityDefinitionId = def[0].id;
 });
 
 afterAll(async () => {
@@ -304,7 +296,7 @@ describe('ConnectorService', () => {
 
     it('should not list soft-deleted connectors', async () => {
       // Create 2 connectors
-      const connector1 = await connectorService.create({
+      await connectorService.create({
         organizationId: testOrgId,
         definitionSlug: 'priority-cloud',
         name: 'Active',

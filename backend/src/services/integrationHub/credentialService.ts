@@ -41,7 +41,7 @@ export interface OAuth2TokenData {
 // ============================================================================
 
 class EncryptionService {
-  private encryptionKey: Buffer;
+  private encryptionKey!: Buffer;
   private keyVersion: number = 1;
 
   constructor() {
