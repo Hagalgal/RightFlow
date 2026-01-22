@@ -296,11 +296,7 @@ describe('ConnectorService', () => {
 
     it('should not list soft-deleted connectors', async () => {
       // Create 2 connectors
-<<<<<<< HEAD
       await connectorService.create({
-=======
-      const connector1 = await connectorService.create({
->>>>>>> 30e4e6d (feat(integration-hub): Add Phase 1 Foundation - TDD implementation)
         organizationId: testOrgId,
         definitionSlug: 'priority-cloud',
         name: 'Active',
