@@ -249,6 +249,17 @@ export async function getByIdForOrg(
 }
 
 /**
+ * Get connector by ID (alias for getByIdForOrg with swapped parameter order)
+ * Used by Pull Service for cleaner API
+ */
+export async function getById(
+  connectorId: string,
+  organizationId: string
+): Promise<Connector> {
+  return getByIdForOrg(connectorId, organizationId);
+}
+
+/**
  * List all connectors for organization
  *
  * Security:
