@@ -11,6 +11,7 @@ import formsRouter from './routes/v1/forms';
 import webhooksRouter from './routes/v1/webhooks';
 import analyticsRouter from './routes/v1/analytics';
 import connectorsRouter from './routes/v1/integrations/connectors';
+import mappingsRouter from './routes/v1/integrations/mappings';
 import './workers/webhookWorker'; // Initialize webhook worker
 
 const app = express();
@@ -59,6 +60,7 @@ app.use('/api/v1/forms', formsRouter);
 app.use('/api/v1/webhooks', webhooksRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/integrations/connectors', connectorsRouter);
+app.use('/api/v1/integrations/mappings', mappingsRouter);
 
 // 404 handler
 app.use((_req, res) => {
