@@ -415,20 +415,32 @@ export async function getByConnector(connectorId: string): Promise<FieldMapping[
 }
 
 /**
- * Apply field mappings to ERP data
- * Transforms raw ERP response to form-ready data
+ * Apply field mappings bidirectionally
+ *
+ * Direction: 'pull' (default) - Transforms ERP data → Form data
+ * Direction: 'push' - Transforms Form data → ERP data
+ *
+ * @param sourceData - Source data object (ERP or Form)
+ * @param mappings - Field mappings to apply
+ * @param direction - 'pull' (ERP→Form) or 'push' (Form→ERP)
+ * @returns Transformed data object
  */
 export async function applyMappings(
-  erpData: any,
-  mappings: FieldMapping[]
+  sourceData: any,
+  mappings: FieldMapping[],
+  direction: 'pull' | 'push' = 'pull'
 ): Promise<any> {
   const transformedData: any = {};
 
   for (const mapping of mappings) {
     const { formField, connectorField, transforms, defaultValue } = mapping;
 
-    // Get value from ERP data (supports nested paths like "customer.name")
-    let value = erpData[connectorField];
+    // Determine source and target fields based on direction
+    const sourceField = direction === 'pull' ? connectorField : formField;
+    const targetField = direction === 'pull' ? formField : connectorField;
+
+    // Get value from source data (supports nested paths like "customer.name")
+    let value = sourceData[sourceField];
 
     // Use default value if field missing
     if (value === undefined || value === null) {
@@ -442,8 +454,15 @@ export async function applyMappings(
     }
 
     // Set transformed value
-    transformedData[formField] = value;
+    transformedData[targetField] = value;
   }
+
+  logger.debug('Field mappings applied', {
+    direction,
+    mappingCount: mappings.length,
+    sourceFields: Object.keys(sourceData).length,
+    targetFields: Object.keys(transformedData).length
+  });
 
   return transformedData;
 }
