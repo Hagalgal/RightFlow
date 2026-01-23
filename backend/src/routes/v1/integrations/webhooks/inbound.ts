@@ -15,7 +15,7 @@
 
 import { Router, Request, Response } from 'express';
 import * as webhookService from '../../../../services/integrationHub/webhookService';
-import { redisClient } from '../../../../config/redis';
+import { redisConnection } from '../../../../config/redis';
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import logger from '../../../../utils/logger';
@@ -29,7 +29,7 @@ const router = Router();
 const webhookRateLimiter = rateLimit({
   store: new RedisStore({
     // @ts-ignore - RedisStore types are outdated
-    client: redisClient,
+    client: redisConnection,
     prefix: 'rl:webhook:'
   }),
   windowMs: 60 * 1000, // 1 minute

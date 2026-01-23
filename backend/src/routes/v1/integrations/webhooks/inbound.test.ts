@@ -15,7 +15,7 @@ import request from 'supertest';
 import express from 'express';
 import inboundRouter from './inbound';
 import * as webhookService from '../../../../services/integrationHub/webhookService';
-import { redisClient } from '../../../../config/redis';
+import { redisConnection } from '../../../../config/redis';
 import { query } from '../../../../config/database';
 
 // ============================================================================
@@ -37,15 +37,15 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Clear Redis cache
-  const keys = await redisClient.keys('webhook:*');
+  const keys = await redisConnection.keys('webhook:*');
   if (keys.length > 0) {
-    await redisClient.del(...keys);
+    await redisConnection.del(...keys);
   }
 
   // Clear rate limiting keys
-  const rlKeys = await redisClient.keys('rl:webhook:*');
+  const rlKeys = await redisConnection.keys('rl:webhook:*');
   if (rlKeys.length > 0) {
-    await redisClient.del(...rlKeys);
+    await redisConnection.del(...rlKeys);
   }
 });
 
@@ -57,7 +57,7 @@ afterEach(async () => {
 afterAll(async () => {
   await query('DELETE FROM webhook_deliveries');
   await query('DELETE FROM inbound_webhooks');
-  await redisClient.quit();
+  await redisConnection.quit();
 });
 
 // ============================================================================
@@ -792,13 +792,13 @@ describe('POST /inbound/:organizationId/:webhookId - Redis Caching', () => {
 
     // Verify cached in Redis
     const cacheKey = `webhook:payload:org-1:${webhook.id}:${payload.timestamp}`;
-    const cached = await redisClient.get(cacheKey);
+    const cached = await redisConnection.get(cacheKey);
 
     expect(cached).toBeDefined();
     expect(JSON.parse(cached!)).toMatchObject(payload);
 
     // Verify TTL is ~24 hours (86400 seconds)
-    const ttl = await redisClient.ttl(cacheKey);
+    const ttl = await redisConnection.ttl(cacheKey);
     expect(ttl).toBeGreaterThan(86000); // Allow some variance
     expect(ttl).toBeLessThanOrEqual(86400);
   });
@@ -809,7 +809,7 @@ describe('POST /inbound/:organizationId/:webhookId - Redis Caching', () => {
     const signature = generateValidSignature(payload, webhook.secret!);
 
     // Mock Redis failure
-    jest.spyOn(redisClient, 'setex').mockRejectedValue(new Error('Redis down'));
+    jest.spyOn(redisConnection, 'setex').mockRejectedValue(new Error('Redis down'));
 
     const response = await request(app)
       .post(`/api/v1/integrations/webhooks/inbound/org-1/${webhook.id}`)
@@ -858,8 +858,8 @@ describe('POST /inbound/:organizationId/:webhookId - Redis Caching', () => {
     const key1 = `webhook:payload:org-1:${webhook.id}:${timestamp1}`;
     const key2 = `webhook:payload:org-1:${webhook.id}:${timestamp2}`;
 
-    const cached1 = await redisClient.get(key1);
-    const cached2 = await redisClient.get(key2);
+    const cached1 = await redisConnection.get(key1);
+    const cached2 = await redisConnection.get(key2);
 
     expect(cached1).toBeDefined();
     expect(cached2).toBeDefined();
@@ -885,7 +885,7 @@ describe('POST /inbound/:organizationId/:webhookId - Redis Caching', () => {
 
     // Verify NOT cached (too large)
     const cacheKey = `webhook:payload:org-1:${webhook.id}:${largePayload.timestamp}`;
-    const cached = await redisClient.get(cacheKey);
+    const cached = await redisConnection.get(cacheKey);
 
     expect(cached).toBeNull();
   });
@@ -907,7 +907,7 @@ describe('POST /inbound/:organizationId/:webhookId - Redis Caching', () => {
     expect(response.body.success).toBe(true);
 
     // Should generate timestamp and cache
-    const keys = await redisClient.keys(`webhook:payload:org-1:${webhook.id}:*`);
+    const keys = await redisConnection.keys(`webhook:payload:org-1:${webhook.id}:*`);
     expect(keys.length).toBeGreaterThan(0);
   });
 });
@@ -942,7 +942,7 @@ describe('POST /inbound/:organizationId/:webhookId - Error Handling', () => {
     const signature = generateValidSignature(payload, webhook.secret!);
 
     // Force error
-    jest.spyOn(redisClient, 'setex').mockRejectedValue(new Error('Redis error'));
+    jest.spyOn(redisConnection, 'setex').mockRejectedValue(new Error('Redis error'));
 
     const response = await request(app)
       .post(`/api/v1/integrations/webhooks/inbound/org-1/${webhook.id}`)
