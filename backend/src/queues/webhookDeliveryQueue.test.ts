@@ -110,7 +110,7 @@ describe('Webhook Delivery Queue', () => {
       );
     });
 
-    it('should generate unique job ID', async () => {
+    it('should generate unique job ID with temporal and random components', async () => {
       const webhook = {
         id: 'webhook-1',
         organizationId: 'org-1',
@@ -128,9 +128,42 @@ describe('Webhook Delivery Queue', () => {
         'deliver-webhook',
         expect.any(Object),
         expect.objectContaining({
-          jobId: expect.stringMatching(/^webhook-1-\d+$/)
+          // Format: webhook-1-1234567890-abc123def456 (id-timestamp-random)
+          jobId: expect.stringMatching(/^webhook-1-\d+-[0-9a-f]{16}$/)
         })
       );
+    });
+
+    it('should prevent race condition by generating unique IDs for concurrent jobs', async () => {
+      const webhook = {
+        id: 'webhook-1',
+        organizationId: 'org-1',
+        url: 'https://example.com/webhook',
+        secretEncrypted: 'encrypted-secret',
+        events: ['form.submitted'],
+        status: 'active' as const
+      };
+
+      const payload = { event: 'form.submitted', data: {} };
+
+      // Enqueue 10 jobs concurrently
+      const promises = Array.from({ length: 10 }, () =>
+        addWebhookDeliveryJob(webhook, payload)
+      );
+
+      await Promise.all(promises);
+
+      // Extract all generated job IDs
+      const jobIds = mockAdd.mock.calls.map((call: any) => call[2].jobId);
+
+      // Verify all job IDs are unique (no collisions)
+      const uniqueJobIds = new Set(jobIds);
+      expect(uniqueJobIds.size).toBe(10);
+
+      // Verify all job IDs have the correct format
+      jobIds.forEach((jobId: string) => {
+        expect(jobId).toMatch(/^webhook-1-\d+-[0-9a-f]{16}$/);
+      });
     });
 
     it('should set job priority based on webhook health', async () => {

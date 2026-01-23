@@ -11,7 +11,8 @@
  */
 
 import { Queue } from 'bullmq';
-import { redisClient } from '../config/redis';
+import crypto from 'crypto';
+import { redisConnection } from '../config/redis';
 import type { WebhookForDelivery, WebhookPayload } from '../services/integrationHub/webhookDeliveryService';
 
 // ============================================================================
@@ -27,7 +28,7 @@ export const webhookDeliveryQueue = new Queue('webhook-delivery', {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD,
-    ...(redisClient as any).options // Reuse existing Redis config
+    ...(redisConnection as any).options // Reuse existing Redis config
   },
   defaultJobOptions: {
     attempts: 4, // 1 initial + 3 retries
@@ -58,8 +59,9 @@ export async function addWebhookDeliveryJob(
   webhook: WebhookForDelivery,
   payload: WebhookPayload
 ): Promise<string> {
-  // Generate unique job ID
-  const jobId = `${webhook.id}-${Date.now()}`;
+  // Generate unique job ID with temporal + random components
+  // This prevents race conditions when multiple jobs are enqueued within the same millisecond
+  const jobId = `${webhook.id}-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
 
   // Determine priority based on webhook health status
   let priority = 2; // Default priority
