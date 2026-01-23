@@ -21,10 +21,7 @@ import { authenticateJWT, requireRole } from '../../../middleware/auth';
 import { syncUser } from '../../../middleware/syncUser';
 import { validateRequest } from '../../../utils/validation';
 import * as connectorService from '../../../services/integrationHub/connectorService';
-import {
-  ValidationError,
-  NotFoundError,
-} from '../../../utils/errors';
+import { ValidationError } from '../../../utils/errors';
 import logger from '../../../utils/logger';
 
 const router = express.Router();
@@ -100,10 +97,10 @@ router.post('/', async (req, res, next) => {
       organizationId,
       definitionSlug: connectorData.definitionSlug,
       name: connectorData.name,
-      config: connectorData.config,
+      config: connectorData.config || {},
       rateLimitRequests: connectorData.rateLimitRequests,
       rateLimitWindowSeconds: connectorData.rateLimitWindowSeconds,
-      timeoutMs: connectorData.timeoutMs,
+      timeoutMs: connectorData.timeoutMs || 30000,
     });
 
     logger.info('Connector created successfully', {
