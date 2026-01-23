@@ -97,7 +97,7 @@ export function OfflineIndicator({
           status === 'syncing' && 'bg-warning/10 text-warning',
           status === 'online' && !hasQueuedItems && 'bg-success/10 text-success',
           status === 'online' && hasQueuedItems && 'bg-warning/10 text-warning',
-          className
+          className,
         )}
         data-status={status}
         role="status"
@@ -107,7 +107,7 @@ export function OfflineIndicator({
         <StatusIcon
           className={cn(
             'w-4 h-4',
-            isSyncing && 'animate-spin'
+            isSyncing && 'animate-spin',
           )}
         />
         {hasQueuedItems && (
@@ -128,7 +128,7 @@ export function OfflineIndicator({
         status === 'syncing' && 'border-warning/50 bg-warning/5',
         status === 'online' && !hasQueuedItems && 'border-success/50 bg-success/5',
         status === 'online' && hasQueuedItems && 'border-warning/50 bg-warning/5',
-        className
+        className,
       )}
       data-status={status}
       role="status"
@@ -141,13 +141,13 @@ export function OfflineIndicator({
           status === 'offline' && 'bg-destructive/10 text-destructive',
           status === 'syncing' && 'bg-warning/10 text-warning',
           status === 'online' && !hasQueuedItems && 'bg-success/10 text-success',
-          status === 'online' && hasQueuedItems && 'bg-warning/10 text-warning'
+          status === 'online' && hasQueuedItems && 'bg-warning/10 text-warning',
         )}
       >
         <StatusIcon
           className={cn(
             'w-4 h-4',
-            isSyncing && 'animate-spin'
+            isSyncing && 'animate-spin',
           )}
         />
       </div>
@@ -160,7 +160,7 @@ export function OfflineIndicator({
               'text-sm font-medium',
               status === 'offline' && 'text-destructive',
               status === 'syncing' && 'text-warning',
-              status === 'online' && 'text-success'
+              status === 'online' && 'text-success',
             )}
           >
             {statusText}
@@ -208,7 +208,7 @@ export function OfflineIndicator({
           <RefreshCw
             className={cn(
               'w-3 h-3 ml-1',
-              isSyncing && 'animate-spin'
+              isSyncing && 'animate-spin',
             )}
           />
           {t.syncNow}

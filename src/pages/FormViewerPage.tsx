@@ -251,13 +251,13 @@ export function FormViewerPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, type: "spring" }}
+          transition={{ duration: 0.6, type: 'spring' }}
           className="glass-card p-12 text-center max-w-md border-green-500/20"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             className="text-6xl mb-6"
           >
             ✅

@@ -7,8 +7,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import handler from './responses';
 import { getAuthContext, checkPermission } from './lib/auth';
-import { ResponsesService } from '../src/services/responses/responses.service';
-import { FormsService } from '../src/services/forms/forms.service';
+import { ResponsesService as _ResponsesService } from '../src/services/responses/responses.service';
+import { FormsService as _FormsService } from '../src/services/forms/forms.service';
 
 // Create mock function references that will be initialized in beforeEach
 let mockGetFormResponses: any;

@@ -17,7 +17,7 @@ import {
   Camera,
   PenTool,
   Cpu,
-  ArrowLeft
+  ArrowLeft,
 } from 'lucide-react';
 import { useTranslation, useDirection } from '@/i18n';
 import { LanguageSelector } from '@/components/layout/LanguageSelector';
@@ -174,7 +174,7 @@ export function LandingPage() {
                 {/* Floating Micro-UI */}
                 <motion.div
                   animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                   className="absolute -top-6 -right-6 md:-right-10 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4"
                 >
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -323,7 +323,7 @@ export function LandingPage() {
                       { name: 'Monday.com', detail: 'Israeli Favorite' },
                       { name: 'Zoho CRM', detail: 'Advanced Flow' },
                       { name: 'WhatsApp', detail: 'Instant Alerts' },
-                      { name: 'Zapier', detail: '3000+ Apps' }
+                      { name: 'Zapier', detail: '3000+ Apps' },
                     ].map(app => (
                       <div key={app.name} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
                         <div className="w-8 h-8 rounded bg-[#FF6100] flex items-center justify-center font-black text-xs">RF</div>

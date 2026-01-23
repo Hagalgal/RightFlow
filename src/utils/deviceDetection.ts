@@ -152,7 +152,7 @@ export function isTouchSupported(): boolean {
   return (
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0 ||
-    // @ts-ignore - IE specific
+    // @ts-expect-error - IE specific
     (navigator.msMaxTouchPoints && navigator.msMaxTouchPoints > 0)
   );
 }
@@ -215,7 +215,7 @@ export function isPWA(): boolean {
   }
 
   // iOS Safari specific check
-  // @ts-ignore - iOS specific
+  // @ts-expect-error - iOS specific
   if (window.navigator.standalone === true) {
     return true;
   }
@@ -233,7 +233,7 @@ export function getConnectionInfo(): {
   rtt: number;
   saveData: boolean;
 } | null {
-  // @ts-ignore - NetworkInformation API
+  // @ts-expect-error - NetworkInformation API
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
   if (!connection) {

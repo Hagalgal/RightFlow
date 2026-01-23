@@ -32,12 +32,12 @@ export interface CompressionOptions {
  */
 export async function compressImage(
   blob: Blob,
-  options: CompressionOptions = {}
+  options: CompressionOptions = {},
 ): Promise<Blob> {
   const {
     maxWidth = 1920,
     maxHeight = 1080,
-    quality = 0.8
+    quality = 0.8,
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -85,7 +85,7 @@ export async function compressImage(
             if (compressedBlob) {
               console.log(
                 `[Image Compression] ${blob.size} → ${compressedBlob.size} bytes ` +
-                `(${Math.round((1 - compressedBlob.size / blob.size) * 100)}% reduction)`
+                `(${Math.round((1 - compressedBlob.size / blob.size) * 100)}% reduction)`,
               );
               resolve(compressedBlob);
             } else {
@@ -93,7 +93,7 @@ export async function compressImage(
             }
           },
           'image/jpeg',
-          quality
+          quality,
         );
       } catch (error) {
         URL.revokeObjectURL(url);
@@ -119,11 +119,11 @@ export async function compressImage(
  */
 export async function generateThumbnail(
   blob: Blob,
-  size: number = 200
+  size: number = 200,
 ): Promise<Blob> {
   return compressImage(blob, {
     maxWidth: size,
     maxHeight: size,
-    quality: 0.7
+    quality: 0.7,
   });
 }

@@ -48,13 +48,13 @@ describe('ResponsesPage', () => {
   describe('loading state', () => {
     it('shows loading state while fetching responses', async () => {
       (global.fetch as any).mockImplementation(() =>
-        new Promise(() => {}) // Never resolves - keeps loading
+        new Promise(() => {}), // Never resolves - keeps loading
       );
 
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       // Component shows Hebrew loading text since direction is RTL
@@ -72,7 +72,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {
@@ -111,7 +111,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {
@@ -124,7 +124,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {
@@ -137,7 +137,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {
@@ -153,7 +153,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {
@@ -171,7 +171,7 @@ describe('ResponsesPage', () => {
       render(
         <BrowserRouter>
           <ResponsesPage />
-        </BrowserRouter>
+        </BrowserRouter>,
       );
 
       await waitFor(() => {

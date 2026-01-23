@@ -14,7 +14,7 @@ import {
   Barcode,
   ChevronRight,
   ChevronLeft,
-  X
+  X,
 } from 'lucide-react';
 import { ToolMode } from '@/types/fields';
 import { useTranslation, useDirection } from '@/i18n';

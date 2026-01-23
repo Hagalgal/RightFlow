@@ -80,6 +80,7 @@ describe('sanitizeHexColor', () => {
 
   it('should prevent XSS attacks', () => {
     expect(sanitizeHexColor('<script>alert(1)</script>', '#000000')).toBe('#000000');
+    // eslint-disable-next-line no-script-url
     expect(sanitizeHexColor('javascript:alert(1)', '#000000')).toBe('#000000');
     expect(sanitizeHexColor('"; DROP TABLE users; --', '#000000')).toBe('#000000');
   });

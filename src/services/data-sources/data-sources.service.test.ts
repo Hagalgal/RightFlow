@@ -129,7 +129,7 @@ describe('DataSourcesService', () => {
           name: 'Invalid Source',
           source_type: 'invalid_type' as any,
           config: {},
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -140,7 +140,7 @@ describe('DataSourcesService', () => {
           name: '',
           source_type: 'static',
           config: {},
-        })
+        }),
       ).rejects.toThrow(/name is required/i);
     });
   });
@@ -178,7 +178,7 @@ describe('DataSourcesService', () => {
     it('should return null for non-existent ID', async () => {
       const found = await service.findById(
         '00000000-0000-0000-0000-999999999999',
-        testUserId
+        testUserId,
       );
 
       expect(found).toBeNull();
@@ -306,7 +306,7 @@ describe('DataSourcesService', () => {
       await expect(
         service.update(created.id, otherUserId, {
           name: 'Hacked Name',
-        })
+        }),
       ).rejects.toThrow(/not found/i);
     });
 
@@ -361,7 +361,7 @@ describe('DataSourcesService', () => {
 
       // Other user should NOT be able to delete
       await expect(service.delete(created.id, otherUserId)).rejects.toThrow(
-        /not found/i
+        /not found/i,
       );
 
       // Source should still exist for original user
@@ -390,19 +390,19 @@ describe('DataSourcesService', () => {
 Company A,001`;
 
       await expect(service.parseCSV(csvContent)).rejects.toThrow(
-        /invalid csv.*headers/i
+        /invalid csv.*headers/i,
       );
     });
 
     it('should reject CSV with more than 10,000 rows', async () => {
       const header = 'label,value\n';
       const rows = Array.from({ length: 10001 }, (_, i) => `Item ${i},val-${i}`).join(
-        '\n'
+        '\n',
       );
       const csvContent = header + rows;
 
       await expect(service.parseCSV(csvContent)).rejects.toThrow(
-        /exceeds.*10,?000.*rows/i
+        /exceeds.*10,?000.*rows/i,
       );
     });
 
@@ -460,7 +460,7 @@ Another Valid,val-003`;
       });
 
       await expect(service.parseJSON(jsonContent)).rejects.toThrow(
-        /must be an array/i
+        /must be an array/i,
       );
     });
 
@@ -472,7 +472,7 @@ Another Valid,val-003`;
       const jsonContent = JSON.stringify(items);
 
       await expect(service.parseJSON(jsonContent)).rejects.toThrow(
-        /exceeds.*10,?000.*items/i
+        /exceeds.*10,?000.*items/i,
       );
     });
 
@@ -549,7 +549,7 @@ Another Valid,val-003`;
 
       // Other user should NOT be able to fetch options
       await expect(service.getOptions(dataSource.id, otherUserId)).rejects.toThrow(
-        /not found/i
+        /not found/i,
       );
     });
 
@@ -564,7 +564,7 @@ Another Valid,val-003`;
       await service.update(dataSource.id, testUserId, { is_active: false });
 
       await expect(service.getOptions(dataSource.id, testUserId)).rejects.toThrow(
-        /not active/i
+        /not active/i,
       );
     });
   });

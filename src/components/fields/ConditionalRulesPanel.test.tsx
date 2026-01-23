@@ -39,7 +39,7 @@ vi.mock('@/i18n', () => ({
 
 const createMockField = (
   id: string,
-  overrides: Partial<FieldDefinition> = {}
+  overrides: Partial<FieldDefinition> = {},
 ): FieldDefinition => ({
   id,
   type: 'text',
@@ -94,7 +94,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       expect(container.firstChild).toHaveAttribute('dir', 'rtl');
@@ -109,7 +109,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       expect(screen.getByText('הוסף כלל')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       expect(screen.getByText('אין כללים מוגדרים')).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       expect(screen.getByText('ברירת מחדל')).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByText('הוסף כלל'));
@@ -194,7 +194,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="hidden"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // Should not show "no rules" message
@@ -218,7 +218,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // Get the source field select
@@ -259,7 +259,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // Click remove button on first rule
@@ -283,7 +283,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // Check that the component uses Tailwind CSS variable classes
@@ -307,7 +307,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       expect(screen.getByText('לוגיקה מותנית')).toBeInTheDocument();
@@ -331,7 +331,7 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // The Hebrew field labels should be available in the dropdown
@@ -351,13 +351,13 @@ describe('ConditionalRulesPanel', () => {
           defaultVisibility="visible"
           onRulesChange={mockOnRulesChange}
           onDefaultVisibilityChange={mockOnDefaultVisibilityChange}
-        />
+        />,
       );
 
       // Find the visibility select and change it
       const selects = screen.getAllByRole('combobox');
       const visibilitySelect = selects.find((s) =>
-        within(s).queryByText('גלוי')
+        within(s).queryByText('גלוי'),
       );
 
       if (visibilitySelect) {

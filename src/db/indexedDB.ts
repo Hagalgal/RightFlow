@@ -146,7 +146,7 @@ class Database {
     const db = await this.ensureDB();
     const allForms = await db.getAll('forms');
     return allForms.filter(form =>
-      form.name.toLowerCase().includes(query.toLowerCase())
+      form.name.toLowerCase().includes(query.toLowerCase()),
     );
   }
 

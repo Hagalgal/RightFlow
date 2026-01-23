@@ -149,7 +149,7 @@ export class DataSourcesService {
   async findById(
     id: string,
     userId: string,
-    orgId?: string | null
+    orgId?: string | null,
   ): Promise<DataSourceRecord | null> {
     const db = getDb();
 
@@ -187,7 +187,7 @@ export class DataSourcesService {
   async findAll(
     userId: string,
     filters?: FindAllFilters,
-    orgId?: string | null
+    orgId?: string | null,
   ): Promise<DataSourceRecord[]> {
     const db = getDb();
 
@@ -230,7 +230,7 @@ export class DataSourcesService {
     id: string,
     userId: string,
     dto: UpdateDataSourceDto,
-    orgId?: string | null
+    orgId?: string | null,
   ): Promise<DataSourceRecord> {
     const db = getDb();
 
@@ -310,7 +310,7 @@ export class DataSourcesService {
   async getOptions(
     id: string,
     userId: string,
-    orgId?: string | null
+    orgId?: string | null,
   ): Promise<DataSourceOption[]> {
     const dataSource = await this.findById(id, userId, orgId);
 
@@ -365,7 +365,7 @@ export class DataSourcesService {
     const headers = lines[0].trim().toLowerCase();
     if (headers !== 'label,value') {
       throw new Error(
-        'Invalid CSV format. Headers must be exactly: label,value'
+        'Invalid CSV format. Headers must be exactly: label,value',
       );
     }
 
@@ -373,7 +373,7 @@ export class DataSourcesService {
     const dataRows = lines.slice(1);
     if (dataRows.length > this.MAX_CSV_ROWS) {
       throw new Error(
-        `CSV exceeds maximum of ${this.MAX_CSV_ROWS.toLocaleString()} rows`
+        `CSV exceeds maximum of ${this.MAX_CSV_ROWS.toLocaleString()} rows`,
       );
     }
 
@@ -425,7 +425,7 @@ export class DataSourcesService {
     // Check item limit
     if (data.length > this.MAX_JSON_ITEMS) {
       throw new Error(
-        `JSON exceeds maximum of ${this.MAX_JSON_ITEMS.toLocaleString()} items`
+        `JSON exceeds maximum of ${this.MAX_JSON_ITEMS.toLocaleString()} items`,
       );
     }
 

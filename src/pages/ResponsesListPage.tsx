@@ -50,7 +50,7 @@ export function ResponsesListPage() {
     }
 
     const filteredForms = forms.filter(form =>
-        form.title.toLowerCase().includes(searchQuery.toLowerCase())
+        form.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     if (isLoading) {

@@ -80,7 +80,7 @@ describe('ResponseExportButton', () => {
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
           expect.stringContaining(`/api/responses?formId=${mockFormId}&export=csv`),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 
@@ -127,7 +127,7 @@ describe('ResponseExportButton', () => {
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
           expect.stringContaining(`/api/responses?formId=${mockFormId}&export=json`),
-          expect.any(Object)
+          expect.any(Object),
         );
       });
 
@@ -196,7 +196,7 @@ describe('ResponseExportButton', () => {
   describe('loading state', () => {
     it('shows loading state during export', async () => {
       (global.fetch as any).mockImplementation(() =>
-        new Promise(() => {}) // Never resolves - keeps loading
+        new Promise(() => {}), // Never resolves - keeps loading
       );
 
       render(<ResponseExportButton formId={mockFormId} />);

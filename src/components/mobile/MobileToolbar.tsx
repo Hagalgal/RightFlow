@@ -21,37 +21,37 @@ const tools: Tool[] = [
     id: 'text',
     icon: Type,
     label: 'טקסט',
-    ariaLabel: 'הוסף שדה טקסט'
+    ariaLabel: 'הוסף שדה טקסט',
   },
   {
     id: 'checkbox',
     icon: CheckSquare,
     label: 'וי',
-    ariaLabel: 'הוסף תיבת סימון'
+    ariaLabel: 'הוסף תיבת סימון',
   },
   {
     id: 'signature',
     icon: PenTool,
     label: 'חתימה',
-    ariaLabel: 'הוסף שדה חתימה'
+    ariaLabel: 'הוסף שדה חתימה',
   },
   {
     id: 'camera',
     icon: Camera,
     label: 'מצלמה',
-    ariaLabel: 'הוסף שדה צילום'
+    ariaLabel: 'הוסף שדה צילום',
   },
   {
     id: 'image',
     icon: Image,
     label: 'תמונה',
-    ariaLabel: 'הוסף תמונה'
+    ariaLabel: 'הוסף תמונה',
   },
   {
     id: 'gps',
     icon: MapPin,
     label: 'מיקום',
-    ariaLabel: 'הוסף שדה מיקום'
+    ariaLabel: 'הוסף שדה מיקום',
   },
 ];
 
@@ -111,7 +111,7 @@ export function MobileToolbar({
         'pb-safe',
         // Shadow
         'shadow-lg',
-        className
+        className,
       )}
       role="toolbar"
       aria-label="כלי עריכה"
@@ -142,7 +142,7 @@ export function MobileToolbar({
               // Active state (touch feedback)
               'active:scale-95 active:bg-gray-200 dark:active:bg-gray-700',
               // Focus
-              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             )}
             aria-label={tool.ariaLabel}
             aria-pressed={isActive}
@@ -150,7 +150,7 @@ export function MobileToolbar({
           >
             <Icon className={cn(
               'w-6 h-6',
-              showLabels && 'mb-0.5'
+              showLabels && 'mb-0.5',
             )} />
             {showLabels && (
               <span className="text-xs font-medium">

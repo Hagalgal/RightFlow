@@ -28,9 +28,9 @@ const router = Router();
 
 const webhookRateLimiter = rateLimit({
   store: new RedisStore({
-    // @ts-ignore - RedisStore types are outdated
+    // @ts-expect-error - RedisStore types are outdated
     client: redisConnection,
-    prefix: 'rl:webhook:'
+    prefix: 'rl:webhook:',
   }),
   windowMs: 60 * 1000, // 1 minute
   max: 100, // 100 requests per minute per webhook
@@ -44,18 +44,18 @@ const webhookRateLimiter = rateLimit({
     logger.warn('Webhook rate limit exceeded', {
       organizationId: req.params.organizationId,
       webhookId: req.params.webhookId,
-      ip: req.ip
+      ip: req.ip,
     });
 
     res.status(429).json({
       error: 'Rate limit exceeded. Maximum 100 requests per minute.',
-      retryAfter: res.getHeader('Retry-After')
+      retryAfter: res.getHeader('Retry-After'),
     });
   },
-  skip: (req: Request) => {
+  skip: (_req: Request) => {
     // Skip rate limiting for health checks or test environments
     return process.env.NODE_ENV === 'test';
-  }
+  },
 });
 
 // ============================================================================
@@ -121,7 +121,7 @@ router.post(
       // 1. Validate webhook UUID
       if (!validateUUID(webhookId)) {
         res.status(400).json({
-          error: 'Invalid webhook UUID format'
+          error: 'Invalid webhook UUID format',
         });
         return;
       }
@@ -132,11 +132,11 @@ router.post(
         logger.warn('Webhook received without signature', {
           organizationId,
           webhookId,
-          ip: req.ip
+          ip: req.ip,
         });
 
         res.status(401).json({
-          error: 'Missing X-RightFlow-Signature header'
+          error: 'Missing X-RightFlow-Signature header',
         });
         return;
       }
@@ -145,7 +145,7 @@ router.post(
       const payloadValidation = validatePayload(req.body);
       if (!payloadValidation.valid) {
         res.status(400).json({
-          error: payloadValidation.error
+          error: payloadValidation.error,
         });
         return;
       }
@@ -157,11 +157,11 @@ router.post(
         logger.warn('Webhook not found', {
           organizationId,
           webhookId,
-          ip: req.ip
+          ip: req.ip,
         });
 
         res.status(404).json({
-          error: 'Webhook not found'
+          error: 'Webhook not found',
         });
         return;
       }
@@ -172,11 +172,11 @@ router.post(
           requestedOrg: organizationId,
           actualOrg: webhook.organizationId,
           webhookId,
-          ip: req.ip
+          ip: req.ip,
         });
 
         res.status(403).json({
-          error: 'Webhook does not belong to this organization'
+          error: 'Webhook does not belong to this organization',
         });
         return;
       }
@@ -184,14 +184,14 @@ router.post(
       // 6. Check webhook status
       if (webhook.status === 'disabled') {
         res.status(403).json({
-          error: 'Webhook is disabled'
+          error: 'Webhook is disabled',
         });
         return;
       }
 
       if (webhook.status === 'paused') {
         res.status(403).json({
-          error: 'Webhook is paused'
+          error: 'Webhook is paused',
         });
         return;
       }
@@ -204,18 +204,18 @@ router.post(
       const isValidSignature = webhookService.verifySignature(
         payloadString,
         signatureHeader,
-        secret
+        secret,
       );
 
       if (!isValidSignature) {
         logger.warn('Invalid webhook signature', {
           organizationId,
           webhookId,
-          ip: req.ip
+          ip: req.ip,
         });
 
         res.status(401).json({
-          error: 'Invalid signature'
+          error: 'Invalid signature',
         });
         return;
       }
@@ -232,26 +232,26 @@ router.post(
           await redisConnection.setex(
             cacheKey,
             86400, // 24 hours
-            payloadString
+            payloadString,
           );
 
           logger.debug('Webhook payload cached', {
             organizationId,
             webhookId,
             cacheKey,
-            size: payloadSize
+            size: payloadSize,
           });
         } catch (error: any) {
           // Non-fatal: Log error but don't fail request
           logger.error('Failed to cache webhook payload', {
             organizationId,
             webhookId,
-            error: error.message
+            error: error.message,
           });
 
           // Return 503 if caching is critical
           res.status(503).json({
-            error: 'Cache service temporarily unavailable'
+            error: 'Cache service temporarily unavailable',
           });
           return;
         }
@@ -259,7 +259,7 @@ router.post(
         logger.info('Webhook payload too large to cache', {
           organizationId,
           webhookId,
-          size: payloadSize
+          size: payloadSize,
         });
       }
 
@@ -274,7 +274,7 @@ router.post(
         webhookId,
         event: req.body.event,
         durationMs,
-        ip: req.ip
+        ip: req.ip,
       });
 
       // 12. Return success response
@@ -282,7 +282,7 @@ router.post(
         success: true,
         webhookId,
         received: new Date().toISOString(),
-        status: 'processed'
+        status: 'processed',
       });
     } catch (error: any) {
       const durationMs = Date.now() - startTime;
@@ -292,16 +292,16 @@ router.post(
         webhookId,
         error: error.message,
         durationMs,
-        ip: req.ip
+        ip: req.ip,
       });
 
       // Return generic error (don't leak internal details)
       res.status(500).json({
         error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
-  }
+  },
 );
 
 export default router;

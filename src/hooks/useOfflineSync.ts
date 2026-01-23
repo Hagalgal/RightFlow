@@ -87,7 +87,7 @@ export function useOfflineSync({
   autoSync = true,
 }: UseOfflineSyncProps = {}): UseOfflineSyncResult {
   const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
   );
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [queueSize, setQueueSize] = useState<number>(0);
@@ -233,7 +233,7 @@ export function useOfflineSync({
       await offlineStorage.queueResponse(response);
       await updateQueueSize();
     },
-    [updateQueueSize]
+    [updateQueueSize],
   );
 
   // Manually trigger sync

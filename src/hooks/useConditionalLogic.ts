@@ -87,13 +87,13 @@ export function useConditionalLogic({
       const visibility = getFieldVisibility(
         field.conditionalRules,
         fieldValues,
-        field.defaultVisibility || 'visible'
+        field.defaultVisibility || 'visible',
       );
 
       const requirement = getFieldRequirement(
         field.conditionalRules,
         fieldValues,
-        field.required
+        field.required,
       );
 
       states[field.id] = {
@@ -120,7 +120,7 @@ export function useConditionalLogic({
         required: field?.required || false,
       };
     },
-    [fieldStates, fieldsMap]
+    [fieldStates, fieldsMap],
   );
 
   // Get all field states

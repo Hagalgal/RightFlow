@@ -186,7 +186,7 @@ class SyncManager {
         this.emit('item-failed', {
           type: 'submission',
           id: submission.id,
-          error: submission.syncError
+          error: submission.syncError,
         });
 
         console.error(`❌ Failed to sync submission ${submission.id}:`, error);
@@ -236,7 +236,7 @@ class SyncManager {
         this.emit('item-failed', {
           type: 'asset',
           id: asset.id,
-          error: (error as ApiError).message
+          error: (error as ApiError).message,
         });
       }
     }
