@@ -12,6 +12,7 @@ import { FormViewerPage } from './pages/FormViewerPage';
 import { ResponsesPage } from './pages/ResponsesPage';
 import { ResponsesListPage } from './pages/ResponsesListPage';
 import { OrganizationSettingsPage } from './pages/OrganizationSettingsPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { AuthGuard } from './components/auth/AuthGuard';
 
 // Landing URL from environment variable
@@ -138,6 +139,14 @@ const router = createBrowserRouter([
     element: (
       <AuthGuard>
         <OrganizationSettingsPage />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/reports',
+    element: (
+      <AuthGuard>
+        <ReportsPage />
       </AuthGuard>
     ),
   },
