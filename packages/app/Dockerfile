@@ -25,6 +25,8 @@ RUN npm ci
 # Copy API source
 COPY api/ ./api/
 COPY backend/ ./backend/
+COPY src/ ./src/
+COPY tsconfig.json ./
 COPY tsconfig.api.json ./
 
 # Build backend
