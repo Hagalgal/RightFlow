@@ -82,16 +82,12 @@ export function LandingPage() {
 
           <div className="flex items-center gap-4">
             <LanguageSelector />
-            <SignInButton mode="modal">
-              <button className="hidden sm:block text-sm font-bold text-[#0A1551] hover:bg-slate-50 px-4 py-2 rounded-lg transition-colors">
-                {isRtl ? 'התחברות' : 'Login'}
-              </button>
-            </SignInButton>
-            <SignInButton mode="modal">
-              <button className="bg-[#FF6100] hover:bg-[#E65700] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-orange-500/20 active:scale-95 text-sm uppercase tracking-wide">
-                {t.getStarted}
-              </button>
-            </SignInButton>
+            <a href="https://app.rightflow.co.il/sign-in" className="hidden sm:block text-sm font-bold text-[#0A1551] hover:bg-slate-50 px-4 py-2 rounded-lg transition-colors">
+              {isRtl ? 'התחברות' : 'Login'}
+            </a>
+            <a href="https://app.rightflow.co.il/sign-up" className="bg-[#FF6100] hover:bg-[#E65700] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-orange-500/20 active:scale-95 text-sm uppercase tracking-wide">
+              {t.getStarted}
+            </a>
           </div>
         </div>
       </nav>
@@ -126,12 +122,10 @@ export function LandingPage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <SignInButton mode="modal">
-                    <button className="bg-[#FF6100] hover:bg-[#E65700] text-white text-lg font-bold px-10 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-orange-500/30 group">
-                      {t.getStarted}
-                      {isRtl ? <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> : <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
-                    </button>
-                  </SignInButton>
+                  <a href="https://app.rightflow.co.il/sign-up" className="bg-[#FF6100] hover:bg-[#E65700] text-white text-lg font-bold px-10 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-xl shadow-orange-500/30 group">
+                    {t.getStarted}
+                    {isRtl ? <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> : <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                  </a>
                   <button className="bg-white hover:bg-slate-50 text-[#0A1551] font-bold px-10 py-5 rounded-2xl border border-slate-200 transition-all shadow-sm">
                     {t.viewDemo}
                   </button>
@@ -161,9 +155,9 @@ export function LandingPage() {
                 <div className="relative bg-white p-4 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(10,21,81,0.15)] border border-slate-100">
                   <div className="rounded-[2rem] overflow-hidden bg-slate-100 aspect-[4/3] relative">
                     <img
-                      src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800"
-                      alt="Mobile App Interface"
-                      className="w-full h-full object-cover opacity-90"
+                      src="https://images.unsplash.com/photo-1541888946425-d81bb1930060?auto=format&fit=crop&q=80&w=800"
+                      alt="Civil Engineer at Work"
+                      className="w-full h-full object-cover opacity-95"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A1551]/60 to-transparent flex flex-col justify-end p-8 text-white">
                       <div className="flex items-center gap-3 mb-4">
@@ -246,8 +240,8 @@ export function LandingPage() {
                       key={niche.id}
                       onClick={() => setActiveNiche(niche.id)}
                       className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${activeNiche === niche.id
-                          ? 'bg-white shadow-lg scale-105'
-                          : 'text-slate-400 hover:text-white'
+                        ? 'bg-white shadow-lg scale-105'
+                        : 'text-slate-400 hover:text-white'
                         }`}
                     >
                       <div className={`p-2 rounded-lg ${activeNiche === niche.id ? niche.bg : 'bg-slate-800'}`}>
@@ -395,11 +389,9 @@ export function LandingPage() {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row justify-center gap-6">
-              <SignInButton mode="modal">
-                <button className="bg-[#FF6100] hover:bg-[#E65700] text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-2xl shadow-orange-500/40 transition-all hover:scale-105 active:scale-95 leading-none">
-                  {t.getStarted}
-                </button>
-              </SignInButton>
+              <a href="https://app.rightflow.co.il/sign-up" className="bg-[#FF6100] hover:bg-[#E65700] text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-2xl shadow-orange-500/40 transition-all hover:scale-105 active:scale-95 leading-none flex items-center justify-center">
+                {t.getStarted}
+              </a>
               <button className="bg-[#0A1551] hover:bg-[#1E2B7A] text-white text-xl font-bold px-12 py-6 rounded-2xl shadow-xl transition-all leading-none">
                 {isRtl ? 'צור קשר' : 'Contact Us'}
               </button>
