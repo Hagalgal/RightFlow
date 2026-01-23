@@ -229,7 +229,7 @@ router.post(
       if (payloadSize < 1024 * 1024) {
         // < 1MB
         try {
-          await redisClient.setex(
+          await redisConnection.setex(
             cacheKey,
             86400, // 24 hours
             payloadString
