@@ -416,6 +416,7 @@ describe('html-generator-css', () => {
 
         try {
           // Using Function constructor is safer than eval for testing
+          // eslint-disable-next-line no-new-func
           const testFn = new Function(testCode);
           return testFn();
         } catch (e) {

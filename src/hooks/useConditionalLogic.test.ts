@@ -15,7 +15,7 @@ import { ConditionalRule } from '@/services/conditional';
 
 const createMockField = (
   id: string,
-  overrides: Partial<FieldDefinition> = {}
+  overrides: Partial<FieldDefinition> = {},
 ): FieldDefinition => ({
   id,
   type: 'text',
@@ -40,7 +40,7 @@ describe('useConditionalLogic', () => {
       ];
 
       const { result } = renderHook(() =>
-        useConditionalLogic({ fields, fieldValues: {} })
+        useConditionalLogic({ fields, fieldValues: {} }),
       );
 
       const state = result.current.getFieldState('field1');
@@ -69,7 +69,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { dropdown1: 'אחר' },
-        })
+        }),
       );
 
       const state = result.current.getFieldState('textField');
@@ -97,7 +97,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { dropdown1: 'כן' },
-        })
+        }),
       );
 
       const state = result.current.getFieldState('textField');
@@ -125,7 +125,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { checkbox1: true },
-        })
+        }),
       );
 
       const state = result.current.getFieldState('textField');
@@ -153,7 +153,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { status: 'פעיל' },
-        })
+        }),
       );
 
       expect(result.current.getFieldState('details').visible).toBe(true);
@@ -163,7 +163,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { status: 'לא פעיל' },
-        })
+        }),
       );
 
       expect(result2.current.getFieldState('details').visible).toBe(false);
@@ -179,7 +179,7 @@ describe('useConditionalLogic', () => {
       ];
 
       const { result } = renderHook(() =>
-        useConditionalLogic({ fields, fieldValues: {} })
+        useConditionalLogic({ fields, fieldValues: {} }),
       );
 
       const allStates = result.current.getAllFieldStates();
@@ -215,7 +215,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { toggle: false },
-        })
+        }),
       );
 
       const statesOff = resultOff.current.getAllFieldStates();
@@ -227,7 +227,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { toggle: true },
-        })
+        }),
       );
 
       const statesOn = resultOn.current.getAllFieldStates();
@@ -258,7 +258,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { toggle: true },
-        })
+        }),
       );
 
       const visibleFields = result.current.getVisibleFields();
@@ -304,7 +304,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { field1: 'yes', field2: 'some value' },
-        })
+        }),
       );
       expect(resultBoth.current.getFieldState('dependent').visible).toBe(true);
 
@@ -313,7 +313,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { field1: 'yes', field2: '' },
-        })
+        }),
       );
       expect(resultFirst.current.getFieldState('dependent').visible).toBe(false);
     });
@@ -351,7 +351,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { field1: 'option1' },
-        })
+        }),
       );
       expect(result1.current.getFieldState('dependent').visible).toBe(true);
 
@@ -360,7 +360,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { field1: 'option2' },
-        })
+        }),
       );
       expect(result2.current.getFieldState('dependent').visible).toBe(true);
 
@@ -369,7 +369,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { field1: 'option3' },
-        })
+        }),
       );
       expect(result3.current.getFieldState('dependent').visible).toBe(false);
     });
@@ -396,7 +396,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { notes: 'זה משהו דחוף מאוד' },
-        })
+        }),
       );
       expect(result1.current.getFieldState('priority').required).toBe(true);
 
@@ -405,7 +405,7 @@ describe('useConditionalLogic', () => {
         useConditionalLogic({
           fields,
           fieldValues: { notes: 'זה רגיל' },
-        })
+        }),
       );
       expect(result2.current.getFieldState('priority').required).toBe(false);
     });
@@ -417,7 +417,7 @@ describe('useConditionalLogic', () => {
       const fieldValues = { field1: 'test' };
 
       const { result, rerender } = renderHook(() =>
-        useConditionalLogic({ fields, fieldValues })
+        useConditionalLogic({ fields, fieldValues }),
       );
 
       const firstGetFieldState = result.current.getFieldState;

@@ -254,7 +254,7 @@ export class OfflineStorageService {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(
         [STORES.FORMS, STORES.RESPONSES, STORES.SYNC_QUEUE],
-        'readwrite'
+        'readwrite',
       );
 
       let completed = 0;

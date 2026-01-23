@@ -11,7 +11,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       onNeedRefresh() {
         // Show update notification to user
         const shouldUpdate = confirm(
-          'גרסה חדשה של האפליקציה זמינה! \nלחץ אישור כדי לעדכן עכשיו.'
+          'גרסה חדשה של האפליקציה זמינה! \nלחץ אישור כדי לעדכן עכשיו.',
         );
         if (shouldUpdate) {
           updateSW(true);

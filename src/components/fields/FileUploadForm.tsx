@@ -230,7 +230,7 @@ export function FileUploadForm({ userId: _userId, onSuccess, onCancel }: FileUpl
           קובץ CSV עם 2 עמודות: <code className="bg-background px-1 py-0.5 rounded">label,value</code>
         </p>
         <p>
-          או קובץ JSON עם מערך של אובייקטים: <code className="bg-background px-1 py-0.5 rounded">[{"{"}"label":"...","value":"..."{"}"}]</code>
+          או קובץ JSON עם מערך של אובייקטים: <code className="bg-background px-1 py-0.5 rounded">[{'{'}"label":"...","value":"..."{'}'}]</code>
         </p>
       </div>
 

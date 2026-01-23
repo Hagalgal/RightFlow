@@ -78,7 +78,7 @@ export function ErrorDialog({
             onClick={handleCopy}
             className={cn(
               'flex items-center gap-2',
-              copied && 'bg-green-50 border-green-500 text-green-700'
+              copied && 'bg-green-50 border-green-500 text-green-700',
             )}
           >
             {copied ? (
@@ -99,5 +99,5 @@ export function ErrorDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

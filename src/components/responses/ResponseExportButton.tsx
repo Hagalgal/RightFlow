@@ -34,7 +34,7 @@ export function ResponseExportButton({ formId }: ResponseExportButtonProps) {
             'X-User-Id': user?.id || '',
           },
           signal: abortControllerRef.current.signal,
-        }
+        },
       );
 
       if (!response.ok) {

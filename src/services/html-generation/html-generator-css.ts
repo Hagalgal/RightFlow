@@ -62,7 +62,7 @@ export function generateFormJS(
   // Insert additional modules into the navigation IIFE
   const combinedJs = navigationJs.replace(
     '// PLACEHOLDER_FOR_ADDITIONAL_MODULES',
-    datePickerJs + '\n' + signatureJs + '\n' + validationJs
+    datePickerJs + '\n' + signatureJs + '\n' + validationJs,
   );
 
   return combinedJs;

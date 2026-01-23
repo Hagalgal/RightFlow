@@ -20,7 +20,7 @@ export type { ConditionalRule, FieldValues, FieldVisibility };
  */
 export function evaluateCondition(
   rule: ConditionalRule,
-  fieldValue: string | number | boolean | undefined | null
+  fieldValue: string | number | boolean | undefined | null,
 ): boolean {
   const { operator, value } = rule;
 
@@ -50,7 +50,7 @@ export function evaluateCondition(
  */
 function compareValues(
   actual: string | number | boolean | undefined | null,
-  expected: string | number | boolean
+  expected: string | number | boolean,
 ): boolean {
   // Handle null/undefined
   if (actual === null || actual === undefined) {
@@ -77,7 +77,7 @@ function compareValues(
  */
 function containsValue(
   actual: string | number | boolean | undefined | null,
-  searchValue: string | number | boolean
+  searchValue: string | number | boolean,
 ): boolean {
   if (actual === null || actual === undefined) {
     return false;
@@ -112,7 +112,7 @@ function isEmpty(value: string | number | boolean | undefined | null): boolean {
  */
 export function evaluateAllConditions(
   rules: ConditionalRule[],
-  fieldValues: FieldValues
+  fieldValues: FieldValues,
 ): boolean {
   if (!rules || rules.length === 0) {
     return true;
@@ -146,7 +146,7 @@ export function evaluateAllConditions(
 export function getFieldVisibility(
   rules: ConditionalRule[] | undefined,
   fieldValues: FieldValues,
-  defaultVisibility: FieldVisibility = 'visible'
+  defaultVisibility: FieldVisibility = 'visible',
 ): FieldVisibility {
   if (!rules || rules.length === 0) {
     return defaultVisibility;
@@ -185,7 +185,7 @@ export function getFieldVisibility(
 export function getFieldRequirement(
   rules: ConditionalRule[] | undefined,
   fieldValues: FieldValues,
-  defaultRequired: boolean = false
+  defaultRequired: boolean = false,
 ): boolean {
   if (!rules || rules.length === 0) {
     return defaultRequired;

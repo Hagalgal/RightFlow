@@ -66,7 +66,7 @@ class ApiClient {
   async post<T = any>(
     endpoint: string,
     body?: any,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
@@ -85,7 +85,7 @@ class ApiClient {
   async put<T = any>(
     endpoint: string,
     body?: any,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
@@ -113,7 +113,7 @@ class ApiClient {
    */
   private async request<T = any>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
 

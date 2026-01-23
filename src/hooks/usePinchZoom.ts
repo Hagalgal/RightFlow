@@ -37,7 +37,7 @@ export interface PinchZoomOptions {
  */
 export function usePinchZoom(
   ref: RefObject<HTMLElement>,
-  options: PinchZoomOptions = {}
+  options: PinchZoomOptions = {},
 ) {
   const {
     minZoom = 50,
@@ -68,7 +68,7 @@ export function usePinchZoom(
         scaleBounds: { min: minZoom / 100, max: maxZoom / 100 },
         rubberband: true,
       },
-    }
+    },
   );
 }
 
@@ -90,7 +90,7 @@ export function useDoubleTapZoom(
   options: {
     onDoubleTap?: () => void;
     enabled?: boolean;
-  } = {}
+  } = {},
 ) {
   const { onDoubleTap, enabled = true } = options;
 
@@ -104,6 +104,6 @@ export function useDoubleTapZoom(
     {
       target: ref,
       eventOptions: { passive: false },
-    }
+    },
   );
 }

@@ -145,7 +145,7 @@ describe('useOfflineSync', () => {
           formId: 'form-hebrew',
           data: hebrewData.data,
           status: 'pending',
-        })
+        }),
       );
     });
   });
@@ -206,7 +206,7 @@ describe('useOfflineSync', () => {
       mockedOfflineStorage.removeFromQueue.mockResolvedValue();
 
       const mockSyncFn = vi.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100))
+        () => new Promise((resolve) => setTimeout(() => resolve({ success: true }), 100)),
       );
 
       const { result } = renderHook(() => useOfflineSync({ onSync: mockSyncFn }));

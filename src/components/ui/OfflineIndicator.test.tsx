@@ -37,7 +37,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       expect(screen.getByText('מחובר')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       expect(screen.getByText('לא מחובר')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={true}
           queueSize={5}
-        />
+        />,
       );
 
       expect(screen.getByText('מסנכרן...')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={3}
-        />
+        />,
       );
 
       expect(screen.getByText(/3/)).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Should not show any number for empty queue
@@ -105,7 +105,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={2}
           onSyncClick={onSyncClick}
-        />
+        />,
       );
 
       const syncButton = screen.getByRole('button', { name: /סנכרן/i });
@@ -121,7 +121,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={2}
           onSyncClick={onSyncClick}
-        />
+        />,
       );
 
       const syncButton = screen.getByRole('button', { name: /סנכרן/i });
@@ -139,7 +139,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={2}
           onSyncClick={onSyncClick}
-        />
+        />,
       );
 
       const syncButton = screen.queryByRole('button', { name: /סנכרן/i });
@@ -157,7 +157,7 @@ describe('OfflineIndicator', () => {
           isSyncing={true}
           queueSize={2}
           onSyncClick={onSyncClick}
-        />
+        />,
       );
 
       const syncButton = screen.queryByRole('button', { name: /סנכרן/i });
@@ -175,7 +175,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={1}
           syncError="שגיאה בסנכרון הנתונים"
-        />
+        />,
       );
 
       expect(screen.getByText('שגיאה בסנכרון הנתונים')).toBeInTheDocument();
@@ -189,7 +189,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       expect(container.firstChild).toHaveAttribute('dir', 'rtl');
@@ -201,7 +201,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={5}
-        />
+        />,
       );
 
       // Check that Hebrew text is displayed
@@ -216,7 +216,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Check that the component uses Tailwind CSS variable classes
@@ -235,7 +235,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={3}
-        />
+        />,
       );
 
       const elements = container.querySelectorAll('[class*="text-"]');
@@ -254,7 +254,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Should have a green/success indicator
@@ -268,7 +268,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Should have a warning/offline indicator
@@ -285,7 +285,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={0}
           compact={true}
-        />
+        />,
       );
 
       // In compact mode, should have smaller dimensions
@@ -299,7 +299,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={0}
           compact={true}
-        />
+        />,
       );
 
       // In compact mode, text should not be visible
@@ -317,7 +317,7 @@ describe('OfflineIndicator', () => {
           isSyncing={false}
           queueSize={0}
           lastSyncTime={lastSyncTime}
-        />
+        />,
       );
 
       // Should display some indication of last sync time
@@ -332,7 +332,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       const indicator = screen.getByRole('status');
@@ -345,7 +345,7 @@ describe('OfflineIndicator', () => {
           isOnline={true}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Rerender with offline status
@@ -354,7 +354,7 @@ describe('OfflineIndicator', () => {
           isOnline={false}
           isSyncing={false}
           queueSize={0}
-        />
+        />,
       );
 
       // Should have aria-live for announcements

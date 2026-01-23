@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import type { VercelRequest } from '@vercel/node';
-import { getAuthContext, checkPermission, getUserFromAuth, type AuthContext } from './auth';
+import { getAuthContext, checkPermission, getUserFromAuth } from './auth';
 import { clerkService } from '../../src/services/auth/clerk.service';
 import { getDb } from '../../src/lib/db';
 
@@ -152,7 +152,7 @@ describe('Auth Layer - Organization Support', () => {
 
       const hasPermission = await checkPermission(
         mockRequest as VercelRequest,
-        'org:settings:manage'
+        'org:settings:manage',
       );
 
       expect(hasPermission).toBe(false);
@@ -171,7 +171,7 @@ describe('Auth Layer - Organization Support', () => {
 
       const hasPermission = await checkPermission(
         mockRequest as VercelRequest,
-        'org:member:manage'
+        'org:member:manage',
       );
 
       expect(hasPermission).toBe(false);
@@ -214,7 +214,7 @@ describe('Auth Layer - Organization Support', () => {
 
       const hasPermission = await checkPermission(
         mockRequest as VercelRequest,
-        'org:form:update'
+        'org:form:update',
       );
 
       expect(hasPermission).toBe(false);
@@ -272,7 +272,7 @@ describe('Auth Layer - Organization Support', () => {
 
       const hasPermission = await checkPermission(
         mockRequest as VercelRequest,
-        'org:form:create'
+        'org:form:create',
       );
 
       expect(hasPermission).toBe(false);
@@ -283,7 +283,7 @@ describe('Auth Layer - Organization Support', () => {
 
       const hasPermission = await checkPermission(
         mockRequest as VercelRequest,
-        'org:form:create'
+        'org:form:create',
       );
 
       expect(hasPermission).toBe(false);

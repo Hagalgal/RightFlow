@@ -73,7 +73,7 @@ describe('ApiClient', () => {
           headers: expect.objectContaining({
             'Authorization': `Bearer ${token}`,
           }),
-        })
+        }),
       );
     });
 
@@ -116,7 +116,7 @@ describe('ApiClient', () => {
           headers: expect.objectContaining({
             'Authorization': `Bearer ${token}`,
           }),
-        })
+        }),
       );
     });
 
@@ -140,7 +140,7 @@ describe('ApiClient', () => {
           headers: expect.objectContaining({
             'Authorization': `Bearer ${token}`,
           }),
-        })
+        }),
       );
     });
 
@@ -164,7 +164,7 @@ describe('ApiClient', () => {
           headers: expect.objectContaining({
             'Authorization': `Bearer ${token}`,
           }),
-        })
+        }),
       );
     });
   });

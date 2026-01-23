@@ -113,7 +113,7 @@ class LocationService {
           timeout,
           maximumAge,
           enableHighAccuracy,
-        }
+        },
       );
     });
   }
@@ -128,7 +128,7 @@ class LocationService {
       enableHighAccuracy?: boolean;
       timeout?: number;
       maximumAge?: number;
-    } = {}
+    } = {},
   ): number {
     if (!this.isSupported()) {
       onError({
@@ -167,7 +167,7 @@ class LocationService {
         enableHighAccuracy,
         timeout,
         maximumAge,
-      }
+      },
     );
 
     return this.watchId;
@@ -215,7 +215,7 @@ class LocationService {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;

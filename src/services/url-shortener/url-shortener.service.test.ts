@@ -84,6 +84,7 @@ describe('UrlShortenerService', () => {
         '',
         'not-a-url',
         'ftp://invalid-protocol.com',
+        // eslint-disable-next-line no-script-url
         'javascript:alert(1)',
       ];
 

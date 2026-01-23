@@ -59,9 +59,9 @@ export function Camera({ onCapture, onClose }: CameraProps) {
         video: {
           facingMode: facingMode, // 'environment' = back camera, 'user' = front
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          height: { ideal: 1080 },
         },
-        audio: false
+        audio: false,
       });
 
       if (videoRef.current) {
@@ -128,7 +128,7 @@ export function Camera({ onCapture, onClose }: CameraProps) {
       const compressedBlob = await compressImage(blob, {
         maxWidth: 1920,
         maxHeight: 1080,
-        quality: 0.8
+        quality: 0.8,
       });
 
       // Save to IndexedDB
@@ -140,7 +140,7 @@ export function Camera({ onCapture, onClose }: CameraProps) {
         mimeType: 'image/jpeg',
         size: compressedBlob.size,
         createdAt: new Date(),
-        syncStatus: 'local'
+        syncStatus: 'local',
       });
 
       console.log(`[Camera] Photo saved: ${photoId} (${compressedBlob.size} bytes)`);

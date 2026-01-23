@@ -51,7 +51,7 @@ export function ConditionalRulesPanel({
   // Get available source fields (exclude current field)
   const sourceFields = useMemo(
     () => allFields.filter((f) => f.id !== fieldId),
-    [allFields, fieldId]
+    [allFields, fieldId],
   );
 
   // Add a new empty rule
@@ -71,17 +71,17 @@ export function ConditionalRulesPanel({
     (ruleId: string) => {
       onRulesChange(currentRules.filter((r) => r.id !== ruleId));
     },
-    [currentRules, onRulesChange]
+    [currentRules, onRulesChange],
   );
 
   // Update a rule
   const handleUpdateRule = useCallback(
     (ruleId: string, updates: Partial<ConditionalRule>) => {
       onRulesChange(
-        currentRules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r))
+        currentRules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r)),
       );
     },
-    [currentRules, onRulesChange]
+    [currentRules, onRulesChange],
   );
 
   // Operator options
@@ -120,7 +120,7 @@ export function ConditionalRulesPanel({
       dir={direction}
       className={cn(
         'p-3 rounded-lg border border-border',
-        'bg-muted/30 space-y-4'
+        'bg-muted/30 space-y-4',
       )}
     >
       {/* Header */}
@@ -154,7 +154,7 @@ export function ConditionalRulesPanel({
               key={rule.id}
               className={cn(
                 'p-3 rounded-md border border-border',
-                'bg-background space-y-2'
+                'bg-background space-y-2',
               )}
             >
               {/* Rule Index & Remove */}

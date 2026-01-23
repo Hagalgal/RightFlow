@@ -42,7 +42,7 @@ export class OrganizationsService {
   async createOrganization(
     clerkOrgId: string,
     name: string,
-    ownerId: string
+    ownerId: string,
   ): Promise<ServiceResult> {
     // Validate inputs
     if (!clerkOrgId) {
@@ -85,7 +85,7 @@ export class OrganizationsService {
    */
   async updateOrganization(
     clerkOrgId: string,
-    updates: Partial<Pick<OrganizationRecord, 'name' | 'settings'>>
+    updates: Partial<Pick<OrganizationRecord, 'name' | 'settings'>>,
   ): Promise<ServiceResult> {
     try {
       const db = getDb();
@@ -170,7 +170,7 @@ export class OrganizationsService {
     clerkMembershipId: string,
     orgId: string,
     userId: string,
-    role: string
+    role: string,
   ): Promise<ServiceResult> {
     // Validate role
     if (!this.isValidRole(role)) {
@@ -217,7 +217,7 @@ export class OrganizationsService {
    */
   async updateMemberRole(
     clerkMembershipId: string,
-    newRole: string
+    newRole: string,
   ): Promise<ServiceResult> {
     // Validate role
     if (!this.isValidRole(newRole)) {
@@ -334,7 +334,7 @@ export class OrganizationsService {
    * Gets an organization by Clerk organization ID
    */
   async getOrganizationByClerkId(
-    clerkOrgId: string
+    clerkOrgId: string,
   ): Promise<OrganizationRecord | null> {
     try {
       const db = getDb();
