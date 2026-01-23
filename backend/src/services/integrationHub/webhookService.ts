@@ -9,7 +9,7 @@
  * - URL validation (no localhost, private IPs, self-referencing)
  */
 
-import { query } from '../../config/database';
+import { query, queryWithMeta } from '../../config/database';
 import crypto from 'crypto';
 import { encrypt, decrypt } from './credentialService';
 
@@ -388,7 +388,7 @@ export async function deleteWebhook(
   id: string,
   organizationId: string
 ): Promise<void> {
-  const result = await query(
+  const result = await queryWithMeta(
     `UPDATE inbound_webhooks
      SET deleted_at = NOW(),
          updated_at = NOW()

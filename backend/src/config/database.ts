@@ -51,6 +51,36 @@ export async function query<T extends QueryResultRow = any>(
   }
 }
 
+// Query helper that returns full QueryResult (with rowCount)
+export async function queryWithMeta<T extends QueryResultRow = any>(
+  sql: string,
+  params: any[] = []
+): Promise<QueryResult<T>> {
+  const start = Date.now();
+  try {
+    const result: QueryResult<T> = await pool.query<T>(sql, params);
+    const duration = Date.now() - start;
+
+    logger.debug('Database query executed', {
+      sql: sql.substring(0, 100),
+      params: params.length,
+      rows: result.rowCount,
+      duration: `${duration}ms`,
+    });
+
+    return result;
+  } catch (error: any) {
+    const duration = Date.now() - start;
+    logger.error('Database query failed', {
+      sql: sql.substring(0, 100),
+      params,
+      error: error.message,
+      duration: `${duration}ms`,
+    });
+    throw error;
+  }
+}
+
 // Health check function
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {

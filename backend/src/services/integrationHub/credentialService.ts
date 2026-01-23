@@ -357,3 +357,70 @@ export async function getOAuth2Tokens(
     throw error;
   }
 }
+
+// ============================================================================
+// Generic Encryption/Decryption Helpers (for webhook secrets, etc.)
+// ============================================================================
+
+/**
+ * Encrypt a string value
+ * @param plaintext - String to encrypt
+ * @param key - Optional encryption key (defaults to INTEGRATION_ENCRYPTION_KEY)
+ * @returns Base64-encoded encrypted data
+ */
+export async function encrypt(plaintext: string, key?: string): Promise<string> {
+  // If custom key provided, use it; otherwise use default encryption service
+  if (key) {
+    const keyBuffer = Buffer.from(key, 'hex');
+    const iv = randomBytes(IV_LENGTH);
+    const cipher = createCipheriv(ALGORITHM, keyBuffer, iv);
+
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, 'utf8'),
+      cipher.final()
+    ]);
+
+    const authTag = cipher.getAuthTag();
+    const result = Buffer.concat([iv, authTag, encrypted]);
+
+    return result.toString('base64');
+  } else {
+    const encrypted = encryptionService.encrypt(plaintext);
+    return encrypted.toString('base64');
+  }
+}
+
+/**
+ * Decrypt a string value
+ * @param encrypted - Base64-encoded encrypted data
+ * @param key - Optional encryption key (defaults to INTEGRATION_ENCRYPTION_KEY)
+ * @returns Decrypted plaintext
+ */
+export async function decrypt(encrypted: string, key?: string): Promise<string> {
+  const encryptedBuffer = Buffer.from(encrypted, 'base64');
+
+  // If custom key provided, use it; otherwise use default encryption service
+  if (key) {
+    const keyBuffer = Buffer.from(key, 'hex');
+
+    if (encryptedBuffer.length < IV_LENGTH + AUTH_TAG_LENGTH) {
+      throw new Error('Invalid encrypted data length');
+    }
+
+    const iv = encryptedBuffer.subarray(0, IV_LENGTH);
+    const authTag = encryptedBuffer.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
+    const ciphertext = encryptedBuffer.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
+
+    const decipher = createDecipheriv(ALGORITHM, keyBuffer, iv);
+    decipher.setAuthTag(authTag);
+
+    const decrypted = Buffer.concat([
+      decipher.update(ciphertext),
+      decipher.final()
+    ]);
+
+    return decrypted.toString('utf8');
+  } else {
+    return encryptionService.decrypt(encryptedBuffer);
+  }
+}
