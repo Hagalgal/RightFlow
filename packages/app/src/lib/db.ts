@@ -35,6 +35,8 @@ export function getDb(): Knex {
       // Keep connection alive
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
+      // SSL configuration for Railway - reject unauthorized for internal network
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     },
     pool: {
       min: 0,
