@@ -5,10 +5,10 @@
  * RightFlow-ready: Supports multi-tenant architecture
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import crypto from 'crypto';
 import { createClerkClient } from '@clerk/clerk-sdk-node';
-import { OrganizationsService } from '../organizations/organizations.service';
+import { OrganizationsService } from '../organizations/organizations.service.js';
 
 export interface ClerkWebhookData {
   type: string;

@@ -3,7 +3,7 @@
  * Handles organization and membership management
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import crypto from 'crypto';
 
 type Role = 'admin' | 'member' | 'viewer';
