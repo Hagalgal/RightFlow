@@ -3,7 +3,7 @@
  * Checks if user has access to premium features based on their plan
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 
 export interface PlanInfo {
   id: string;

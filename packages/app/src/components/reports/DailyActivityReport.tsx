@@ -133,7 +133,7 @@ export function DailyActivityReport({ date }: Props) {
             <XAxis
               dataKey="hour"
               stroke="#64748b"
-              tickFormatter={(value) => `${value}:00`}
+              tickFormatter={(value: any) => `${value}:00`}
             />
             <YAxis stroke="#64748b" />
             <Tooltip
@@ -143,8 +143,8 @@ export function DailyActivityReport({ date }: Props) {
                 borderRadius: '8px',
                 direction: 'rtl',
               }}
-              labelFormatter={(value) => `שעה ${value}:00`}
-              formatter={(value: number) => [value, 'טפסים']}
+              labelFormatter={(value: any) => `שעה ${value}:00`}
+              formatter={(value: any) => [value, 'טפסים']}
             />
             <Area
               type="monotone"

@@ -5,12 +5,12 @@
  * Replaces localStorage with database storage
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import crypto from 'crypto';
-import { UsageService } from '../billing/usage.service';
-import { premiumFeaturesService } from '../premium/premium-features.service';
-import { urlShortenerService } from '../url-shortener/url-shortener.service';
-import { OrganizationsService } from '../organizations/organizations.service';
+import { UsageService } from '../billing/usage.service.js';
+import { premiumFeaturesService } from '../premium/premium-features.service.js';
+import { urlShortenerService } from '../url-shortener/url-shortener.service.js';
+import { OrganizationsService } from '../organizations/organizations.service.js';
 
 export interface FormField {
   id: string;

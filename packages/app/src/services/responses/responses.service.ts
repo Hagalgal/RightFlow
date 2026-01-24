@@ -3,9 +3,9 @@
  * Handles form response submissions, retrieval, and export
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import crypto from 'crypto';
-import { UsageService } from '../billing/usage.service';
+import { UsageService } from '../billing/usage.service.js';
 
 export interface SubmitResponseParams {
   formId: string;

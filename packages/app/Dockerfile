@@ -64,6 +64,7 @@ COPY --from=backend-builder /app/dist-api ./dist-api
 # Copy backend source (needed for some imports)
 COPY backend/ ./backend/
 
+# Cache bust: v2.4.1-fix-db-import
 # Copy server and config files
 COPY server.mjs ./
 COPY knexfile.cjs ./

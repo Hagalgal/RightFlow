@@ -36,7 +36,7 @@ export function FormsStatusReport({ from, to }: Props) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry) => `${entry.percentage.toFixed(1)}%`}
+                label={(entry: any) => `${entry.percentage.toFixed(1)}%`}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="count"
@@ -45,7 +45,7 @@ export function FormsStatusReport({ from, to }: Props) {
                   <Cell key={`cell-${index}`} fill={COLORS[entry.status as keyof typeof COLORS] || '#64748b'} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [value, 'טפסים']} />
+              <Tooltip formatter={(value: any) => [value, 'טפסים']} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

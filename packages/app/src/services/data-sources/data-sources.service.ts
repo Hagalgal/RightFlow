@@ -11,7 +11,7 @@
  * - webhook: External CRM (v1.5 future)
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import crypto from 'crypto';
 
 export interface DataSourceOption {
