@@ -101,7 +101,7 @@ app.all('/api/webhooks/grow', createApiHandler('webhooks/grow.ts'));
 app.get('/api/health', async (req, res) => {
   try {
     // Test database connection
-    const { getDb } = await import('./src/lib/db.ts');
+    const { getDb } = await import('./dist-api/packages/app/src/lib/db.js');
     const db = getDb();
     await db.raw('SELECT 1');
 
@@ -256,7 +256,7 @@ const shutdown = async () => {
 
     // Close database connections
     try {
-      const { closeDb } = await import('./src/lib/db.ts');
+      const { closeDb } = await import('./dist-api/packages/app/src/lib/db.js');
       await closeDb();
       console.log('✅ Database connections closed');
     } catch (error) {
