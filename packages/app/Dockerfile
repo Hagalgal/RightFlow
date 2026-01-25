@@ -1,5 +1,5 @@
 # Build stage for frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20.18.0-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -34,7 +34,7 @@ ENV VITE_ROOBZ_API_ENDPOINT=$VITE_ROOBZ_API_ENDPOINT
 RUN npm run build
 
 # Build stage for backend API
-FROM node:20-alpine AS backend-builder
+FROM node:20.18.0-alpine AS backend-builder
 
 WORKDIR /app
 
@@ -53,7 +53,7 @@ COPY tsconfig.api.json ./
 RUN npm run build:api
 
 # Production stage
-FROM node:20-alpine
+FROM node:20.18.0-alpine
 
 WORKDIR /app
 
