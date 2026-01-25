@@ -8,7 +8,7 @@
  * Grow API Documentation: https://grow-il.readme.io/reference/introduction
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import type { Knex } from 'knex';
 
 export interface GrowSubscription {

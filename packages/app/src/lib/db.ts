@@ -30,14 +30,23 @@ export function getDb(): Knex {
   // Create Knex instance with PostgreSQL configuration
   db = knex({
     client: 'pg',
-    connection: databaseUrl,
+    connection: {
+      connectionString: databaseUrl,
+      // Keep connection alive
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
+      // SSL configuration for Railway - reject unauthorized for internal network
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    },
     pool: {
-      min: 2,
+      min: 0,
       max: 10,
       // Connection timeout for serverless environments
       acquireTimeoutMillis: 30000,
-      // Idle timeout
-      idleTimeoutMillis: 30000,
+      // Idle timeout - shorter for Railway
+      idleTimeoutMillis: 10000,
+      // Validate connections before use
+      propagateCreateError: false,
     },
     // Enable debug logging in development
     debug: process.env.NODE_ENV === 'development',

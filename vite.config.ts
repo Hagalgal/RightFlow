@@ -12,6 +12,7 @@ export default defineConfig({
       includeAssets: ['fonts/**/*.ttf', 'fonts/**/*.woff2', 'icons/**/*.png'],
       manifest: false, // Use the manifest.json from public folder
       workbox: {
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB limit
         globPatterns: ['**/*.{js,css,html,ttf,woff2,png,svg}'],
         runtimeCaching: [
           {
@@ -60,7 +61,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, './packages/app/src'),
     },
   },
   server: {

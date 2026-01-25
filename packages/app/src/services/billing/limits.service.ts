@@ -3,7 +3,7 @@
  * Checks and enforces plan limits for forms, responses, and storage
  */
 
-import { getDb } from '../../lib/db';
+import { getDb } from '../../lib/db.js';
 import type { Knex } from 'knex';
 
 export interface Plan {
