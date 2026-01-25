@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+// Build: 2026-01-25T21:25:00 - CSS glass classes fix v2.4.2
 export default {
   darkMode: ["class"],
   content: [
