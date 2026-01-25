@@ -6,6 +6,22 @@ export default {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    './src/**/*.css',
+    './packages/app/src/**/*.{ts,tsx}',
+    './packages/app/src/**/*.css',
+  ],
+  // Safelist RTL-related classes that may be dynamically generated
+  safelist: [
+    'border-l',
+    'border-r',
+    'text-left',
+    'text-right',
+    'left-3',
+    'right-3',
+    'pl-10',
+    'pr-10',
+    '-left-1',
+    '-right-1',
   ],
   prefix: "",
   theme: {
