@@ -24,8 +24,9 @@ class ApiClient {
   private authToken: string | null = null;
 
   constructor() {
-    // Use API proxy in development, direct URL in production
-    this.baseURL = import.meta.env.VITE_API_URL || '/api';
+    // Always use /api/v1 — works in both dev (Vite proxy) and prod (Railway)
+    // Uses Express backend on port 3002
+    this.baseURL = '/api/v1';
   }
 
   /**

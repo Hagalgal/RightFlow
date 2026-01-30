@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Rnd } from 'react-rnd';
-import { X } from 'lucide-react';
+// X icon removed - using Unicode ✕ for tiny delete badge
 import { cn } from '@/utils/cn';
 import { FieldDefinition } from '@/types/fields';
 import { FieldContextMenu } from './FieldContextMenu';
@@ -196,17 +196,24 @@ export const StaticTextField = ({
       >
         {field.content || 'טקסט סטטי'}
 
-        {/* Delete button */}
+        {/* Delete badge - tiny Unicode ✕, outside top-left corner */}
         <button
-          className="absolute top-0 left-0 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ transform: 'translate(-50%, -50%)' }}
+          className="absolute bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+          style={{
+            top: '-4px',
+            left: '-4px',
+            width: '8px',
+            height: '8px',
+            fontSize: '6px',
+            lineHeight: 1,
+          }}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(field.id);
           }}
           title="מחק שדה"
         >
-          <X className="w-3 h-3" />
+          ✕
         </button>
       </Rnd>
 

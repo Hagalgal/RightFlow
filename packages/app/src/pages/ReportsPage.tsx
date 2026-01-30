@@ -8,12 +8,8 @@ import { useAuth, UserButton } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
-  Download,
-  Calendar,
   Users,
-  FileText,
   TrendingUp,
-  Clock,
   CheckCircle2,
 } from 'lucide-react';
 import { DailyActivityReport } from '../components/reports/DailyActivityReport';
@@ -52,11 +48,11 @@ export function ReportsPage() {
 
   if (!canViewReports) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <BarChart3 className="w-16 h-16 text-slate-400 mx-auto" />
-          <h1 className="text-2xl font-bold text-slate-800">אין הרשאה לצפות בדוחות</h1>
-          <p className="text-slate-600">פנה למנהל הארגון לקבלת גישה</p>
+          <BarChart3 className="w-16 h-16 text-muted-foreground/30 mx-auto" />
+          <h1 className="text-2xl font-bold text-foreground opacity-80">אין הרשאה לצפות בדוחות</h1>
+          <p className="text-muted-foreground">פנה למנהל הארגון לקבלת גישה</p>
         </div>
       </div>
     );
@@ -84,18 +80,18 @@ export function ReportsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 rtl" dir="rtl">
+    <div className="min-h-screen bg-secondary/20" dir="rtl">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white dark:bg-black border-b border-border sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-[#0A1551] to-[#1a2d7a] p-3 rounded-xl shadow-lg">
-                <BarChart3 className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-5">
+              <div className="bg-black dark:bg-white p-3 rounded-xl shadow-lg">
+                <BarChart3 className="w-6 h-6 text-white dark:text-black" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-[#0A1551]">דוחות ואנליטיקה</h1>
-                <p className="text-sm text-slate-600">תובנות עסקיות בזמן אמת</p>
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">דוחות ואנליטיקה</h1>
+                <p className="text-sm text-muted-foreground font-medium">תובנות עסקיות בזמן אמת</p>
               </div>
             </div>
 
@@ -105,14 +101,14 @@ export function ReportsPage() {
                 selectedDate={selectedDate}
                 dateRange={dateRange}
               />
-              <UserButton />
+              <UserButton appearance={{ elements: { userButtonAvatarBox: 'h-10 w-10 rounded-lg' } }} />
             </div>
           </div>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-white dark:bg-black border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-2 overflow-x-auto">
             {tabs.map((tab) => {
@@ -123,18 +119,17 @@ export function ReportsPage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    relative px-6 py-4 flex items-center gap-3 transition-colors min-w-fit
-                    ${
-                      isActive
-                        ? 'text-[#FF6100] border-b-2 border-[#FF6100]'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    relative px-6 py-5 flex items-center gap-3 transition-all min-w-fit
+                    ${isActive
+                      ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900'
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />
                   <div className="text-right">
-                    <div className="font-semibold">{tab.label}</div>
-                    <div className="text-xs text-slate-500">{tab.description}</div>
+                    <div className="font-bold tracking-tight">{tab.label}</div>
+                    <div className="text-[10px] text-muted-foreground opacity-70 uppercase tracking-widest">{tab.description}</div>
                   </div>
                 </button>
               );

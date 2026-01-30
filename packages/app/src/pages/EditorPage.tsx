@@ -707,7 +707,7 @@ export function EditorPage() {
       let formId = currentFormId;
 
       if (!formId) {
-        const createResponse = await fetch('/api/forms', {
+        const createResponse = await fetch('/api/v1/forms', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -737,14 +737,17 @@ export function EditorPage() {
         console.log('✓ Form created with ID:', formId);
       }
 
-      // Step 2: Publish the form
-      const publishResponse = await fetch(`/api/forms-publish?id=${formId}&action=publish`, {
-        method: 'POST',
+      // Step 2: Publish the form (update status to published)
+      const publishResponse = await fetch(`/api/v1/forms/${formId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: notes ? JSON.stringify({ notes }) : undefined,
+        body: JSON.stringify({
+          status: 'published',
+          settings: notes ? { ...settings, publishNotes: notes } : settings
+        }),
       });
 
       if (!publishResponse.ok) {
@@ -752,8 +755,7 @@ export function EditorPage() {
         throw new Error(error.message || 'Failed to publish form');
       }
 
-      const publishResult = await publishResponse.json();
-      const form = publishResult.form;
+      const form = await publishResponse.json();
 
       // Step 3: Update state with URLs
       // Construct public URL from form slug

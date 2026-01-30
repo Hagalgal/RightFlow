@@ -1,11 +1,12 @@
 import { OrganizationProfile } from '@clerk/clerk-react';
-import { useDirection } from '@/i18n';
+import { useDirection, useTranslation } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 
 export function OrganizationSettingsPage() {
   const direction = useDirection();
   const navigate = useNavigate();
+  const t = useTranslation();
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
@@ -22,8 +23,27 @@ export function OrganizationSettingsPage() {
         </h1>
       </header>
 
-      {/* Organization Profile */}
-      <div className="container mx-auto p-6 max-w-[1200px]">
+      <div className="container mx-auto p-6 max-w-[1200px] space-y-6">
+        {/* WhatsApp Channels Link */}
+        <button
+          onClick={() => navigate('/organization/whatsapp')}
+          className="w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-start"
+        >
+          <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground">
+              {t.whatsappChannels}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t.whatsappManageChannelsDesc}
+            </p>
+          </div>
+          <ArrowLeft className={`w-5 h-5 text-muted-foreground ${direction === 'rtl' ? '' : 'rotate-180'}`} />
+        </button>
+
+        {/* Organization Profile */}
         <OrganizationProfile
           appearance={{
             elements: {

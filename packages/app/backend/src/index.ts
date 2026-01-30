@@ -12,7 +12,11 @@ import webhooksRouter from './routes/v1/webhooks';
 import analyticsRouter from './routes/v1/analytics';
 import connectorsRouter from './routes/v1/integrations/connectors';
 import mappingsRouter from './routes/v1/integrations/mappings';
+import whatsappRouter from './routes/v1/whatsapp';
+import whatsappWebhookRouter from './routes/v1/whatsapp-webhook';
+import extractionRouter from './routes/v1/extraction';
 import './workers/webhookWorker'; // Initialize webhook worker
+import './workers/whatsappHealthWorker'; // Initialize WhatsApp health worker
 
 const app = express();
 
@@ -22,7 +26,9 @@ app.use(helmet());
 // CORS
 app.use(
   cors({
-    origin: config.FRONTEND_URL,
+    origin: config.NODE_ENV === 'development'
+      ? [config.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5173']
+      : config.FRONTEND_URL,
     credentials: true,
   }),
 );
@@ -61,6 +67,9 @@ app.use('/api/v1/webhooks', webhooksRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/integrations/connectors', connectorsRouter);
 app.use('/api/v1/integrations/mappings', mappingsRouter);
+app.use('/api/v1/whatsapp', whatsappRouter);
+app.use('/api/v1/whatsapp', whatsappWebhookRouter);
+app.use('/api/v1', extractionRouter);
 
 // 404 handler
 app.use((_req, res) => {

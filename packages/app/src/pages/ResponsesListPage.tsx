@@ -32,7 +32,7 @@ export function ResponsesListPage() {
         try {
             setIsLoading(true);
             const token = await getToken();
-            const response = await fetch('/api/forms', {
+            const response = await fetch('/api/v1/forms', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
