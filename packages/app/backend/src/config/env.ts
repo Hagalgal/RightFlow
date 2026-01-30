@@ -7,7 +7,7 @@ dotenv.config();
 // Environment variable schema (with Zod validation)
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().default('3000').transform(Number),
+  PORT: z.string().default('3002').transform(Number),
 
   // Database
   DATABASE_URL: z.string().url(),
@@ -33,6 +33,11 @@ const envSchema = z.object({
 
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // WhatsApp (WAHA)
+  WAHA_API_URL: z.string().url().default('https://waha-production-0c12.up.railway.app'),
+  WAHA_API_KEY: z.string().min(1).optional(),
+  WAHA_WEBHOOK_SECRET: z.string().optional(),
 });
 
 // Validate environment variables

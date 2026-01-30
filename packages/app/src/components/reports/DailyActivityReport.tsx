@@ -42,15 +42,15 @@ export function DailyActivityReport({ date }: Props) {
       value: data.submissionsToday,
       change: data.percentChange,
       icon: TrendingUp,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      color: 'text-black dark:text-white',
+      bg: 'bg-zinc-100 dark:bg-zinc-800',
     },
     {
       label: 'משתמשים פעילים',
       value: data.activeUsers,
       icon: Users,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
+      color: 'text-zinc-600 dark:text-zinc-300',
+      bg: 'bg-zinc-50 dark:bg-zinc-900',
     },
     {
       label: 'זמן מילוי ממוצע',
@@ -59,15 +59,15 @@ export function DailyActivityReport({ date }: Props) {
       ).padStart(2, '0')}`,
       subtitle: 'דקות',
       icon: Clock,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
+      color: 'text-zinc-500 dark:text-zinc-400',
+      bg: 'bg-zinc-50 dark:bg-zinc-900',
     },
     {
       label: 'שיעור אישור',
       value: `${data.approvalRate.toFixed(1)}%`,
       icon: CheckCircle2,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
+      color: 'text-black dark:text-white',
+      bg: 'bg-zinc-100 dark:bg-zinc-800',
     },
   ];
 
@@ -80,36 +80,35 @@ export function DailyActivityReport({ date }: Props) {
           const isPositive = stat.change ? stat.change > 0 : null;
 
           return (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <div key={index} className="bg-white dark:bg-zinc-900/50 rounded-xl shadow-sm border border-border p-6 hover:shadow-md transition-all">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{stat.label}</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900">{stat.value}</span>
+                    <span className="text-3xl font-extrabold text-foreground">{stat.value}</span>
                     {stat.subtitle && (
-                      <span className="text-sm text-slate-500">{stat.subtitle}</span>
+                      <span className="text-sm text-muted-foreground font-medium">{stat.subtitle}</span>
                     )}
                   </div>
                   {stat.change !== undefined && (
-                    <div className="flex items-center gap-1 mt-2">
+                    <div className="flex items-center gap-1 mt-3">
                       {isPositive ? (
-                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <TrendingUp className="w-3.5 h-3.5 text-black dark:text-white" />
                       ) : (
-                        <TrendingDown className="w-4 h-4 text-red-600" />
+                        <TrendingDown className="w-3.5 h-3.5 text-zinc-400" />
                       )}
                       <span
-                        className={`text-sm font-medium ${
-                          isPositive ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`text-sm font-bold ${isPositive ? 'text-black dark:text-white' : 'text-zinc-500'
+                          }`}
                       >
                         {isPositive ? '+' : ''}
                         {stat.change.toFixed(1)}%
                       </span>
-                      <span className="text-xs text-slate-500">מאתמול</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">מאתמול</span>
                     </div>
                   )}
                 </div>
-                <div className={`${stat.bg} p-3 rounded-lg`}>
+                <div className={`${stat.bg} p-3 rounded-xl transition-colors`}>
                   <Icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
               </div>
@@ -119,29 +118,33 @@ export function DailyActivityReport({ date }: Props) {
       </div>
 
       {/* Hourly Chart */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">פילוח לפי שעות</h3>
+      <div className="bg-white dark:bg-zinc-900/50 rounded-xl shadow-sm border border-border p-6">
+        <h3 className="text-lg font-extrabold text-foreground tracking-tight mb-6">פילוח לפי שעות</h3>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={data.submissionsByHour}>
             <defs>
               <linearGradient id="colorSubmissions" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#FF6100" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#FF6100" stopOpacity={0} />
+                <stop offset="5%" stopColor="#000000" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="#000000" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
             <XAxis
               dataKey="hour"
-              stroke="#64748b"
+              stroke="#a1a1aa"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
               tickFormatter={(value: any) => `${value}:00`}
             />
-            <YAxis stroke="#64748b" />
+            <YAxis stroke="#a1a1aa" fontSize={11} tickLine={false} axisLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'white',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #e1e1e1',
                 borderRadius: '8px',
                 direction: 'rtl',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               }}
               labelFormatter={(value: any) => `שעה ${value}:00`}
               formatter={(value: any) => [value, 'טפסים']}
@@ -149,8 +152,8 @@ export function DailyActivityReport({ date }: Props) {
             <Area
               type="monotone"
               dataKey="count"
-              stroke="#FF6100"
-              strokeWidth={2}
+              stroke="#000000"
+              strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#colorSubmissions)"
             />
@@ -186,19 +189,18 @@ export function DailyActivityReport({ date }: Props) {
                     })}
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      submission.status === 'approved'
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${submission.status === 'approved'
                         ? 'bg-green-100 text-green-700'
                         : submission.status === 'rejected'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
                   >
                     {submission.status === 'approved'
                       ? 'אושר'
                       : submission.status === 'rejected'
-                      ? 'נדחה'
-                      : 'ממתין'}
+                        ? 'נדחה'
+                        : 'ממתין'}
                   </span>
                 </div>
               </div>

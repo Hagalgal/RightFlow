@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Rnd } from 'react-rnd';
-import { X, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { FieldDefinition } from '@/types/fields';
 import { sanitizeUserInput } from '@/utils/inputSanitization';
@@ -149,9 +149,10 @@ export const DropdownField = ({
         bounds="parent"
         className={cn(
           'field-marker field-marker-dropdown',
+          'border-2 border-primary/50 bg-primary/5',
           field.station === 'agent' ? 'field-marker-station-agent' : 'field-marker-station-client',
-          isSelected && 'field-marker-selected',
-          isHovered && 'field-marker-hovered',
+          isSelected && 'field-marker-selected border-primary bg-primary/10',
+          isHovered && 'field-marker-hovered border-primary/70',
           getConfidenceClassName(field.confidence, field.manuallyAdjusted),
           'group flex items-center',
         )}
@@ -188,17 +189,27 @@ export const DropdownField = ({
           {sanitizeUserInput(field.label || field.name) || 'רשימה נפתחת'}
         </div>
 
-        {/* Delete button */}
+        {/* Delete badge - tiny Unicode ✕, outside top-left corner */}
         <button
-          className="absolute top-0 left-0 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ transform: 'translate(-50%, -50%)' }}
+          className="absolute bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-[1001] leading-none"
+          style={{
+            top: '-4px',
+            left: '-4px',
+            width: '8px',
+            height: '8px',
+            fontSize: '6px',
+            lineHeight: 1,
+            pointerEvents: 'auto',
+          }}
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             onDelete(field.id);
           }}
+          onMouseDown={(e) => e.stopPropagation()}
           title="מחק רשימה נפתחת"
         >
-          <X className="w-3 h-3" />
+          ✕
         </button>
 
         {/* Confidence badge - shows on hover/select for AI-detected fields */}

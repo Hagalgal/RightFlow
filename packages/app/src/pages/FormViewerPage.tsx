@@ -181,7 +181,7 @@ export function FormViewerPage() {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch('/api/responses', {
+      const response = await fetch('/api/v1/submissions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

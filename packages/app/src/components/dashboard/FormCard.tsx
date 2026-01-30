@@ -2,47 +2,63 @@ import { useState, useRef } from 'react';
 import {
   MoreVertical,
   Edit2,
-  Copy,
   Trash2,
   FileText,
   Calendar,
   MessageSquare,
-  ArrowRight,
   ExternalLink,
   CheckCircle2,
+  MessageCircle,
 } from 'lucide-react';
 import type { FormRecord } from '../../services/forms/forms.service';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@clerk/clerk-react';
+import { useDirection } from '../../i18n';
 
 interface FormCardProps {
   form: FormRecord;
   onDelete: () => void;
   onEdit: () => void;
   onViewResponses: () => void;
-  canDelete?: boolean;
+  onSendWhatsApp?: () => void;
 }
 
-export function FormCard({ form, onDelete, onEdit, onViewResponses, canDelete = true }: FormCardProps) {
+export function FormCard({ form, onDelete, onEdit, onViewResponses, onSendWhatsApp }: FormCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const { getToken } = useAuth();
+  const direction = useDirection();
 
-  const formattedDate = new Date(form.created_at).toLocaleDateString('he-IL', {
-    year: 'numeric',
-    month: 'short',
+  const formattedDate = new Date(form.updatedAt || form.created_at).toLocaleDateString('he-IL', {
     day: 'numeric',
+    month: 'short',
+    year: 'numeric'
   });
 
   const statusBadge = {
-    draft: { label: 'טיוטה', color: 'bg-muted text-muted-foreground', icon: FileText },
-    published: { label: 'מפורסם', color: 'bg-green-500/10 text-green-600 border border-green-500/20', icon: CheckCircle2 },
-    archived: { label: 'בארכיון', color: 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/20', icon: FileText },
+    draft: { label: 'טיוטה', className: 'bg-zinc-100 text-zinc-600 border-zinc-200' },
+    published: { label: 'מפורסם', className: 'bg-green-50 text-green-700 border-green-200' },
+    archived: { label: 'בארכיון', className: 'bg-zinc-100 text-zinc-500 border-zinc-200' },
   };
 
   const badge = statusBadge[form.status] || statusBadge.draft;
   const publicUrl = form.status === 'published' ? `${window.location.origin}/f/${form.slug}` : null;
 
-  function handleCopyLink() {
+  async function handleDelete() {
+    if (!confirm(direction === 'rtl' ? 'למחוק טופס זה?' : 'Delete this form?')) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/forms?id=${form.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) onDelete();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function handleCopy() {
     if (publicUrl) {
       navigator.clipboard.writeText(publicUrl);
       setCopied(true);
@@ -50,153 +66,120 @@ export function FormCard({ form, onDelete, onEdit, onViewResponses, canDelete = 
     }
   }
 
-  function handleOpenPublicForm() {
-    if (publicUrl) {
-      window.open(publicUrl, '_blank');
-    }
-  }
-
-  function handleMenuToggle() {
-    setIsMenuOpen(!isMenuOpen);
-  }
-
   return (
-    <div className="glass-card flex flex-col h-full group">
-      {/* Card Header Illustration/Icon Area */}
-      <div className="h-24 bg-gradient-to-br from-primary/5 to-accent/5 rounded-t-2xl flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,transparent,black)] dark:bg-grid-slate-700/25" />
-        <FileText className="w-10 h-10 text-primary/40 group-hover:scale-110 transition-transform duration-500" />
+    <div className="premium-card flex flex-col h-full group p-0 overflow-hidden">
+      {/* Visual Header */}
+      <div className="h-32 bg-zinc-50 dark:bg-zinc-950/40 relative flex items-center justify-center border-b border-border">
+        <div className="absolute inset-0 opacity-10 filter grayscale brightness-125" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+        <FileText className="w-10 h-10 text-zinc-300 group-hover:text-primary/40 transition-colors" />
 
-        <div className="absolute top-4 right-4">
-          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badge.color}`}>
+        <div className={`absolute top-4 ${direction === 'rtl' ? 'right-4' : 'left-4'}`}>
+          <span className={`status-badge ${badge.className}`}>
             {badge.label}
           </span>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex justify-between items-start gap-2 mb-2">
-          <h3 className="font-bold text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-            {form.title}
-          </h3>
+        <div className={`absolute top-3 ${direction === 'rtl' ? 'left-3' : 'right-3'}`}>
           <div className="relative">
             <button
-              ref={buttonRef}
-              onClick={handleMenuToggle}
-              className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-lg hover:bg-muted"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800/10 dark:hover:bg-white/10 transition-colors"
             >
-              <MoreVertical className="w-4 h-4" />
+              <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </button>
-
             <AnimatePresence>
               {isMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-[100]" onClick={() => setIsMenuOpen(false)} />
+                  <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    className="absolute top-full left-0 mt-2 w-48 bg-popover backdrop-blur-xl rounded-xl shadow-2xl border border-border z-[101] py-2 outline-none"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={`absolute top-full ${direction === 'rtl' ? 'left-0' : 'right-0'} mt-1 w-44 bg-white dark:bg-zinc-800 border border-border rounded-lg shadow-xl z-50 py-1`}
                   >
-                    <button
-                      onClick={() => { setIsMenuOpen(false); onEdit(); }}
-                      className="w-full flex items-center justify-end gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    >
-                      ערוך <Edit2 className="w-3.5 h-3.5" />
+                    <button onClick={() => { setIsMenuOpen(false); onEdit(); }} className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-sm font-medium">
+                      ערוך <Edit2 className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => { setIsMenuOpen(false); onViewResponses(); }}
-                      className="w-full flex items-center justify-end gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    >
-                      תגובות <MessageSquare className="w-3.5 h-3.5" />
+                    <button onClick={() => { setIsMenuOpen(false); onViewResponses(); }} className="w-full flex items-center justify-between px-4 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-sm font-medium">
+                      תגובות <MessageSquare className="w-4 h-4" />
                     </button>
-                    {form.status === 'published' && (
-                      <button
-                        onClick={() => { setIsMenuOpen(false); handleCopyLink(); }}
-                        className="w-full flex items-center justify-end gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-                      >
-                        העתק קישור <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    {canDelete && (
-                      <>
-                        <div className="h-px bg-border my-1" />
-                        <button
-                          onClick={() => { setIsMenuOpen(false); onDelete(); }}
-                          className="w-full flex items-center justify-end gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                        >
-                          מחק <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
+                    <div className="h-px bg-border my-1" />
+                    <button onClick={() => { setIsMenuOpen(false); handleDelete(); }} className="w-full flex items-center justify-between px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950/50 text-red-600 text-sm font-medium">
+                      מחק <Trash2 className="w-4 h-4" />
+                    </button>
                   </motion.div>
                 </>
               )}
             </AnimatePresence>
           </div>
         </div>
+      </div>
 
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-3 h-8 leading-relaxed">
-          {form.description || 'אין תיאור לטופס זה'}
+      {/* Content */}
+      <div className="p-6 flex-1 flex flex-col">
+        <h3 className="font-bold text-lg text-foreground mb-1 line-clamp-1 group-hover:text-primary transition-colors cursor-pointer" onClick={onEdit}>
+          {form.title}
+        </h3>
+        <p className="text-sm text-muted-foreground line-clamp-2 h-10 mb-6">
+          {form.description || 'אין תיאור לטופס זה.'}
         </p>
 
-        {/* Quick Actions - Show for published forms */}
-        {form.status === 'published' && publicUrl && (
-          <div className="flex gap-2 mb-3">
+        <div className="mt-auto space-y-3">
+          {/* Stats Row */}
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{formattedDate}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>{form.fields?.length || 0} שדות</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+              <FileText className="w-3.5 h-3.5" />
+              <span>1 עמוד</span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-border" />
+
+          {/* Action Buttons Row */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleCopyLink}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+              onClick={onEdit}
+              className="flex items-center justify-center w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              title="עריכה"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={handleCopy}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               title="העתק קישור"
             >
-              {copied ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  הועתק!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  העתק קישור
-                </>
-              )}
+              {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <ExternalLink className="w-3.5 h-3.5" />}
             </button>
+
             <button
-              onClick={handleOpenPublicForm}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
-              title="פתח טופס"
+              onClick={onSendWhatsApp}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors bg-green-500/10 text-green-600 hover:bg-green-500/20"
+              title="שלח בוואטסאפ"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <MessageCircle className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={onViewResponses}
+              className="flex items-center justify-center gap-1.5 px-3 h-8 bg-blue-500/10 text-blue-600 rounded-lg hover:bg-blue-500/20 transition-colors text-xs font-medium ms-auto"
+              title="צפה בתגובות"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
             </button>
           </div>
-        )}
-
-        <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <Calendar className="w-3 h-3" />
-              {formattedDate}
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <MessageSquare className="w-3 h-3" />
-              {form.fields.length} שדות
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <FileText className="w-3 h-3" />
-              {(() => {
-                const pages = new Set(form.fields.map((f: any) => f.pageNumber || 1));
-                return `${pages.size} עמודים`;
-              })()}
-            </div>
-          </div>
-
-          <button
-            onClick={onEdit}
-            className="w-8 h-8 rounded-full bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all group/btn"
-            title="עריכה"
-          >
-            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
-          </button>
         </div>
       </div>
     </div>

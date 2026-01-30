@@ -13,6 +13,7 @@ import { ResponsesPage } from './pages/ResponsesPage';
 import { ResponsesListPage } from './pages/ResponsesListPage';
 import { OrganizationSettingsPage } from './pages/OrganizationSettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import WhatsAppChannelsPage from './pages/WhatsAppChannelsPage';
 import { AuthGuard } from './components/auth/AuthGuard';
 
 // Landing URL from environment variable
@@ -29,7 +30,7 @@ const router = createBrowserRouter([
   {
     path: '/sign-in',
     element: (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
         <div className="max-w-md w-full space-y-8">
           <SignIn
             routing="path"
@@ -40,13 +41,15 @@ const router = createBrowserRouter([
                 footer: {
                   display: 'none', // Hide default footer to add custom link
                 },
+                rootBox: 'shadow-xl rounded-xl overflow-hidden border border-border',
+                card: 'bg-white dark:bg-black',
               },
             }}
           />
           <div className="mt-6 text-center">
             <a
               href={LANDING_URL}
-              className="text-sm text-slate-600 hover:text-[#FF6100] transition-colors flex items-center justify-center gap-2"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 font-medium"
             >
               <span>←</span>
               <span>חזרה לדף הבית למידע נוסף</span>
@@ -59,7 +62,7 @@ const router = createBrowserRouter([
   {
     path: '/sign-up',
     element: (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-secondary/30">
         <div className="max-w-md w-full space-y-8">
           <SignUp
             routing="path"
@@ -70,13 +73,15 @@ const router = createBrowserRouter([
                 footer: {
                   display: 'none',
                 },
+                rootBox: 'shadow-xl rounded-xl overflow-hidden border border-border',
+                card: 'bg-white dark:bg-black',
               },
             }}
           />
           <div className="mt-6 text-center">
             <a
               href={LANDING_URL}
-              className="text-sm text-slate-600 hover:text-[#FF6100] transition-colors flex items-center justify-center gap-2"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 font-medium"
             >
               <span>←</span>
               <span>חזרה לדף הבית למידע נוסף</span>
@@ -143,6 +148,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/organization/whatsapp',
+    element: (
+      <AuthGuard>
+        <WhatsAppChannelsPage />
+      </AuthGuard>
+    ),
+  },
+  {
     path: '/reports',
     element: (
       <AuthGuard>
@@ -155,20 +168,20 @@ const router = createBrowserRouter([
   {
     path: '*',
     element: (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center space-y-6">
-          <h1 className="text-6xl font-black text-[#0A1551]">404</h1>
-          <p className="text-xl text-slate-600 mb-4">הדף שחיפשת לא נמצא</p>
+          <h1 className="text-8xl font-black text-foreground opacity-20">404</h1>
+          <p className="text-xl text-muted-foreground mb-4">הדף שחיפשת לא נמצא</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/dashboard"
-              className="bg-[#FF6100] hover:bg-[#E65700] text-white font-bold px-6 py-3 rounded-xl transition-colors"
+              className="bg-primary text-primary-foreground hover:bg-zinc-800 dark:hover:bg-zinc-200 font-bold px-8 py-3 rounded-lg transition-all active:scale-[0.98]"
             >
               חזרה לדשבורד
             </a>
             <a
               href={LANDING_URL}
-              className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-6 py-3 rounded-xl transition-colors"
+              className="bg-secondary hover:bg-zinc-200 dark:hover:bg-zinc-800 text-foreground font-bold px-8 py-3 rounded-lg transition-all border border-border"
             >
               חזרה לדף הבית
             </a>
