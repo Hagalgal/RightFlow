@@ -76,7 +76,7 @@ export function ResponseExportButton({ formId }: ResponseExportButtonProps) {
   return (
     <div className="relative">
       <button
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-black/10 disabled:opacity-50"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
       >
@@ -84,16 +84,16 @@ export function ResponseExportButton({ formId }: ResponseExportButtonProps) {
       </button>
 
       {isOpen && !isLoading && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+        <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-border z-50 overflow-hidden">
           <div className="py-1">
             <button
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-3 text-sm font-medium text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               onClick={() => handleExport('csv')}
             >
               Export as CSV
             </button>
             <button
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-3 text-sm font-medium text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               onClick={() => handleExport('json')}
             >
               Export as JSON
@@ -103,7 +103,7 @@ export function ResponseExportButton({ formId }: ResponseExportButtonProps) {
       )}
 
       {error && (
-        <div className="absolute right-0 mt-2 w-48 bg-red-50 text-red-600 p-2 rounded text-sm">
+        <div className="absolute right-0 mt-2 w-48 bg-destructive/10 text-destructive p-3 rounded-xl text-xs font-bold border border-destructive/20 animate-in fade-in slide-in-from-top-1">
           {error}
         </div>
       )}

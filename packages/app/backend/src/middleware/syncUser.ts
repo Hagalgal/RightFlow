@@ -20,9 +20,9 @@ export async function syncUser(req: Request, _res: Response, next: NextFunction)
     // 1. Upsert organization (if doesn't exist)
     await query(
       `
-      INSERT INTO organizations (clerk_organization_id, name)
+      INSERT INTO organizations (clerk_org_id, name)
       VALUES ($1, $2)
-      ON CONFLICT (clerk_organization_id) DO UPDATE
+      ON CONFLICT (clerk_org_id) DO UPDATE
       SET updated_at = NOW()
       RETURNING id
     `,
@@ -41,7 +41,7 @@ export async function syncUser(req: Request, _res: Response, next: NextFunction)
       )
       VALUES (
         $1,
-        (SELECT id FROM organizations WHERE clerk_organization_id = $2),
+        (SELECT id FROM organizations WHERE clerk_org_id = $2),
         $3,
         $4,
         $5

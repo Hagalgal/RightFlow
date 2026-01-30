@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 /* Mobile-specific styles */
 @import './mobile.css';
@@ -9,75 +9,68 @@
 
 @layer base {
   :root {
-    --background: 220 33% 98%;
-    --foreground: 224 71% 4%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 224 71% 4%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 243 75% 59%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
 
     --radius: 0.75rem;
 
-    /* Highlight colors for forms */
-    --highlight-orange: 24 95% 53%;
-    --highlight-blue: 217 91% 60%;
-
-    --sidebar-bg: 220 33% 98%;
-    --canvas-bg: 220 14% 94%;
+    --sidebar-bg: 0 0% 100%;
+    --canvas-bg: 210 40% 98%;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 213 31% 91%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 243 75% 59%;
-
-    --sidebar-bg: 224 71% 2%;
-    --canvas-bg: 224 71% 6%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -88,7 +81,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
@@ -98,211 +92,70 @@
   h5,
   h6 {
     font-family: 'Outfit', sans-serif;
+    @apply tracking-tight;
   }
 }
 
 @layer components {
-  .glass {
-    @apply bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10;
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
   }
 
-  .glass-card {
-    @apply glass shadow-xl rounded-2xl transition-all duration-300;
+  [dir="rtl"] .dashboard-grid {
+    grid-template-columns: 280px 1fr;
   }
 
-  .glass-panel {
-    @apply bg-white/40 dark:bg-black/20 backdrop-blur-3xl border-r border-white/10 dark:border-white/5;
+  .sidebar {
+    @apply flex flex-col border-r border-border bg-card p-6 h-screen sticky top-0;
   }
 
-  .glass-border {
-    @apply border border-white/20 dark:border-white/10;
+  [dir="rtl"] .sidebar {
+    @apply border-r-0 border-l;
   }
 
-  .premium-shadow {
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  .main-content {
+    @apply flex-1 p-8 bg-[#f9fafb] dark:bg-zinc-950/20 overflow-y-auto;
   }
 
-  .dark .premium-shadow {
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  .premium-card {
+    @apply bg-white dark:bg-zinc-900 border border-border rounded-xl shadow-sm transition-all hover:shadow-md;
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary/90 rounded-xl px-6 py-2.5 font-bold transition-all shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-primary text-primary-foreground h-11 px-6 rounded-lg font-medium transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply glass hover:bg-white/80 dark:hover:bg-white/10 rounded-xl px-6 py-2.5 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-secondary text-secondary-foreground h-11 px-6 rounded-lg font-medium transition-all hover:bg-secondary/80 border border-border flex items-center justify-center gap-2;
   }
 
-  .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-highlight-blue font-bold;
+  .input-standard {
+    @apply h-11 bg-white dark:bg-zinc-900 border border-border rounded-lg px-4 focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm;
   }
 
-  .input-premium {
-    @apply bg-white/50 dark:bg-black/20 border border-border focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-xl px-4 py-2 transition-all outline-none;
+  .status-badge {
+    @apply px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border;
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
-}
-
-/* Layout Specifics */
-.forms-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
-}
-
-.dashboard-grid {
-  @apply grid min-h-screen;
-  grid-template-columns: 260px 1fr;
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30;
 }
 
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-}
 
-/* Animations */
-.hover-lift {
-  @apply transition-transform duration-300 hover:-translate-y-1;
-}
-
-/* Field Markers - PDF Canvas Fields */
-:root {
-  --field-station-agent: 217 91% 60%; /* Blue for agent fields */
-  --field-station-client: 24 95% 53%; /* Orange for client fields */
-  --field-text: 220 9% 46%;
-  --field-checkbox: 142 71% 45%;
-  --field-radio: 262 83% 58%;
-  --field-dropdown: 199 89% 48%;
-  --signature-bg: 220 14% 96%;
-}
-
-.dark {
-  --field-station-agent: 217 91% 65%;
-  --field-station-client: 24 95% 58%;
-  --field-text: 220 9% 70%;
-  --field-checkbox: 142 71% 50%;
-  --field-radio: 262 83% 65%;
-  --field-dropdown: 199 89% 55%;
-  --signature-bg: 215 28% 17%;
-}
-
-.field-marker {
-  @apply rounded-sm transition-all duration-150;
-  border: 1.5px solid transparent;
-}
-
-.field-marker-station-agent {
-  border-color: hsl(var(--field-station-agent) / 0.6);
-  background-color: hsl(var(--field-station-agent) / 0.08);
-}
-
-.field-marker-station-client {
-  border-color: hsl(var(--field-station-client) / 0.6);
-  background-color: hsl(var(--field-station-client) / 0.08);
-}
-
-.field-marker-selected {
-  border-width: 2px;
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
-}
-
-.field-marker-station-agent.field-marker-selected {
-  border-color: hsl(var(--field-station-agent));
-}
-
-.field-marker-station-client.field-marker-selected {
-  border-color: hsl(var(--field-station-client));
-}
-
-.field-marker:hover,
-.field-marker-hovered {
-  border-color: hsl(var(--primary) / 0.8);
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
-}
-
-/* Confidence-based field markers (Layer 5 - PDF Field Location Optimization) */
-.field-marker-confidence-high {
-  /* High confidence (>70%) - solid green indicator */
-  border-color: hsl(142 71% 45% / 0.7) !important;
-  background-color: hsl(142 71% 45% / 0.08) !important;
-}
-
-.field-marker-confidence-medium {
-  /* Medium confidence (40-70%) - dashed yellow/orange border */
-  border-style: dashed !important;
-  border-color: hsl(45 93% 47% / 0.8) !important;
-  background-color: hsl(45 93% 47% / 0.1) !important;
-}
-
-.field-marker-confidence-low {
-  /* Low confidence (<40%) - dashed red border with warning background */
-  border-style: dashed !important;
-  border-width: 2px !important;
-  border-color: hsl(0 84% 60% / 0.8) !important;
-  background-color: hsl(0 84% 60% / 0.12) !important;
-  animation: pulse-low-confidence 2s ease-in-out infinite;
-}
-
-@keyframes pulse-low-confidence {
-  0%, 100% {
-    box-shadow: 0 0 0 0 hsl(0 84% 60% / 0.3);
+  .sidebar {
+    display: none;
   }
-  50% {
-    box-shadow: 0 0 0 4px hsl(0 84% 60% / 0.1);
-  }
-}
-
-/* Override confidence styles when manually adjusted - show check mark style */
-.field-marker-manually-adjusted {
-  border-style: solid !important;
-  border-color: hsl(142 71% 45% / 0.8) !important;
-  background-color: hsl(142 71% 45% / 0.05) !important;
-}
-
-/* Confidence badge indicator */
-.field-confidence-badge {
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 8px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.field-marker:hover .field-confidence-badge,
-.field-marker-selected .field-confidence-badge {
-  opacity: 1;
-}
-
-.field-confidence-badge-high {
-  background-color: hsl(142 71% 45%);
-  color: white;
-}
-
-.field-confidence-badge-medium {
-  background-color: hsl(45 93% 47%);
-  color: hsl(45 93% 20%);
-}
-
-.field-confidence-badge-low {
-  background-color: hsl(0 84% 60%);
-  color: white;
 }

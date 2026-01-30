@@ -1,26 +1,29 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   LayoutDashboard,
   FileText,
   BarChart3,
   Settings,
-  HelpCircle,
-  Search,
   Bell,
+  Search,
+  HelpCircle,
   Layout,
+  AlertCircle,
+  LogOut,
 } from 'lucide-react';
 import { FormCard } from '../components/dashboard/FormCard';
+import { SendFormLinkDialog } from '../components/whatsapp/SendFormLinkDialog';
 import type { FormRecord } from '../services/forms/forms.service';
 import { useMigrationOnMount } from '../utils/localStorageMigration';
 import { useTranslation, useDirection } from '../i18n';
 
 export function DashboardPage() {
   const { isSignedIn, isLoaded, user } = useUser();
-  const { getToken, orgId, orgRole } = useAuth();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
   const t = useTranslation();
   const direction = useDirection();
@@ -28,16 +31,7 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Simplified role-based access (Clerk free tier)
-  // Create forms: Personal accounts OR organization members (admin/member)
-  // Delete forms: Personal accounts OR organization admins only
-  const canCreateForm = !orgId || (
-    orgRole === 'org:admin' ||
-    orgRole === 'org:member' ||
-    orgRole === 'org:basic_member'
-  );
-  const canDeleteForm = !orgId || orgRole === 'org:admin';
+  const [whatsAppForm, setWhatsAppForm] = useState<FormRecord | null>(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -59,11 +53,11 @@ export function DashboardPage() {
       const token = await getToken();
       if (!token) throw new Error('No authentication token available');
 
-      const response = await fetch('/api/forms', {
+      const response = await fetch('/api/v1/forms', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error('Failed to load forms');
+      if (!response.ok) throw new Error(direction === 'rtl' ? 'טעינת הטפסים נכשלה' : 'Failed to load forms');
       const data = await response.json();
       setForms(data.forms || []);
     } catch (err) {
@@ -76,49 +70,44 @@ export function DashboardPage() {
   async function handleCreateForm() {
     try {
       const token = await getToken();
+      console.log('🔐 Token received:', token ? 'Yes (length: ' + token.length + ')' : 'No');
+
       if (!token) throw new Error('No authentication token available');
 
-      const response = await fetch('/api/forms', {
+      const response = await fetch('/api/v1/forms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          title: direction === 'rtl' ? 'טופס ללא כותרת' : 'Untitled Form',
+          name: direction === 'rtl' ? 'טופס ללא כותרת' : 'Untitled Form',
           description: '',
-          fields: [],
+          fields: [
+            {
+              id: 'field_1',
+              type: 'text',
+              label: direction === 'rtl' ? 'שדה טקסט' : 'Text Field',
+              required: false,
+            }
+          ],
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create form');
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Full Error response:', JSON.stringify(errorData, null, 2));
+        console.error('❌ Error message:', errorData?.error?.message || errorData?.message || 'Unknown error');
+        throw new Error(errorData?.error?.message || errorData?.message || 'Failed to create form');
+      }
+
       const data = await response.json();
       navigate(`/editor/${data.form.id}`);
     } catch (err) {
+      console.error('💥 Create form error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create form');
-    }
-  }
-
-  async function handleDeleteForm(formId: string) {
-    if (!confirm(direction === 'rtl' ? 'האם אתה בטוח שברצונך למחוק טופס זה?' : 'Are you sure you want to delete this form?')) {
-      return;
-    }
-
-    try {
-      const token = await getToken();
-      if (!token) throw new Error('No authentication token available');
-
-      const response = await fetch(`/api/forms?id=${formId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to delete form');
-      await loadForms();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete form');
     }
   }
 
@@ -128,163 +117,154 @@ export function DashboardPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background text-foreground" dir={direction}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground font-medium">{t.loadingDashboard}</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-grid bg-background text-foreground" dir={direction}>
+    <div className="dashboard-grid" dir={direction}>
       {/* Sidebar */}
-      <aside className={`${direction === 'rtl' ? 'border-l' : 'border-r'} border-border bg-sidebar-bg/50 backdrop-blur-xl hidden lg:flex flex-col p-6 sticky top-0 h-screen`}>
-        <div className="flex items-center gap-3 px-2 mb-10 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-            <Layout className="text-white w-5 h-5" />
+      <aside className="sidebar">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-9 h-9 bg-black dark:bg-white rounded-lg flex items-center justify-center">
+            <Layout className="text-white dark:text-black w-5 h-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight">
-            Right<span className="text-primary">Flow</span>
-          </span>
+          <span className="text-xl font-bold tracking-tight">RightFlow</span>
         </div>
 
         <nav className="flex-1 space-y-1">
           {[
-            { icon: LayoutDashboard, label: t.overview, active: true, path: '/dashboard' },
-            { icon: FileText, label: t.myForms, active: false, path: '/dashboard' },
-            { icon: BarChart3, label: t.responses, active: false, path: '/responses' },
-            { icon: Settings, label: t.settings, active: false, path: '/dashboard' },
-          ].map((item, idx) => (
+            { id: 'overview', icon: LayoutDashboard, label: t.overview, path: '/dashboard', active: true },
+            { id: 'forms', icon: FileText, label: t.myForms, path: '/dashboard' },
+            { id: 'responses', icon: BarChart3, label: t.responses, path: '/responses' },
+            { id: 'settings', icon: Settings, label: t.settings, path: '/organization' },
+          ].map((item) => (
             <button
-              key={idx}
+              key={item.id}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium ${item.active
-                ? 'bg-primary/10 text-primary shadow-sm shadow-primary/5'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${item.active
+                  ? 'bg-secondary text-primary'
+                  : 'text-muted-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-foreground'
                 }`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-4 h-4" />
               {item.label}
             </button>
           ))}
         </nav>
 
-        <div className="pt-6 border-t border-border mt-auto">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
-            <HelpCircle className="w-5 h-5" />
+        <div className="mt-auto space-y-1 pt-6 border-t border-border">
+          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+            <HelpCircle className="w-4 h-4" />
             {t.helpCenter}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-20 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between px-8">
-          <div className="flex items-center gap-4 flex-1 max-w-xl">
-            <div className="relative w-full group">
-              <Search className={`absolute ${direction === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors`} />
+      <main className="main-content">
+        {/* Top Header */}
+        <header className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4 flex-1 max-w-md">
+            <div className="relative w-full">
+              <Search className={`absolute ${direction === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
               <input
                 type="text"
                 placeholder={t.searchFormsPlaceholder}
-                className={`input-premium w-full ${direction === 'rtl' ? 'pr-10' : 'pl-10'} bg-muted/50 focus:bg-background h-10 text-sm`}
+                className={`input-standard w-full ${direction === 'rtl' ? 'pr-10' : 'pl-10'} h-10`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <button className="relative text-muted-foreground hover:text-foreground transition-colors">
+          <div className="flex items-center gap-4">
+            <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-muted-foreground">
               <Bell className="w-5 h-5" />
-              <span className={`absolute -top-1 ${direction === 'rtl' ? '-left-1' : '-right-1'} w-2 h-2 bg-primary rounded-full border-2 border-background`} />
             </button>
-            <div className="h-8 w-[1px] bg-border mx-2" />
-            <div className="flex items-center gap-3">
-              <div className={`${direction === 'rtl' ? 'text-left' : 'text-right'} hidden sm:block`}>
-                <p className="text-sm font-bold truncate max-w-[120px]">{user?.fullName || (direction === 'rtl' ? 'משתמש' : 'User')}</p>
-                <p className="text-xs text-muted-foreground">{t.freePlan}</p>
-              </div>
-              <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: 'w-10 h-10 rounded-xl' } }} />
-            </div>
+            <div className="h-6 w-px bg-border" />
+            <UserButton appearance={{ elements: { userButtonAvatarBox: 'w-10 h-10 rounded-lg' } }} />
           </div>
         </header>
 
-        {/* Content */}
-        <div className="p-8 max-w-[1400px] mx-auto w-full">
+        {/* Welcome Section */}
+        <div className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{t.dashboard}</h1>
+            <p className="text-muted-foreground mt-1">{t.manageFormsDescription}</p>
+          </div>
+          <button onClick={handleCreateForm} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            {t.createNewForm}
+          </button>
+        </div>
+
+        {/* Error State */}
+        <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-2xl mb-8 flex items-center gap-3"
+              exit={{ opacity: 0 }}
+              className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-lg mb-8 flex items-center gap-3 text-sm font-medium"
             >
-              <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-              <span className="font-medium">{error}</span>
+              <AlertCircle className="w-4 h-4" />
+              {error}
+              <button onClick={() => setError(null)} className="ml-auto opacity-60 hover:opacity-100">
+                <Plus className="w-4 h-4 rotate-45" />
+              </button>
             </motion.div>
           )}
+        </AnimatePresence>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">{t.dashboard}</h1>
-              <p className="text-muted-foreground font-medium mt-1">{t.manageFormsDescription}</p>
+        {/* Forms Content */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-48 rounded-xl animate-pulse bg-zinc-200 dark:bg-zinc-800" />
+            ))}
+          </div>
+        ) : filteredForms.length === 0 ? (
+          <div className="bg-white dark:bg-zinc-900 border border-border rounded-xl p-20 text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+              <FileText className="text-muted-foreground w-8 h-8" />
             </div>
-            {canCreateForm && (
-              <button
-                onClick={handleCreateForm}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                {t.createNewForm}
+            <h2 className="text-xl font-bold mb-2">{t.noFormsFound}</h2>
+            <p className="text-muted-foreground max-w-sm text-sm">
+              {searchQuery ? t.noResultsFor.replace('{query}', searchQuery) : 'עדיין לא יצרת טפסים. התחל עכשיו.'}
+            </p>
+            {!searchQuery && (
+              <button onClick={handleCreateForm} className="btn-primary mt-8">
+                {t.createFirstForm}
               </button>
             )}
           </div>
-
-          {isLoading ? (
-            <div className="forms-grid">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="glass-card h-48 animate-pulse bg-muted/20" />
-              ))}
-            </div>
-          ) : filteredForms.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="glass-card p-20 text-center flex flex-col items-center border-dashed"
-            >
-              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mb-6">
-                <FileText className="text-primary w-10 h-10" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">{t.noFormsFound}</h2>
-              <p className="text-muted-foreground mb-8 max-w-sm">
-                {searchQuery ? t.noResultsFor.replace('{query}', searchQuery) : 'עדיין לא יצרת טפסים. התחל את המסע שלך על ידי יצירת ה-flow הראשון שלך בעברית.'}
-              </p>
-              {!searchQuery && canCreateForm && (
-                <button
-                  onClick={handleCreateForm}
-                  className="btn-primary px-8"
-                >
-                  {t.createFirstForm}
-                </button>
-              )}
-            </motion.div>
-          ) : (
-            <div className="forms-grid">
-              {filteredForms.map((form) => (
-                <FormCard
-                  key={form.id}
-                  form={form}
-                  onDelete={() => handleDeleteForm(form.id)}
-                  onEdit={() => navigate(`/editor/${form.id}`)}
-                  onViewResponses={() => navigate(`/responses/${form.id}`)}
-                  canDelete={canDeleteForm}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredForms.map((form) => (
+              <FormCard
+                key={form.id}
+                form={form}
+                onDelete={loadForms}
+                onEdit={() => navigate(`/editor/${form.id}`)}
+                onViewResponses={() => navigate(`/responses/${form.id}`)}
+                onSendWhatsApp={() => setWhatsAppForm(form)}
+              />
+            ))}
+          </div>
+        )}
       </main>
+
+      {whatsAppForm && (
+        <SendFormLinkDialog
+          open={!!whatsAppForm}
+          onOpenChange={(open) => { if (!open) setWhatsAppForm(null); }}
+          formId={whatsAppForm.id}
+          formUrl={`${window.location.origin}/f/${whatsAppForm.slug}`}
+        />
+      )}
     </div>
   );
 }

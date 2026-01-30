@@ -274,6 +274,7 @@ export interface Translations {
   // Dashboard
   dashboard: string;
   backToDashboard: string;
+  backToSettings: string;
   overview: string;
   myForms: string;
   responses: string;
@@ -367,6 +368,36 @@ export interface Translations {
   signatureSmoothingDesc: string;
   aiDetectionTitle: string;
   aiDetectionDesc: string;
+
+  // WhatsApp
+  whatsappChannels: string;
+  whatsappManageChannelsDesc: string;
+  connectNewWhatsapp: string;
+  disconnectChannel: string;
+  disconnectConfirm: string;
+  channelName: string;
+  channelNamePlaceholder: string;
+  statusWorking: string;
+  statusFailed: string;
+  statusStopped: string;
+  statusStarting: string;
+  statusScanQr: string;
+  scanQrCode: string;
+  scanQrInstructions: string;
+  qrExpired: string;
+  connectionSuccess: string;
+  sendFormLink: string;
+  recipientPhone: string;
+  recipientPhonePlaceholder: string;
+  messageCaption: string;
+  selectChannel: string;
+  sendMessage: string;
+  messageSent: string;
+  messageFailed: string;
+  noChannelsConnected: string;
+  noWorkingChannels: string;
+  messagesSentLabel: string;
+  refreshStatus: string;
 }
 
 const hebrewTranslations: Translations = {
@@ -643,6 +674,7 @@ const hebrewTranslations: Translations = {
   // Dashboard
   dashboard: 'לוח בקרה',
   backToDashboard: 'חזרה ללוח הבקרה',
+  backToSettings: 'חזרה להגדרות',
   overview: 'סקירה כללית',
   myForms: 'הטפסים שלי',
   responses: 'תגובות',
@@ -736,6 +768,36 @@ const hebrewTranslations: Translations = {
   signatureSmoothingDesc: 'אלגוריתם Bézier ליצירת חתימות מקצועיות שנראות סרוקות בתוך ה-PDF.',
   aiDetectionTitle: 'זיהוי שדות ב-AI',
   aiDetectionDesc: 'העלה כל קובץ PDF והמערכת שלנו תזהה ותמפה את השדות עבורך בשניות.',
+
+  // WhatsApp
+  whatsappChannels: 'ערוצי וואטסאפ',
+  whatsappManageChannelsDesc: 'ניהול ערוצי וואטסאפ ושליחת הודעות',
+  connectNewWhatsapp: 'חבר וואטסאפ חדש',
+  disconnectChannel: 'נתק ערוץ',
+  disconnectConfirm: 'האם אתה בטוח שברצונך לנתק ערוץ זה?',
+  channelName: 'שם הערוץ',
+  channelNamePlaceholder: 'לדוגמה: מכירות',
+  statusWorking: 'מחובר',
+  statusFailed: 'נכשל',
+  statusStopped: 'מנותק',
+  statusStarting: 'מתחבר...',
+  statusScanQr: 'ממתין לסריקה',
+  scanQrCode: 'סרוק קוד QR',
+  scanQrInstructions: 'פתח את וואטסאפ בטלפון \u2190 הגדרות \u2190 מכשירים מקושרים \u2190 קשר מכשיר \u2190 סרוק את הקוד',
+  qrExpired: 'הקוד פג תוקף, מרענן...',
+  connectionSuccess: 'וואטסאפ חובר בהצלחה!',
+  sendFormLink: 'שלח קישור בוואטסאפ',
+  recipientPhone: 'מספר טלפון נמען',
+  recipientPhonePlaceholder: '052-1234567',
+  messageCaption: 'הודעה מצורפת (אופציונלי)',
+  selectChannel: 'בחר ערוץ וואטסאפ',
+  sendMessage: 'שלח הודעה',
+  messageSent: 'ההודעה נשלחה בהצלחה',
+  messageFailed: 'שליחת ההודעה נכשלה',
+  noChannelsConnected: 'אין ערוצי וואטסאפ מחוברים',
+  noWorkingChannels: 'אין ערוצים פעילים. חבר ערוץ חדש מהגדרות הארגון.',
+  messagesSentLabel: 'הודעות נשלחו',
+  refreshStatus: 'רענן סטטוס',
 };
 
 const englishTranslations: Translations = {
@@ -1012,6 +1074,7 @@ const englishTranslations: Translations = {
   // Dashboard
   dashboard: 'Dashboard',
   backToDashboard: 'Back to Dashboard',
+  backToSettings: 'Back to Settings',
   overview: 'Overview',
   myForms: 'My Forms',
   responses: 'Responses',
@@ -1105,6 +1168,36 @@ const englishTranslations: Translations = {
   signatureSmoothingDesc: 'Bézier algorithm for professional signatures that look scanned in the PDF.',
   aiDetectionTitle: 'AI Field Detection',
   aiDetectionDesc: 'Upload any PDF and our system will detect and map fields for you in seconds.',
+
+  // WhatsApp
+  whatsappChannels: 'WhatsApp Channels',
+  whatsappManageChannelsDesc: 'Manage WhatsApp channels and send messages',
+  connectNewWhatsapp: 'Connect New WhatsApp',
+  disconnectChannel: 'Disconnect Channel',
+  disconnectConfirm: 'Are you sure you want to disconnect this channel?',
+  channelName: 'Channel Name',
+  channelNamePlaceholder: 'e.g. Sales',
+  statusWorking: 'Connected',
+  statusFailed: 'Failed',
+  statusStopped: 'Disconnected',
+  statusStarting: 'Connecting...',
+  statusScanQr: 'Awaiting Scan',
+  scanQrCode: 'Scan QR Code',
+  scanQrInstructions: 'Open WhatsApp on your phone \u2192 Settings \u2192 Linked Devices \u2192 Link a Device \u2192 Scan the code',
+  qrExpired: 'Code expired, refreshing...',
+  connectionSuccess: 'WhatsApp connected successfully!',
+  sendFormLink: 'Send Link via WhatsApp',
+  recipientPhone: 'Recipient Phone Number',
+  recipientPhonePlaceholder: '052-1234567',
+  messageCaption: 'Caption (optional)',
+  selectChannel: 'Select WhatsApp Channel',
+  sendMessage: 'Send Message',
+  messageSent: 'Message sent successfully',
+  messageFailed: 'Message sending failed',
+  noChannelsConnected: 'No WhatsApp channels connected',
+  noWorkingChannels: 'No active channels. Connect a new channel from organization settings.',
+  messagesSentLabel: 'Messages Sent',
+  refreshStatus: 'Refresh Status',
 };
 
 const translations: Record<Language, Translations> = {

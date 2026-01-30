@@ -5,8 +5,28 @@ import { AuthenticationError, InvalidTokenError } from '../utils/errors';
 import logger from '../utils/logger';
 
 // Clerk's public key endpoint (for JWT signature verification)
+// Extract the domain from the publishable key (format: pk_test_<base64-encoded-domain>)
+function getClerkDomain(): string {
+  const publishableKey = process.env.CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    throw new Error('CLERK_PUBLISHABLE_KEY is not set');
+  }
+
+  // Split by underscore: pk_test_<base64>
+  const parts = publishableKey.split('_');
+  if (parts.length < 3) {
+    throw new Error('Invalid CLERK_PUBLISHABLE_KEY format');
+  }
+
+  // Decode the base64 domain (remove trailing $ if present)
+  const base64Domain = parts[2];
+  const domain = Buffer.from(base64Domain, 'base64').toString('utf-8').replace(/\$$/, '');
+
+  return domain;
+}
+
 const client = jwksClient({
-  jwksUri: `https://${process.env.CLERK_PUBLISHABLE_KEY?.split('_')[1]}.clerk.accounts.dev/.well-known/jwks.json`,
+  jwksUri: `https://${getClerkDomain()}/.well-known/jwks.json`,
   cache: true,
   cacheMaxAge: 600000, // 10 minutes
 });
@@ -69,19 +89,32 @@ export async function authenticateJWT(
 
     // 3. Extract user info from JWT claims
     const userId = decoded.sub; // Clerk user ID
-    const organizationId = decoded.org_id;
+    const organizationId = decoded.org_id || decoded.org_slug;
     const role = decoded.metadata?.role || 'worker';
     const email = decoded.email;
     const name = decoded.name;
 
-    if (!userId || !organizationId) {
-      throw new InvalidTokenError('אסימון לא תקין - חסרים נתונים');
+    // Debug: Log token contents to help troubleshoot
+    logger.debug('JWT decoded', {
+      userId,
+      organizationId,
+      hasOrgId: !!decoded.org_id,
+      hasOrgSlug: !!decoded.org_slug,
+      tokenKeys: Object.keys(decoded),
+    });
+
+    if (!userId) {
+      throw new InvalidTokenError('אסימון לא תקין - חסר מזהה משתמש');
     }
+
+    // For now, use a default organization if none is provided
+    // TODO: Implement proper organization selection in frontend
+    const finalOrgId = organizationId || 'default-org';
 
     // 4. Attach user info to request object
     req.user = {
       id: userId,
-      organizationId,
+      organizationId: finalOrgId,
       role,
       email,
       name,
